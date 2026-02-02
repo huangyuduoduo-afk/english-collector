@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#FFFDF7">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -24,14 +24,28 @@
       --error: #E53935;
     }
     
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
     
     body { 
-      font-family: 'Inter', -apple-system, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--cream);
       -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
       min-height: 100vh;
+      min-height: -webkit-fill-available;
       overflow-x: hidden;
+      line-height: 1.5;
     }
     
     .font-serif { font-family: 'Playfair Display', Georgia, serif; }
@@ -88,6 +102,7 @@
       top: 0;
       z-index: 40;
       padding: 16px;
+      padding-top: max(16px, env(safe-area-inset-top));
       background: linear-gradient(to bottom, var(--cream) 60%, transparent);
     }
     
@@ -103,6 +118,7 @@
       background: none;
       border: none;
       cursor: pointer;
+      color: var(--text-secondary);
     }
     
     .search-box {
@@ -119,7 +135,7 @@
       flex: 1;
       border: none;
       background: transparent;
-      font-size: 14px;
+      font-size: 15px;
       color: var(--text-primary);
       outline: none;
     }
@@ -177,13 +193,13 @@
     }
     
     .card-content {
-      font-size: 14px;
+      font-size: 15px;
       line-height: 1.6;
       color: var(--text-primary);
     }
     
     .card-source {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-muted);
       font-style: italic;
       margin-top: 8px;
@@ -199,7 +215,7 @@
     }
     
     .keyword-tag {
-      font-size: 11px;
+      font-size: 12px;
       padding: 4px 8px;
       background: rgba(232, 97, 44, 0.1);
       color: var(--accent);
@@ -231,7 +247,7 @@
     }
     
     .empty-state-desc {
-      font-size: 14px;
+      font-size: 15px;
       color: var(--text-muted);
     }
     
@@ -242,6 +258,7 @@
       left: 16px;
       right: 16px;
       z-index: 30;
+      padding-bottom: env(safe-area-inset-bottom);
     }
     
     .quick-input {
@@ -264,7 +281,7 @@
       width: 100%;
       border: none;
       background: transparent;
-      font-size: 14px;
+      font-size: 15px;
       color: var(--text-primary);
       outline: none;
     }
@@ -315,8 +332,8 @@
     }
     
     .nav-item svg {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
     }
     
     .nav-item span {
@@ -403,11 +420,12 @@
       background: white;
       border: 1px solid rgba(0,0,0,0.08);
       border-radius: 12px;
-      font-size: 14px;
+      font-size: 15px;
       color: var(--text-primary);
       resize: none;
       outline: none;
       transition: border-color 0.2s;
+      line-height: 1.6;
     }
     
     .add-modal-textarea:focus {
@@ -423,7 +441,7 @@
       align-items: center;
       gap: 8px;
       margin-top: 12px;
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-muted);
     }
     
@@ -435,10 +453,10 @@
     
     .btn {
       flex: 1;
-      padding: 12px 16px;
+      padding: 14px 16px;
       border: none;
       border-radius: 12px;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
@@ -492,7 +510,7 @@
     .type-paragraph { background: #9B8AA6; }
     
     .detail-date {
-      font-size: 12px;
+      font-size: 13px;
       color: var(--text-muted);
     }
     
@@ -512,7 +530,7 @@
     }
     
     .detail-translation {
-      font-size: 14px;
+      font-size: 15px;
       line-height: 1.6;
       color: var(--text-secondary);
       padding-bottom: 20px;
@@ -556,7 +574,7 @@
       background: white;
       border: 1px solid rgba(0,0,0,0.08);
       border-radius: 8px;
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text-primary);
       cursor: pointer;
       transition: all 0.2s;
@@ -579,14 +597,22 @@
     
     .etymology-word {
       font-family: 'Playfair Display', serif;
-      font-size: 22px;
+      font-size: 24px;
       color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    
+    .etymology-phonetic {
+      font-size: 15px;
+      color: var(--text-muted);
       margin-bottom: 12px;
+      font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;
     }
     
     .etymology-item {
-      font-size: 13px;
+      font-size: 14px;
       margin-bottom: 8px;
+      line-height: 1.5;
     }
     
     .etymology-item:last-child {
@@ -609,6 +635,7 @@
       border-top-color: white;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
+      margin: 0 auto;
     }
     
     @keyframes spin {
@@ -619,6 +646,7 @@
     .toast {
       position: fixed;
       top: 20px;
+      top: max(20px, env(safe-area-inset-top));
       left: 50%;
       transform: translateX(-50%) translateY(-100px);
       background: var(--text-primary);
@@ -628,6 +656,8 @@
       font-size: 14px;
       z-index: 100;
       transition: transform 0.3s ease;
+      max-width: 90%;
+      text-align: center;
     }
     
     .toast.show {
@@ -656,9 +686,10 @@
     .flashcard {
       perspective: 1000px;
       width: 100%;
-      max-width: 400px;
-      height: 300px;
+      max-width: 340px;
+      height: 240px;
       margin: 0 auto 30px;
+      cursor: pointer;
     }
     
     .flashcard-inner {
@@ -693,26 +724,64 @@
       transform: rotateY(180deg);
       text-align: left;
       justify-content: flex-start;
+      align-items: stretch;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     
-    .flashcard-front p {
-      font-size: 16px;
-      line-height: 1.6;
+    .flashcard-word {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
       color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    
+    .flashcard-phonetic {
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+    
+    .flashcard-back-word {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--text-primary);
+      margin-bottom: 4px;
+    }
+    
+    .flashcard-back-phonetic {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    
+    .flashcard-back-meaning {
+      font-size: 16px;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+    
+    .flashcard-back-detail {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    
+    .flashcard-back-detail span {
+      color: var(--text-muted);
     }
     
     .review-actions {
       display: flex;
-      gap: 12px;
+      gap: 16px;
       justify-content: center;
     }
     
     .review-btn {
-      padding: 14px 28px;
+      padding: 14px 32px;
       border: none;
       border-radius: 12px;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
@@ -723,12 +792,26 @@
       color: white;
     }
     
+    .review-btn.know:hover {
+      background: #43A047;
+    }
+    
     .review-btn.dont-know {
       background: #FF7043;
       color: white;
     }
     
+    .review-btn.dont-know:hover {
+      background: #F4511E;
+    }
+    
     .review-progress {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+    
+    .review-hint {
       font-size: 13px;
       color: var(--text-muted);
       margin-bottom: 20px;
@@ -776,12 +859,12 @@
     }
     
     .settings-item-label {
-      font-size: 14px;
+      font-size: 15px;
       color: var(--text-primary);
     }
     
     .settings-item-value {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--text-muted);
     }
     
@@ -789,18 +872,25 @@
       padding: 10px 14px;
       border: 1px solid rgba(0,0,0,0.1);
       border-radius: 8px;
-      font-size: 13px;
-      width: 180px;
+      font-size: 14px;
+      width: 160px;
       text-align: right;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    
+    .settings-input:focus {
+      border-color: var(--accent);
     }
     
     .settings-select {
       padding: 10px 14px;
       border: 1px solid rgba(0,0,0,0.1);
       border-radius: 8px;
-      font-size: 13px;
+      font-size: 14px;
       background: white;
       min-width: 140px;
+      outline: none;
     }
     
     .stats-grid {
@@ -813,7 +903,7 @@
     .stat-card {
       background: white;
       border-radius: 12px;
-      padding: 16px;
+      padding: 16px 12px;
       text-align: center;
     }
     
@@ -847,7 +937,7 @@
   <header class="header">
     <div class="header-inner">
       <button class="menu-btn" onclick="toggleMenu()">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
         </svg>
       </button>
@@ -857,7 +947,7 @@
       </div>
       
       <button class="add-btn" onclick="openAddModal()">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
         </svg>
       </button>
@@ -882,21 +972,23 @@
   <div class="review-container" id="reviewTab">
     <div id="reviewContent">
       <p class="review-progress" id="reviewProgress">1 / 20</p>
+      <p class="review-hint">点击卡片翻转</p>
       
       <div class="flashcard" id="flashcard" onclick="flipCard()">
         <div class="flashcard-inner">
           <div class="flashcard-front">
-            <p id="flashcardFront">Click to start review</p>
+            <div class="flashcard-word" id="flashcardWord">word</div>
+            <div class="flashcard-phonetic" id="flashcardPhonetic">/wɜːrd/</div>
           </div>
-          <div class="flashcard-back">
-            <div id="flashcardBack"></div>
+          <div class="flashcard-back" id="flashcardBack">
+            <!-- Back content will be inserted here -->
           </div>
         </div>
       </div>
       
       <div class="review-actions">
-        <button class="review-btn dont-know" onclick="markCard(false)">Don't Know</button>
-        <button class="review-btn know" onclick="markCard(true)">Know</button>
+        <button class="review-btn dont-know" onclick="markCard(false)">不认识</button>
+        <button class="review-btn know" onclick="markCard(true)">认识</button>
       </div>
     </div>
     
@@ -907,8 +999,8 @@
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path>
           </svg>
         </div>
-        <h2 class="empty-state-title">Nothing to review</h2>
-        <p class="empty-state-desc">Save some cards first, then come back</p>
+        <h2 class="empty-state-title">没有可复习的单词</h2>
+        <p class="empty-state-desc">先去收藏一些内容吧</p>
       </div>
     </div>
   </div>
@@ -919,31 +1011,31 @@
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-value" id="statTotal">0</div>
-        <div class="stat-label">Total Cards</div>
+        <div class="stat-label">收藏</div>
       </div>
       <div class="stat-card">
         <div class="stat-value" id="statWords">0</div>
-        <div class="stat-label">Words</div>
+        <div class="stat-label">单词</div>
       </div>
       <div class="stat-card">
         <div class="stat-value" id="statDays">0</div>
-        <div class="stat-label">Days</div>
+        <div class="stat-label">天</div>
       </div>
     </div>
     
     <!-- API Settings -->
     <div class="settings-section">
-      <div class="settings-title">AI Settings</div>
+      <div class="settings-title">AI 设置</div>
       <div class="settings-card">
         <div class="settings-item">
-          <span class="settings-item-label">Provider</span>
+          <span class="settings-item-label">服务商</span>
           <select class="settings-select" id="apiProvider" onchange="saveSettings()">
             <option value="gemini">Gemini</option>
             <option value="deepseek">DeepSeek</option>
           </select>
         </div>
         <div class="settings-item">
-          <span class="settings-item-label">Model</span>
+          <span class="settings-item-label">模型</span>
           <select class="settings-select" id="apiModel" onchange="saveSettings()">
             <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
             <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
@@ -951,37 +1043,37 @@
         </div>
         <div class="settings-item">
           <span class="settings-item-label">API Key</span>
-          <input type="password" class="settings-input" id="apiKey" placeholder="Enter API key" onchange="saveSettings()">
+          <input type="password" class="settings-input" id="apiKey" placeholder="输入 API Key" onchange="saveSettings()">
         </div>
       </div>
     </div>
     
     <!-- Data -->
     <div class="settings-section">
-      <div class="settings-title">Data</div>
+      <div class="settings-title">数据管理</div>
       <div class="settings-card">
         <div class="settings-item" style="cursor: pointer;" onclick="exportJSON()">
-          <span class="settings-item-label">Export Backup (JSON)</span>
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <span class="settings-item-label">导出备份 (JSON)</span>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
           </svg>
         </div>
         <div class="settings-item" style="cursor: pointer;" onclick="document.getElementById('importFile').click()">
-          <span class="settings-item-label">Import Backup</span>
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <span class="settings-item-label">导入备份</span>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"></path>
           </svg>
           <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importJSON(event)">
         </div>
         <div class="settings-item" style="cursor: pointer;" onclick="exportAnki('sentences')">
-          <span class="settings-item-label">Export to Anki (Sentences)</span>
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <span class="settings-item-label">导出到 Anki (句子)</span>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
           </svg>
         </div>
         <div class="settings-item" style="cursor: pointer;" onclick="exportAnki('words')">
-          <span class="settings-item-label">Export to Anki (Words)</span>
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <span class="settings-item-label">导出到 Anki (单词)</span>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
           </svg>
         </div>
@@ -990,10 +1082,10 @@
     
     <!-- About -->
     <div class="settings-section">
-      <div class="settings-title">About</div>
+      <div class="settings-title">关于</div>
       <div class="settings-card">
         <div class="settings-item">
-          <span class="settings-item-label">Version</span>
+          <span class="settings-item-label">版本</span>
           <span class="settings-item-value">1.0.0</span>
         </div>
       </div>
@@ -1003,8 +1095,8 @@
   <!-- Quick input -->
   <div class="quick-input-wrapper" id="quickInputWrapper">
     <div class="quick-input">
-      <div class="quick-input-label">ADD A NEW NOTE</div>
-      <input type="text" id="quickInput" placeholder="Start typing here..." onkeydown="handleQuickInput(event)">
+      <div class="quick-input-label">添加新内容</div>
+      <input type="text" id="quickInput" placeholder="输入英文内容..." onkeydown="handleQuickInput(event)">
     </div>
   </div>
   
@@ -1043,17 +1135,17 @@
     <div class="modal-content" onclick="event.stopPropagation()">
       <div class="modal-body">
         <h2 class="add-modal-title">Save to your mind</h2>
-        <textarea class="add-modal-textarea" id="addInput" placeholder="Paste or type any English text..."></textarea>
+        <textarea class="add-modal-textarea" id="addInput" placeholder="粘贴或输入英文内容..."></textarea>
         <div class="add-modal-hint">
           <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"></path>
           </svg>
-          <span>AI will analyze and extract key vocabulary</span>
+          <span>AI 将自动分析并提取重点词汇</span>
         </div>
         <div class="add-modal-actions">
-          <button class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+          <button class="btn btn-secondary" onclick="closeAddModal()">取消</button>
           <button class="btn btn-primary" id="saveBtn" onclick="saveCard()">
-            <span id="saveBtnText">Save</span>
+            <span id="saveBtnText">保存</span>
           </button>
         </div>
       </div>
@@ -1079,7 +1171,7 @@
       firstUseDate: null
     };
     let reviewState = {
-      cards: [],
+      words: [],
       currentIndex: 0,
       results: []
     };
@@ -1259,8 +1351,8 @@
         ${keywordsHtml}
         
         <div class="add-modal-actions">
-          <button class="btn btn-secondary" onclick="deleteCard('${cardId}')">Delete</button>
-          <button class="btn btn-primary" onclick="exportSingleAnki('${cardId}')">Export to Anki</button>
+          <button class="btn btn-secondary" onclick="deleteCard('${cardId}')">删除</button>
+          <button class="btn btn-primary" onclick="exportSingleAnki('${cardId}')">导出到 Anki</button>
         </div>
       `;
       
@@ -1271,6 +1363,7 @@
       if (!keyword) return '';
       return `
         <div class="etymology-word">${escapeHtml(keyword.word)}</div>
+        ${keyword.phonetic ? `<div class="etymology-phonetic">${escapeHtml(keyword.phonetic)}</div>` : ''}
         <div class="etymology-item">
           <span class="etymology-label">构词 · </span>
           <span class="etymology-value">${escapeHtml(keyword.roots || '-')}</span>
@@ -1319,7 +1412,7 @@
       if (!content) return;
       
       if (!settings.apiKey) {
-        showToast('Please set your API key in Settings first', 'error');
+        showToast('请先在 Settings 中设置 API Key', 'error');
         return;
       }
       
@@ -1365,25 +1458,25 @@
         renderCards();
         updateStats();
         closeAddModal();
-        showToast('Saved successfully!', 'success');
+        showToast('保存成功！', 'success');
         
       } catch (error) {
         console.error('Save error:', error);
-        showToast('Failed to save: ' + error.message, 'error');
+        showToast('保存失败: ' + error.message, 'error');
       } finally {
         saveBtn.disabled = false;
-        saveBtnText.textContent = 'Save';
+        saveBtnText.textContent = '保存';
       }
     }
 
     async function deleteCard(cardId) {
-      if (!confirm('Are you sure you want to delete this card?')) return;
+      if (!confirm('确定要删除这条收藏吗？')) return;
       
       await deleteCardFromDB(cardId);
       renderCards();
       updateStats();
       closeDetailModal();
-      showToast('Deleted', 'success');
+      showToast('已删除', 'success');
     }
 
     function handleQuickInput(event) {
@@ -1410,14 +1503,15 @@
 
 要求：
 1. translation: 整句/整段的中文翻译
-2. keywords: 数组，包含最多5个重点词汇，每个词汇包含：
+2. keywords: 数组，包含最多5个重点词汇（选择有学习价值的词，不要选 the, is, a 等简单词），每个词汇包含：
    - word: 单词本身
+   - phonetic: 国际音标（如 /ˌserənˈdɪpəti/）
    - roots: 词根构成（如 "re- (再) + mem- (记住) + -ber"）
    - origin: 词源说明（来自哪种语言，历史演变）
    - meaning: 中文释义
 
 只返回纯JSON，格式如下：
-{"translation":"...","keywords":[{"word":"...","roots":"...","origin":"...","meaning":"..."}]}`;
+{"translation":"...","keywords":[{"word":"...","phonetic":"...","roots":"...","origin":"...","meaning":"..."}]}`;
 
       const response = await fetch('/api/analyze', {
         method: 'POST',
@@ -1439,9 +1533,29 @@
       return data;
     }
 
-    // ==================== Review Functions ====================
+    // ==================== Review Functions (Words Only) ====================
     function initReview() {
-      if (cards.length === 0) {
+      // Collect all unique words from all cards
+      const wordMap = new Map();
+      
+      cards.forEach(card => {
+        if (card.keywords && card.keywords.length > 0) {
+          card.keywords.forEach(keyword => {
+            const wordLower = keyword.word.toLowerCase();
+            if (!wordMap.has(wordLower)) {
+              wordMap.set(wordLower, {
+                ...keyword,
+                cardId: card.id,
+                example: card.content
+              });
+            }
+          });
+        }
+      });
+      
+      const allWords = Array.from(wordMap.values());
+      
+      if (allWords.length === 0) {
         document.getElementById('reviewContent').classList.add('hide');
         document.getElementById('reviewEmpty').classList.remove('hide');
         return;
@@ -1450,39 +1564,38 @@
       document.getElementById('reviewContent').classList.remove('hide');
       document.getElementById('reviewEmpty').classList.add('hide');
       
-      // Shuffle and pick up to 20 cards
-      const shuffled = [...cards].sort(() => Math.random() - 0.5);
-      reviewState.cards = shuffled.slice(0, 20);
+      // Shuffle and pick up to 20 words
+      const shuffled = allWords.sort(() => Math.random() - 0.5);
+      reviewState.words = shuffled.slice(0, 20);
       reviewState.currentIndex = 0;
       reviewState.results = [];
       
-      showCurrentCard();
+      showCurrentWord();
     }
 
-    function showCurrentCard() {
-      const card = reviewState.cards[reviewState.currentIndex];
-      if (!card) return;
+    function showCurrentWord() {
+      const word = reviewState.words[reviewState.currentIndex];
+      if (!word) return;
       
       document.getElementById('reviewProgress').textContent = 
-        `${reviewState.currentIndex + 1} / ${reviewState.cards.length}`;
+        `${reviewState.currentIndex + 1} / ${reviewState.words.length}`;
       
-      document.getElementById('flashcardFront').textContent = card.content;
+      // Front side - word and phonetic
+      document.getElementById('flashcardWord').textContent = word.word;
+      document.getElementById('flashcardPhonetic').textContent = word.phonetic || '';
       
-      let backContent = `
-        <p style="color: var(--text-secondary); margin-bottom: 16px;">${escapeHtml(card.translation || '')}</p>
+      // Back side - full details
+      document.getElementById('flashcardBack').innerHTML = `
+        <div class="flashcard-back-word">${escapeHtml(word.word)}</div>
+        <div class="flashcard-back-phonetic">${escapeHtml(word.phonetic || '')}</div>
+        <div class="flashcard-back-meaning">${escapeHtml(word.meaning || '')}</div>
+        <div class="flashcard-back-detail">
+          <span>构词:</span> ${escapeHtml(word.roots || '-')}<br>
+          <span>来源:</span> ${escapeHtml(word.origin || '-')}<br>
+          <span>例句:</span> ${escapeHtml(word.example || '')}
+        </div>
       `;
       
-      if (card.keywords && card.keywords.length > 0) {
-        backContent += card.keywords.map(k => `
-          <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.05);">
-            <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">${escapeHtml(k.word)}</div>
-            <div style="font-size: 12px; color: var(--text-muted);">${escapeHtml(k.roots || '')}</div>
-            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">${escapeHtml(k.meaning || '')}</div>
-          </div>
-        `).join('');
-      }
-      
-      document.getElementById('flashcardBack').innerHTML = backContent;
       document.getElementById('flashcard').classList.remove('flipped');
     }
 
@@ -1491,27 +1604,21 @@
     }
 
     async function markCard(known) {
-      const card = reviewState.cards[reviewState.currentIndex];
-      if (!card) return;
+      const word = reviewState.words[reviewState.currentIndex];
+      if (!word) return;
       
-      // Update card in database
-      card.reviewCount = (card.reviewCount || 0) + 1;
-      card.lastReviewed = new Date().toISOString();
-      card.known = known;
-      await saveCardToDB(card);
+      reviewState.results.push({ word: word.word, known });
       
-      reviewState.results.push({ cardId: card.id, known });
-      
-      // Move to next card
+      // Move to next word
       reviewState.currentIndex++;
       
-      if (reviewState.currentIndex >= reviewState.cards.length) {
+      if (reviewState.currentIndex >= reviewState.words.length) {
         // Review complete
         const knownCount = reviewState.results.filter(r => r.known).length;
-        showToast(`Review complete! ${knownCount}/${reviewState.cards.length} known`, 'success');
+        showToast(`复习完成！认识 ${knownCount}/${reviewState.words.length} 个单词`, 'success');
         initReview(); // Reset for another round
       } else {
-        showCurrentCard();
+        showCurrentWord();
       }
     }
 
@@ -1578,7 +1685,7 @@
       };
       
       downloadFile(JSON.stringify(data, null, 2), 'english-collector-backup.json', 'application/json');
-      showToast('Backup exported', 'success');
+      showToast('备份已导出', 'success');
     }
 
     function importJSON(event) {
@@ -1591,7 +1698,7 @@
           const data = JSON.parse(e.target.result);
           
           if (!data.cards || !Array.isArray(data.cards)) {
-            throw new Error('Invalid backup file');
+            throw new Error('无效的备份文件');
           }
           
           // Import cards
@@ -1601,9 +1708,9 @@
           
           renderCards();
           updateStats();
-          showToast(`Imported ${data.cards.length} cards`, 'success');
+          showToast(`已导入 ${data.cards.length} 条收藏`, 'success');
         } catch (error) {
-          showToast('Failed to import: ' + error.message, 'error');
+          showToast('导入失败: ' + error.message, 'error');
         }
       };
       reader.readAsText(file);
@@ -1612,7 +1719,7 @@
 
     function exportAnki(type) {
       if (cards.length === 0) {
-        showToast('No cards to export', 'error');
+        showToast('没有可导出的内容', 'error');
         return;
       }
       
@@ -1626,7 +1733,7 @@
           csv += `${front}\t${back}\n`;
         });
       } else if (type === 'words') {
-        // Export words: Front = word, Back = etymology + example
+        // Export words: Front = word, Back = phonetic + meaning + etymology + example
         const exported = new Set();
         cards.forEach(card => {
           if (card.keywords) {
@@ -1634,7 +1741,7 @@
               if (!exported.has(k.word.toLowerCase())) {
                 exported.add(k.word.toLowerCase());
                 const front = escapeCSV(k.word);
-                const back = escapeCSV(`${k.meaning}\n\n词根: ${k.roots}\n来源: ${k.origin}\n\n例句: ${card.content}`);
+                const back = escapeCSV(`${k.phonetic || ''}\n\n${k.meaning}\n\n词根: ${k.roots || '-'}\n来源: ${k.origin || '-'}\n\n例句: ${card.content}`);
                 csv += `${front}\t${back}\n`;
               }
             });
@@ -1643,7 +1750,7 @@
       }
       
       downloadFile(csv, `anki-${type}-${Date.now()}.txt`, 'text/plain');
-      showToast('Anki deck exported', 'success');
+      showToast('Anki 卡片已导出', 'success');
     }
 
     function exportSingleAnki(cardId) {
@@ -1658,13 +1765,13 @@
       // Export each word
       if (card.keywords) {
         card.keywords.forEach(k => {
-          const back = `${k.meaning}\n\n词根: ${k.roots}\n来源: ${k.origin}\n\n例句: ${card.content}`;
+          const back = `${k.phonetic || ''}\n\n${k.meaning}\n\n词根: ${k.roots || '-'}\n来源: ${k.origin || '-'}\n\n例句: ${card.content}`;
           csv += `${escapeCSV(k.word)}\t${escapeCSV(back)}\n`;
         });
       }
       
       downloadFile(csv, `anki-card-${Date.now()}.txt`, 'text/plain');
-      showToast('Card exported to Anki', 'success');
+      showToast('已导出到 Anki', 'success');
     }
 
     // ==================== Tab Navigation ====================
@@ -1731,7 +1838,7 @@
 
     function toggleMenu() {
       // Placeholder for menu functionality
-      showToast('Menu coming soon');
+      showToast('菜单功能开发中');
     }
 
     // ==================== Initialize ====================
@@ -1743,7 +1850,7 @@
         updateStats();
       } catch (error) {
         console.error('Init error:', error);
-        showToast('Failed to initialize app', 'error');
+        showToast('初始化失败', 'error');
       }
     }
 
