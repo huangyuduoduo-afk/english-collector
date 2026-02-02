@@ -1841,11 +1841,46 @@
       showToast('菜单功能开发中');
     }
 
+    // ==================== Import from URL (Chrome Extension) ====================
+    async function checkUrlImport() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const importData = urlParams.get('import');
+      
+      if (importData) {
+        try {
+          // Decode the card data
+          const cardJson = decodeURIComponent(atob(importData));
+          const card = JSON.parse(cardJson);
+          
+          // Save to database
+          await saveCardToDB(card);
+          
+          // Update first use date if needed
+          if (!settings.firstUseDate) {
+            settings.firstUseDate = new Date().toISOString();
+            await saveSettingsToDB();
+          }
+          
+          // Clean URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          // Update UI
+          renderCards();
+          updateStats();
+          showToast('已从扩展导入收藏！', 'success');
+          
+        } catch (error) {
+          console.error('Import error:', error);
+        }
+      }
+    }
+
     // ==================== Initialize ====================
     async function init() {
       try {
         await initDB();
         await loadData();
+        await checkUrlImport(); // Check for Chrome extension import
         renderCards();
         updateStats();
       } catch (error) {
