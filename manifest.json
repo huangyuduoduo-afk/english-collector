@@ -1,0 +1,16 @@
+{
+  "name": "English Collector",
+  "short_name": "EnCollector",
+  "description": "Collect and learn English vocabulary with etymology",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FFFDF7",
+  "theme_color": "#FFFDF7",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23E8612C' rx='20' width='100' height='100'/><text x='50' y='62' font-size='40' text-anchor='middle' fill='white' font-family='Georgia'>En</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

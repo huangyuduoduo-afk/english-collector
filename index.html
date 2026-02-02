@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#FFFDF7">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <title>English Collector</title>
+  <link rel="manifest" href="/manifest.json">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --cream: #FFFDF7;
+      --card-yellow: #FFF9E6;
+      --card-yellow-hover: #FFF5D6;
+      --warm-gray: #F5F3EF;
+      --text-primary: #2D2A26;
+      --text-secondary: #6B665C;
+      --text-muted: #A8A299;
+      --accent: #E8612C;
+      --accent-light: #FFEEE8;
+      --success: #4CAF50;
+      --error: #E53935;
+    }
+    
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    body { 
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--cream);
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    
+    .font-serif { font-family: 'Playfair Display', Georgia, serif; }
+    
+    /* Ambient gradient background */
+    .ambient-glow {
+      position: fixed;
+      top: -20%;
+      left: -10%;
+      width: 60%;
+      height: 50%;
+      background: radial-gradient(ellipse at center, 
+        rgba(255, 180, 150, 0.25) 0%, 
+        rgba(255, 200, 180, 0.15) 30%,
+        rgba(230, 210, 255, 0.1) 50%,
+        transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    .ambient-glow-2 {
+      position: fixed;
+      bottom: -10%;
+      right: -10%;
+      width: 50%;
+      height: 40%;
+      background: radial-gradient(ellipse at center, 
+        rgba(200, 220, 255, 0.2) 0%, 
+        rgba(220, 200, 255, 0.1) 40%,
+        transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    
+    /* Card styles */
+    .card {
+      background: var(--card-yellow);
+      border: none;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      cursor: pointer;
+    }
+    
+    .card:hover {
+      background: var(--card-yellow-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    }
+    
+    /* Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      padding: 16px;
+      background: linear-gradient(to bottom, var(--cream) 60%, transparent);
+    }
+    
+    .header-inner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .menu-btn {
+      padding: 8px;
+      margin-left: -8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+    }
+    
+    .search-box {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      background: white;
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 10px;
+    }
+    
+    .search-box input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+    }
+    
+    .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+    
+    .add-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(232, 97, 44, 0.3);
+      transition: background 0.2s;
+    }
+    
+    .add-btn:hover {
+      background: #D55525;
+    }
+    
+    /* Main content */
+    .main-content {
+      position: relative;
+      z-index: 10;
+      padding: 8px 16px 160px;
+    }
+    
+    /* Masonry grid */
+    .masonry {
+      column-count: 2;
+      column-gap: 12px;
+    }
+    
+    .masonry .card {
+      break-inside: avoid;
+      margin-bottom: 12px;
+      padding: 16px;
+    }
+    
+    @media (min-width: 768px) {
+      .masonry {
+        column-count: 3;
+        column-gap: 16px;
+      }
+      .masonry .card {
+        margin-bottom: 16px;
+      }
+    }
+    
+    .card-content {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+    
+    .card-source {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-top: 8px;
+    }
+    
+    .card-keywords {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .keyword-tag {
+      font-size: 11px;
+      padding: 4px 8px;
+      background: rgba(232, 97, 44, 0.1);
+      color: var(--accent);
+      border-radius: 4px;
+    }
+    
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+    
+    .empty-state-icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 16px;
+      background: var(--warm-gray);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .empty-state-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    
+    .empty-state-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    
+    /* Quick input */
+    .quick-input-wrapper {
+      position: fixed;
+      bottom: 72px;
+      left: 16px;
+      right: 16px;
+      z-index: 30;
+    }
+    
+    .quick-input {
+      background: white;
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 12px;
+      padding: 12px 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .quick-input-label {
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    
+    .quick-input input {
+      width: 100%;
+      border: none;
+      background: transparent;
+      font-size: 14px;
+      color: var(--text-primary);
+      outline: none;
+    }
+    
+    .quick-input input::placeholder {
+      color: var(--text-muted);
+    }
+    
+    /* Bottom navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      background: rgba(255, 253, 247, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(0,0,0,0.05);
+      padding: 8px 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
+    }
+    
+    .nav-items {
+      display: flex;
+      justify-content: space-around;
+    }
+    
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 24px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: color 0.2s;
+    }
+    
+    .nav-item.active {
+      color: var(--accent);
+    }
+    
+    .nav-item:hover {
+      color: var(--text-secondary);
+    }
+    
+    .nav-item svg {
+      width: 20px;
+      height: 20px;
+    }
+    
+    .nav-item span {
+      font-size: 11px;
+      font-weight: 500;
+    }
+    
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.15);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 50;
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    
+    .modal-overlay.active {
+      display: flex;
+    }
+    
+    @media (min-width: 640px) {
+      .modal-overlay {
+        align-items: center;
+      }
+    }
+    
+    .modal-content {
+      background: var(--cream);
+      border-radius: 20px 20px 0 0;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    @media (min-width: 640px) {
+      .modal-content {
+        max-width: 500px;
+        border-radius: 20px;
+        max-height: 85vh;
+      }
+    }
+    
+    .modal-body {
+      padding: 24px;
+    }
+    
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--warm-gray);
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    
+    .modal-close:hover {
+      background: #E8E6E2;
+    }
+    
+    /* Add modal specific */
+    .add-modal-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 20px;
+      color: var(--text-primary);
+      margin-bottom: 16px;
+    }
+    
+    .add-modal-textarea {
+      width: 100%;
+      height: 120px;
+      padding: 16px;
+      background: white;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 12px;
+      font-size: 14px;
+      color: var(--text-primary);
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    
+    .add-modal-textarea:focus {
+      border-color: var(--accent);
+    }
+    
+    .add-modal-textarea::placeholder {
+      color: var(--text-muted);
+    }
+    
+    .add-modal-hint {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    
+    .add-modal-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .btn {
+      flex: 1;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-secondary {
+      background: var(--warm-gray);
+      color: var(--text-secondary);
+    }
+    
+    .btn-secondary:hover {
+      background: #E8E6E2;
+    }
+    
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      background: #D55525;
+    }
+    
+    .btn-primary:disabled {
+      background: var(--text-muted);
+      cursor: not-allowed;
+    }
+    
+    /* Detail modal */
+    .detail-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    
+    .detail-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .type-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+    
+    .type-word { background: #E8A87C; }
+    .type-sentence { background: #85B8A0; }
+    .type-paragraph { background: #9B8AA6; }
+    
+    .detail-date {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    
+    .detail-content {
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--text-primary);
+      font-weight: 300;
+      margin-bottom: 8px;
+    }
+    
+    .detail-source {
+      font-size: 14px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin-bottom: 16px;
+    }
+    
+    .detail-translation {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    
+    /* Keywords section */
+    .keywords-section {
+      margin-bottom: 20px;
+    }
+    
+    .keywords-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    
+    .keywords-title-bar {
+      width: 3px;
+      height: 14px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+    
+    .keywords-title-text {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .keywords-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    
+    .keyword-btn {
+      padding: 8px 14px;
+      background: white;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .keyword-btn:hover, .keyword-btn.active {
+      background: var(--accent-light);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    
+    /* Etymology box */
+    .etymology-box {
+      background: white;
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .etymology-word {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+    }
+    
+    .etymology-item {
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+    
+    .etymology-item:last-child {
+      margin-bottom: 0;
+    }
+    
+    .etymology-label {
+      color: var(--text-muted);
+    }
+    
+    .etymology-value {
+      color: var(--text-secondary);
+    }
+    
+    /* Loading spinner */
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* Toast */
+    .toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--text-primary);
+      color: white;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      z-index: 100;
+      transition: transform 0.3s ease;
+    }
+    
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+    
+    .toast.error {
+      background: var(--error);
+    }
+    
+    .toast.success {
+      background: var(--success);
+    }
+    
+    /* Review tab */
+    .review-container {
+      display: none;
+      padding: 40px 20px 160px;
+      text-align: center;
+    }
+    
+    .review-container.active {
+      display: block;
+    }
+    
+    .flashcard {
+      perspective: 1000px;
+      width: 100%;
+      max-width: 400px;
+      height: 300px;
+      margin: 0 auto 30px;
+    }
+    
+    .flashcard-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      transition: transform 0.6s;
+      transform-style: preserve-3d;
+    }
+    
+    .flashcard.flipped .flashcard-inner {
+      transform: rotateY(180deg);
+    }
+    
+    .flashcard-front, .flashcard-back {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      background: var(--card-yellow);
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .flashcard-back {
+      transform: rotateY(180deg);
+      text-align: left;
+      justify-content: flex-start;
+      overflow-y: auto;
+    }
+    
+    .flashcard-front p {
+      font-size: 16px;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+    
+    .review-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+    
+    .review-btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .review-btn.know {
+      background: #4CAF50;
+      color: white;
+    }
+    
+    .review-btn.dont-know {
+      background: #FF7043;
+      color: white;
+    }
+    
+    .review-progress {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+    
+    /* Settings tab */
+    .settings-container {
+      display: none;
+      padding: 20px 16px 160px;
+    }
+    
+    .settings-container.active {
+      display: block;
+    }
+    
+    .settings-section {
+      margin-bottom: 24px;
+    }
+    
+    .settings-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+    
+    .settings-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    .settings-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+    }
+    
+    .settings-item:last-child {
+      border-bottom: none;
+    }
+    
+    .settings-item-label {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+    
+    .settings-item-value {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    
+    .settings-input {
+      padding: 10px 14px;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 8px;
+      font-size: 13px;
+      width: 180px;
+      text-align: right;
+    }
+    
+    .settings-select {
+      padding: 10px 14px;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 8px;
+      font-size: 13px;
+      background: white;
+      min-width: 140px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    
+    .stat-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 28px;
+      color: var(--text-primary);
+    }
+    
+    .stat-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    
+    /* Hide class */
+    .hide {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient background -->
+  <div class="ambient-glow"></div>
+  <div class="ambient-glow-2"></div>
+  
+  <!-- Toast notification -->
+  <div id="toast" class="toast"></div>
+  
+  <!-- Header -->
+  <header class="header">
+    <div class="header-inner">
+      <button class="menu-btn" onclick="toggleMenu()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
+        </svg>
+      </button>
+      
+      <div class="search-box">
+        <input type="text" id="searchInput" placeholder="Search my mind..." oninput="handleSearch()">
+      </div>
+      
+      <button class="add-btn" onclick="openAddModal()">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+  
+  <!-- Main content - Everything tab -->
+  <main class="main-content" id="everythingTab">
+    <div class="masonry" id="cardGrid"></div>
+    <div class="empty-state hide" id="emptyState">
+      <div class="empty-state-icon">
+        <svg width="28" height="28" fill="none" stroke="#A8A299" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"></path>
+        </svg>
+      </div>
+      <h2 class="empty-state-title">Your mind is empty</h2>
+      <p class="empty-state-desc">Start collecting words and sentences</p>
+    </div>
+  </main>
+  
+  <!-- Review tab -->
+  <div class="review-container" id="reviewTab">
+    <div id="reviewContent">
+      <p class="review-progress" id="reviewProgress">1 / 20</p>
+      
+      <div class="flashcard" id="flashcard" onclick="flipCard()">
+        <div class="flashcard-inner">
+          <div class="flashcard-front">
+            <p id="flashcardFront">Click to start review</p>
+          </div>
+          <div class="flashcard-back">
+            <div id="flashcardBack"></div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="review-actions">
+        <button class="review-btn dont-know" onclick="markCard(false)">Don't Know</button>
+        <button class="review-btn know" onclick="markCard(true)">Know</button>
+      </div>
+    </div>
+    
+    <div id="reviewEmpty" class="hide">
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <svg width="28" height="28" fill="none" stroke="#A8A299" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path>
+          </svg>
+        </div>
+        <h2 class="empty-state-title">Nothing to review</h2>
+        <p class="empty-state-desc">Save some cards first, then come back</p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Settings tab -->
+  <div class="settings-container" id="settingsTab">
+    <!-- Stats overview -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="statTotal">0</div>
+        <div class="stat-label">Total Cards</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statWords">0</div>
+        <div class="stat-label">Words</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="statDays">0</div>
+        <div class="stat-label">Days</div>
+      </div>
+    </div>
+    
+    <!-- API Settings -->
+    <div class="settings-section">
+      <div class="settings-title">AI Settings</div>
+      <div class="settings-card">
+        <div class="settings-item">
+          <span class="settings-item-label">Provider</span>
+          <select class="settings-select" id="apiProvider" onchange="saveSettings()">
+            <option value="gemini">Gemini</option>
+            <option value="deepseek">DeepSeek</option>
+          </select>
+        </div>
+        <div class="settings-item">
+          <span class="settings-item-label">Model</span>
+          <select class="settings-select" id="apiModel" onchange="saveSettings()">
+            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+          </select>
+        </div>
+        <div class="settings-item">
+          <span class="settings-item-label">API Key</span>
+          <input type="password" class="settings-input" id="apiKey" placeholder="Enter API key" onchange="saveSettings()">
+        </div>
+      </div>
+    </div>
+    
+    <!-- Data -->
+    <div class="settings-section">
+      <div class="settings-title">Data</div>
+      <div class="settings-card">
+        <div class="settings-item" style="cursor: pointer;" onclick="exportJSON()">
+          <span class="settings-item-label">Export Backup (JSON)</span>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+          </svg>
+        </div>
+        <div class="settings-item" style="cursor: pointer;" onclick="document.getElementById('importFile').click()">
+          <span class="settings-item-label">Import Backup</span>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"></path>
+          </svg>
+          <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importJSON(event)">
+        </div>
+        <div class="settings-item" style="cursor: pointer;" onclick="exportAnki('sentences')">
+          <span class="settings-item-label">Export to Anki (Sentences)</span>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+          </svg>
+        </div>
+        <div class="settings-item" style="cursor: pointer;" onclick="exportAnki('words')">
+          <span class="settings-item-label">Export to Anki (Words)</span>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
+          </svg>
+        </div>
+      </div>
+    </div>
+    
+    <!-- About -->
+    <div class="settings-section">
+      <div class="settings-title">About</div>
+      <div class="settings-card">
+        <div class="settings-item">
+          <span class="settings-item-label">Version</span>
+          <span class="settings-item-value">1.0.0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Quick input -->
+  <div class="quick-input-wrapper" id="quickInputWrapper">
+    <div class="quick-input">
+      <div class="quick-input-label">ADD A NEW NOTE</div>
+      <input type="text" id="quickInput" placeholder="Start typing here..." onkeydown="handleQuickInput(event)">
+    </div>
+  </div>
+  
+  <!-- Bottom navigation -->
+  <nav class="bottom-nav">
+    <div class="nav-items">
+      <button class="nav-item active" data-tab="everything" onclick="switchTab('everything')">
+        <svg fill="currentColor" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
+          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
+          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
+        </svg>
+        <span>Everything</span>
+      </button>
+      
+      <button class="nav-item" data-tab="review" onclick="switchTab('review')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path>
+        </svg>
+        <span>Review</span>
+      </button>
+      
+      <button class="nav-item" data-tab="settings" onclick="switchTab('settings')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        <span>Settings</span>
+      </button>
+    </div>
+  </nav>
+  
+  <!-- Add Modal -->
+  <div class="modal-overlay" id="addModal" onclick="closeAddModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-body">
+        <h2 class="add-modal-title">Save to your mind</h2>
+        <textarea class="add-modal-textarea" id="addInput" placeholder="Paste or type any English text..."></textarea>
+        <div class="add-modal-hint">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"></path>
+          </svg>
+          <span>AI will analyze and extract key vocabulary</span>
+        </div>
+        <div class="add-modal-actions">
+          <button class="btn btn-secondary" onclick="closeAddModal()">Cancel</button>
+          <button class="btn btn-primary" id="saveBtn" onclick="saveCard()">
+            <span id="saveBtnText">Save</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="detailModal" onclick="closeDetailModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-body" id="detailBody">
+        <!-- Detail content will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==================== Data Store ====================
+    let cards = [];
+    let settings = {
+      apiProvider: 'gemini',
+      apiModel: 'gemini-1.5-flash',
+      apiKey: '',
+      firstUseDate: null
+    };
+    let reviewState = {
+      cards: [],
+      currentIndex: 0,
+      results: []
+    };
+
+    // ==================== IndexedDB ====================
+    const DB_NAME = 'EnglishCollectorDB';
+    const DB_VERSION = 1;
+    let db;
+
+    async function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => {
+          db = request.result;
+          resolve(db);
+        };
+        
+        request.onupgradeneeded = (event) => {
+          const database = event.target.result;
+          
+          if (!database.objectStoreNames.contains('cards')) {
+            const cardStore = database.createObjectStore('cards', { keyPath: 'id' });
+            cardStore.createIndex('createdAt', 'createdAt', { unique: false });
+          }
+          
+          if (!database.objectStoreNames.contains('settings')) {
+            database.createObjectStore('settings', { keyPath: 'key' });
+          }
+        };
+      });
+    }
+
+    async function loadData() {
+      // Load cards
+      const cardTransaction = db.transaction(['cards'], 'readonly');
+      const cardStore = cardTransaction.objectStore('cards');
+      const cardRequest = cardStore.getAll();
+      
+      cards = await new Promise((resolve, reject) => {
+        cardRequest.onsuccess = () => resolve(cardRequest.result || []);
+        cardRequest.onerror = () => reject(cardRequest.error);
+      });
+      
+      // Sort by createdAt descending
+      cards.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      
+      // Load settings
+      const settingsTransaction = db.transaction(['settings'], 'readonly');
+      const settingsStore = settingsTransaction.objectStore('settings');
+      const settingsRequest = settingsStore.get('main');
+      
+      const savedSettings = await new Promise((resolve, reject) => {
+        settingsRequest.onsuccess = () => resolve(settingsRequest.result);
+        settingsRequest.onerror = () => reject(settingsRequest.error);
+      });
+      
+      if (savedSettings) {
+        settings = { ...settings, ...savedSettings.value };
+      }
+      
+      // Apply settings to UI
+      document.getElementById('apiProvider').value = settings.apiProvider;
+      document.getElementById('apiModel').value = settings.apiModel;
+      document.getElementById('apiKey').value = settings.apiKey;
+      
+      updateModelOptions();
+    }
+
+    async function saveCardToDB(card) {
+      const transaction = db.transaction(['cards'], 'readwrite');
+      const store = transaction.objectStore('cards');
+      await store.put(card);
+      
+      // Update local array
+      const existingIndex = cards.findIndex(c => c.id === card.id);
+      if (existingIndex >= 0) {
+        cards[existingIndex] = card;
+      } else {
+        cards.unshift(card);
+      }
+    }
+
+    async function deleteCardFromDB(cardId) {
+      const transaction = db.transaction(['cards'], 'readwrite');
+      const store = transaction.objectStore('cards');
+      await store.delete(cardId);
+      
+      cards = cards.filter(c => c.id !== cardId);
+    }
+
+    async function saveSettingsToDB() {
+      const transaction = db.transaction(['settings'], 'readwrite');
+      const store = transaction.objectStore('settings');
+      await store.put({ key: 'main', value: settings });
+    }
+
+    // ==================== UI Functions ====================
+    function renderCards() {
+      const grid = document.getElementById('cardGrid');
+      const emptyState = document.getElementById('emptyState');
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      
+      const filteredCards = cards.filter(card => {
+        const contentMatch = card.content.toLowerCase().includes(searchQuery);
+        const translationMatch = card.translation && card.translation.toLowerCase().includes(searchQuery);
+        const keywordMatch = card.keywords && card.keywords.some(k => k.word.toLowerCase().includes(searchQuery));
+        return contentMatch || translationMatch || keywordMatch;
+      });
+      
+      if (filteredCards.length === 0) {
+        grid.innerHTML = '';
+        emptyState.classList.remove('hide');
+        return;
+      }
+      
+      emptyState.classList.add('hide');
+      grid.innerHTML = filteredCards.map(card => `
+        <div class="card" onclick="openDetailModal('${card.id}')">
+          <div class="card-content">${escapeHtml(card.content)}</div>
+          ${card.source ? `<div class="card-source">${escapeHtml(card.source)}</div>` : ''}
+          ${card.keywords && card.keywords.length > 0 ? `
+            <div class="card-keywords">
+              ${card.keywords.slice(0, 3).map(k => `<span class="keyword-tag">${escapeHtml(k.word)}</span>`).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `).join('');
+    }
+
+    function openDetailModal(cardId) {
+      const card = cards.find(c => c.id === cardId);
+      if (!card) return;
+      
+      const typeClass = card.type === 'word' ? 'type-word' : card.type === 'sentence' ? 'type-sentence' : 'type-paragraph';
+      const typeLabel = card.type === 'word' ? '词' : card.type === 'sentence' ? '句' : '段';
+      const date = new Date(card.createdAt).toLocaleDateString('zh-CN');
+      
+      let keywordsHtml = '';
+      if (card.keywords && card.keywords.length > 0) {
+        keywordsHtml = `
+          <div class="keywords-section">
+            <div class="keywords-title">
+              <div class="keywords-title-bar"></div>
+              <span class="keywords-title-text">重点词汇 (点击查看详情)</span>
+            </div>
+            <div class="keywords-list">
+              ${card.keywords.map((k, i) => `
+                <button class="keyword-btn ${i === 0 ? 'active' : ''}" onclick="showEtymology('${cardId}', ${i})">${escapeHtml(k.word)}</button>
+              `).join('')}
+            </div>
+          </div>
+          <div class="etymology-box" id="etymologyBox">
+            ${renderEtymology(card.keywords[0])}
+          </div>
+        `;
+      }
+      
+      document.getElementById('detailBody').innerHTML = `
+        <div class="detail-header">
+          <div class="detail-meta">
+            <span class="type-dot ${typeClass}"></span>
+            <span class="detail-date">${typeLabel} · ${date}</span>
+          </div>
+          <button class="modal-close" onclick="closeDetailModal()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <p class="detail-content">${escapeHtml(card.content)}</p>
+        ${card.source ? `<p class="detail-source">${escapeHtml(card.source)}</p>` : ''}
+        <p class="detail-translation">${escapeHtml(card.translation || '')}</p>
+        
+        ${keywordsHtml}
+        
+        <div class="add-modal-actions">
+          <button class="btn btn-secondary" onclick="deleteCard('${cardId}')">Delete</button>
+          <button class="btn btn-primary" onclick="exportSingleAnki('${cardId}')">Export to Anki</button>
+        </div>
+      `;
+      
+      document.getElementById('detailModal').classList.add('active');
+    }
+
+    function renderEtymology(keyword) {
+      if (!keyword) return '';
+      return `
+        <div class="etymology-word">${escapeHtml(keyword.word)}</div>
+        <div class="etymology-item">
+          <span class="etymology-label">构词 · </span>
+          <span class="etymology-value">${escapeHtml(keyword.roots || '-')}</span>
+        </div>
+        <div class="etymology-item">
+          <span class="etymology-label">来源 · </span>
+          <span class="etymology-value">${escapeHtml(keyword.origin || '-')}</span>
+        </div>
+        <div class="etymology-item">
+          <span class="etymology-label">释义 · </span>
+          <span class="etymology-value">${escapeHtml(keyword.meaning || '-')}</span>
+        </div>
+      `;
+    }
+
+    function showEtymology(cardId, keywordIndex) {
+      const card = cards.find(c => c.id === cardId);
+      if (!card || !card.keywords) return;
+      
+      // Update active button
+      document.querySelectorAll('.keyword-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === keywordIndex);
+      });
+      
+      // Update etymology box
+      document.getElementById('etymologyBox').innerHTML = renderEtymology(card.keywords[keywordIndex]);
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detailModal').classList.remove('active');
+    }
+
+    function openAddModal() {
+      document.getElementById('addModal').classList.add('active');
+      document.getElementById('addInput').focus();
+    }
+
+    function closeAddModal() {
+      document.getElementById('addModal').classList.remove('active');
+      document.getElementById('addInput').value = '';
+    }
+
+    // ==================== Card Operations ====================
+    async function saveCard() {
+      const content = document.getElementById('addInput').value.trim();
+      if (!content) return;
+      
+      if (!settings.apiKey) {
+        showToast('Please set your API key in Settings first', 'error');
+        return;
+      }
+      
+      const saveBtn = document.getElementById('saveBtn');
+      const saveBtnText = document.getElementById('saveBtnText');
+      saveBtn.disabled = true;
+      saveBtnText.innerHTML = '<div class="spinner"></div>';
+      
+      try {
+        // Call AI API
+        const analysis = await analyzeWithAI(content);
+        
+        // Determine type
+        const wordCount = content.split(/\s+/).length;
+        let type = 'paragraph';
+        if (wordCount <= 3) type = 'word';
+        else if (content.split(/[.!?]/).filter(s => s.trim()).length <= 1) type = 'sentence';
+        
+        // Create card
+        const card = {
+          id: 'card_' + Date.now(),
+          content: content,
+          type: type,
+          translation: analysis.translation,
+          keywords: analysis.keywords,
+          source: '',
+          createdAt: new Date().toISOString(),
+          reviewCount: 0,
+          lastReviewed: null,
+          known: false
+        };
+        
+        // Save to DB
+        await saveCardToDB(card);
+        
+        // Update first use date
+        if (!settings.firstUseDate) {
+          settings.firstUseDate = new Date().toISOString();
+          await saveSettingsToDB();
+        }
+        
+        // Update UI
+        renderCards();
+        updateStats();
+        closeAddModal();
+        showToast('Saved successfully!', 'success');
+        
+      } catch (error) {
+        console.error('Save error:', error);
+        showToast('Failed to save: ' + error.message, 'error');
+      } finally {
+        saveBtn.disabled = false;
+        saveBtnText.textContent = 'Save';
+      }
+    }
+
+    async function deleteCard(cardId) {
+      if (!confirm('Are you sure you want to delete this card?')) return;
+      
+      await deleteCardFromDB(cardId);
+      renderCards();
+      updateStats();
+      closeDetailModal();
+      showToast('Deleted', 'success');
+    }
+
+    function handleQuickInput(event) {
+      if (event.key === 'Enter') {
+        const content = document.getElementById('quickInput').value.trim();
+        if (content) {
+          document.getElementById('addInput').value = content;
+          document.getElementById('quickInput').value = '';
+          openAddModal();
+          saveCard();
+        }
+      }
+    }
+
+    function handleSearch() {
+      renderCards();
+    }
+
+    // ==================== AI Analysis ====================
+    async function analyzeWithAI(content) {
+      const prompt = `分析以下英文内容，返回JSON格式（不要markdown代码块）：
+
+内容："${content}"
+
+要求：
+1. translation: 整句/整段的中文翻译
+2. keywords: 数组，包含最多5个重点词汇，每个词汇包含：
+   - word: 单词本身
+   - roots: 词根构成（如 "re- (再) + mem- (记住) + -ber"）
+   - origin: 词源说明（来自哪种语言，历史演变）
+   - meaning: 中文释义
+
+只返回纯JSON，格式如下：
+{"translation":"...","keywords":[{"word":"...","roots":"...","origin":"...","meaning":"..."}]}`;
+
+      const response = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: settings.apiProvider,
+          model: settings.apiModel,
+          apiKey: settings.apiKey,
+          prompt: prompt
+        })
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'API request failed');
+      }
+      
+      const data = await response.json();
+      return data;
+    }
+
+    // ==================== Review Functions ====================
+    function initReview() {
+      if (cards.length === 0) {
+        document.getElementById('reviewContent').classList.add('hide');
+        document.getElementById('reviewEmpty').classList.remove('hide');
+        return;
+      }
+      
+      document.getElementById('reviewContent').classList.remove('hide');
+      document.getElementById('reviewEmpty').classList.add('hide');
+      
+      // Shuffle and pick up to 20 cards
+      const shuffled = [...cards].sort(() => Math.random() - 0.5);
+      reviewState.cards = shuffled.slice(0, 20);
+      reviewState.currentIndex = 0;
+      reviewState.results = [];
+      
+      showCurrentCard();
+    }
+
+    function showCurrentCard() {
+      const card = reviewState.cards[reviewState.currentIndex];
+      if (!card) return;
+      
+      document.getElementById('reviewProgress').textContent = 
+        `${reviewState.currentIndex + 1} / ${reviewState.cards.length}`;
+      
+      document.getElementById('flashcardFront').textContent = card.content;
+      
+      let backContent = `
+        <p style="color: var(--text-secondary); margin-bottom: 16px;">${escapeHtml(card.translation || '')}</p>
+      `;
+      
+      if (card.keywords && card.keywords.length > 0) {
+        backContent += card.keywords.map(k => `
+          <div style="margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid rgba(0,0,0,0.05);">
+            <div style="font-weight: 500; color: var(--text-primary); margin-bottom: 4px;">${escapeHtml(k.word)}</div>
+            <div style="font-size: 12px; color: var(--text-muted);">${escapeHtml(k.roots || '')}</div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">${escapeHtml(k.meaning || '')}</div>
+          </div>
+        `).join('');
+      }
+      
+      document.getElementById('flashcardBack').innerHTML = backContent;
+      document.getElementById('flashcard').classList.remove('flipped');
+    }
+
+    function flipCard() {
+      document.getElementById('flashcard').classList.toggle('flipped');
+    }
+
+    async function markCard(known) {
+      const card = reviewState.cards[reviewState.currentIndex];
+      if (!card) return;
+      
+      // Update card in database
+      card.reviewCount = (card.reviewCount || 0) + 1;
+      card.lastReviewed = new Date().toISOString();
+      card.known = known;
+      await saveCardToDB(card);
+      
+      reviewState.results.push({ cardId: card.id, known });
+      
+      // Move to next card
+      reviewState.currentIndex++;
+      
+      if (reviewState.currentIndex >= reviewState.cards.length) {
+        // Review complete
+        const knownCount = reviewState.results.filter(r => r.known).length;
+        showToast(`Review complete! ${knownCount}/${reviewState.cards.length} known`, 'success');
+        initReview(); // Reset for another round
+      } else {
+        showCurrentCard();
+      }
+    }
+
+    // ==================== Settings ====================
+    function saveSettings() {
+      settings.apiProvider = document.getElementById('apiProvider').value;
+      settings.apiModel = document.getElementById('apiModel').value;
+      settings.apiKey = document.getElementById('apiKey').value;
+      
+      updateModelOptions();
+      saveSettingsToDB();
+    }
+
+    function updateModelOptions() {
+      const modelSelect = document.getElementById('apiModel');
+      const provider = document.getElementById('apiProvider').value;
+      
+      if (provider === 'gemini') {
+        modelSelect.innerHTML = `
+          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
+          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
+          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+        `;
+      } else if (provider === 'deepseek') {
+        modelSelect.innerHTML = `
+          <option value="deepseek-chat">DeepSeek Chat</option>
+          <option value="deepseek-coder">DeepSeek Coder</option>
+        `;
+      }
+      
+      // Restore selected model if it exists
+      if (settings.apiModel) {
+        const option = modelSelect.querySelector(`option[value="${settings.apiModel}"]`);
+        if (option) modelSelect.value = settings.apiModel;
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('statTotal').textContent = cards.length;
+      
+      // Count unique words
+      const allWords = new Set();
+      cards.forEach(card => {
+        if (card.keywords) {
+          card.keywords.forEach(k => allWords.add(k.word.toLowerCase()));
+        }
+      });
+      document.getElementById('statWords').textContent = allWords.size;
+      
+      // Calculate days since first use
+      if (settings.firstUseDate) {
+        const days = Math.ceil((new Date() - new Date(settings.firstUseDate)) / (1000 * 60 * 60 * 24));
+        document.getElementById('statDays').textContent = days;
+      }
+    }
+
+    // ==================== Export Functions ====================
+    function exportJSON() {
+      const data = {
+        version: '1.0.0',
+        exportDate: new Date().toISOString(),
+        cards: cards,
+        settings: { ...settings, apiKey: '' } // Don't export API key
+      };
+      
+      downloadFile(JSON.stringify(data, null, 2), 'english-collector-backup.json', 'application/json');
+      showToast('Backup exported', 'success');
+    }
+
+    function importJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          
+          if (!data.cards || !Array.isArray(data.cards)) {
+            throw new Error('Invalid backup file');
+          }
+          
+          // Import cards
+          for (const card of data.cards) {
+            await saveCardToDB(card);
+          }
+          
+          renderCards();
+          updateStats();
+          showToast(`Imported ${data.cards.length} cards`, 'success');
+        } catch (error) {
+          showToast('Failed to import: ' + error.message, 'error');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = ''; // Reset input
+    }
+
+    function exportAnki(type) {
+      if (cards.length === 0) {
+        showToast('No cards to export', 'error');
+        return;
+      }
+      
+      let csv = '';
+      
+      if (type === 'sentences') {
+        // Export sentences: Front = content, Back = translation
+        cards.forEach(card => {
+          const front = escapeCSV(card.content);
+          const back = escapeCSV(card.translation || '');
+          csv += `${front}\t${back}\n`;
+        });
+      } else if (type === 'words') {
+        // Export words: Front = word, Back = etymology + example
+        const exported = new Set();
+        cards.forEach(card => {
+          if (card.keywords) {
+            card.keywords.forEach(k => {
+              if (!exported.has(k.word.toLowerCase())) {
+                exported.add(k.word.toLowerCase());
+                const front = escapeCSV(k.word);
+                const back = escapeCSV(`${k.meaning}\n\n词根: ${k.roots}\n来源: ${k.origin}\n\n例句: ${card.content}`);
+                csv += `${front}\t${back}\n`;
+              }
+            });
+          }
+        });
+      }
+      
+      downloadFile(csv, `anki-${type}-${Date.now()}.txt`, 'text/plain');
+      showToast('Anki deck exported', 'success');
+    }
+
+    function exportSingleAnki(cardId) {
+      const card = cards.find(c => c.id === cardId);
+      if (!card) return;
+      
+      let csv = '';
+      
+      // Export the sentence
+      csv += `${escapeCSV(card.content)}\t${escapeCSV(card.translation || '')}\n`;
+      
+      // Export each word
+      if (card.keywords) {
+        card.keywords.forEach(k => {
+          const back = `${k.meaning}\n\n词根: ${k.roots}\n来源: ${k.origin}\n\n例句: ${card.content}`;
+          csv += `${escapeCSV(k.word)}\t${escapeCSV(back)}\n`;
+        });
+      }
+      
+      downloadFile(csv, `anki-card-${Date.now()}.txt`, 'text/plain');
+      showToast('Card exported to Anki', 'success');
+    }
+
+    // ==================== Tab Navigation ====================
+    function switchTab(tab) {
+      // Update nav
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.tab === tab);
+      });
+      
+      // Update content visibility
+      document.getElementById('everythingTab').classList.toggle('hide', tab !== 'everything');
+      document.getElementById('reviewTab').classList.toggle('active', tab === 'review');
+      document.getElementById('settingsTab').classList.toggle('active', tab === 'settings');
+      
+      // Update quick input visibility
+      document.getElementById('quickInputWrapper').classList.toggle('hide', tab !== 'everything');
+      
+      // Initialize review if needed
+      if (tab === 'review') {
+        initReview();
+      }
+      
+      // Update stats if settings
+      if (tab === 'settings') {
+        updateStats();
+      }
+    }
+
+    // ==================== Utilities ====================
+    function showToast(message, type = '') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = 'toast ' + type;
+      toast.classList.add('show');
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3000);
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function escapeCSV(text) {
+      if (!text) return '';
+      return text.replace(/"/g, '""').replace(/\n/g, '<br>');
+    }
+
+    function downloadFile(content, filename, type) {
+      const blob = new Blob([content], { type: type });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function toggleMenu() {
+      // Placeholder for menu functionality
+      showToast('Menu coming soon');
+    }
+
+    // ==================== Initialize ====================
+    async function init() {
+      try {
+        await initDB();
+        await loadData();
+        renderCards();
+        updateStats();
+      } catch (error) {
+        console.error('Init error:', error);
+        showToast('Failed to initialize app', 'error');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
