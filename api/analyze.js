@@ -140,8 +140,10 @@ function parseAIResponse(text) {
       parsed.keywords = [];
     }
     
+    // Ensure each keyword has required fields including phonetic
     parsed.keywords = parsed.keywords.map(k => ({
       word: k.word || '',
+      phonetic: k.phonetic || '',
       roots: k.roots || '',
       origin: k.origin || '',
       meaning: k.meaning || ''
