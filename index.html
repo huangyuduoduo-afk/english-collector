@@ -8,7 +8,11 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <title>English Collector</title>
   <link rel="manifest" href="/manifest.json">
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  
+  <!-- Google Identity Services -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
   <style>
     :root {
       --cream: #FFFDF7;
@@ -33,34 +37,27 @@
     
     html {
       -webkit-text-size-adjust: 100%;
-      text-size-adjust: 100%;
     }
     
     body { 
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--cream);
       -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      text-rendering: optimizeLegibility;
       min-height: 100vh;
-      min-height: -webkit-fill-available;
       overflow-x: hidden;
       line-height: 1.5;
     }
     
     .font-serif { font-family: 'Playfair Display', Georgia, serif; }
     
-    /* Ambient gradient background */
+    /* Ambient background */
     .ambient-glow {
       position: fixed;
-      top: -20%;
-      left: -10%;
-      width: 60%;
-      height: 50%;
+      top: -20%; left: -10%;
+      width: 60%; height: 50%;
       background: radial-gradient(ellipse at center, 
         rgba(255, 180, 150, 0.25) 0%, 
         rgba(255, 200, 180, 0.15) 30%,
-        rgba(230, 210, 255, 0.1) 50%,
         transparent 70%);
       pointer-events: none;
       z-index: 0;
@@ -68,13 +65,10 @@
     
     .ambient-glow-2 {
       position: fixed;
-      bottom: -10%;
-      right: -10%;
-      width: 50%;
-      height: 40%;
+      bottom: -10%; right: -10%;
+      width: 50%; height: 40%;
       background: radial-gradient(ellipse at center, 
         rgba(200, 220, 255, 0.2) 0%, 
-        rgba(220, 200, 255, 0.1) 40%,
         transparent 70%);
       pointer-events: none;
       z-index: 0;
@@ -83,11 +77,13 @@
     /* Card styles */
     .card {
       background: var(--card-yellow);
-      border: none;
       border-radius: 8px;
       transition: all 0.2s ease;
       box-shadow: 0 1px 2px rgba(0,0,0,0.03);
       cursor: pointer;
+      padding: 16px;
+      break-inside: avoid;
+      margin-bottom: 12px;
     }
     
     .card:hover {
@@ -101,15 +97,17 @@
       position: sticky;
       top: 0;
       z-index: 40;
-      padding: 16px;
-      padding-top: max(16px, env(safe-area-inset-top));
-      background: linear-gradient(to bottom, var(--cream) 60%, transparent);
+      padding: 12px 16px;
+      padding-top: max(12px, env(safe-area-inset-top));
+      background: linear-gradient(to bottom, var(--cream) 80%, transparent);
     }
     
     .header-inner {
       display: flex;
       align-items: center;
       gap: 12px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
     
     .menu-btn {
@@ -119,10 +117,16 @@
       border: none;
       cursor: pointer;
       color: var(--text-secondary);
+      border-radius: 8px;
+    }
+    
+    .menu-btn:hover {
+      background: var(--warm-gray);
     }
     
     .search-box {
       flex: 1;
+      max-width: 400px;
       display: flex;
       align-items: center;
       padding: 10px 16px;
@@ -135,74 +139,63 @@
       flex: 1;
       border: none;
       background: transparent;
-      font-size: 15px;
+      font-size: 14px;
       color: var(--text-primary);
       outline: none;
     }
     
-    .search-box input::placeholder {
-      color: var(--text-muted);
-    }
+    .search-box input::placeholder { color: var(--text-muted); }
     
     .add-btn {
-      width: 44px;
-      height: 44px;
+      width: 40px; height: 40px;
       display: flex;
       align-items: center;
       justify-content: center;
       background: var(--accent);
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       color: white;
       cursor: pointer;
       box-shadow: 0 2px 8px rgba(232, 97, 44, 0.3);
-      transition: background 0.2s;
     }
     
-    .add-btn:hover {
-      background: #D55525;
-    }
+    .add-btn:hover { background: #D55525; }
     
     /* Main content */
     .main-content {
       position: relative;
       z-index: 10;
       padding: 8px 16px 160px;
+      max-width: 1200px;
+      margin: 0 auto;
     }
     
-    /* Masonry grid */
+    /* Masonry grid - responsive */
     .masonry {
-      column-count: 2;
+      column-count: 1;
       column-gap: 12px;
     }
     
-    .masonry .card {
-      break-inside: avoid;
-      margin-bottom: 12px;
-      padding: 16px;
+    @media (min-width: 500px) {
+      .masonry { column-count: 2; }
     }
     
-    @media (min-width: 768px) {
-      .masonry {
-        column-count: 3;
-        column-gap: 16px;
-      }
-      .masonry .card {
-        margin-bottom: 16px;
-      }
+    @media (min-width: 800px) {
+      .masonry { column-count: 3; column-gap: 16px; }
+    }
+    
+    @media (min-width: 1100px) {
+      .masonry { column-count: 4; }
     }
     
     .card-content {
-      font-size: 15px;
+      font-size: 14px;
       line-height: 1.6;
       color: var(--text-primary);
-    }
-    
-    .card-source {
-      font-size: 13px;
-      color: var(--text-muted);
-      font-style: italic;
-      margin-top: 8px;
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
     }
     
     .card-keywords {
@@ -215,8 +208,8 @@
     }
     
     .keyword-tag {
-      font-size: 12px;
-      padding: 4px 8px;
+      font-size: 11px;
+      padding: 3px 8px;
       background: rgba(232, 97, 44, 0.1);
       color: var(--accent);
       border-radius: 4px;
@@ -229,8 +222,7 @@
     }
     
     .empty-state-icon {
-      width: 64px;
-      height: 64px;
+      width: 64px; height: 64px;
       margin: 0 auto 16px;
       background: var(--warm-gray);
       border-radius: 16px;
@@ -247,7 +239,7 @@
     }
     
     .empty-state-desc {
-      font-size: 15px;
+      font-size: 14px;
       color: var(--text-muted);
     }
     
@@ -255,8 +247,10 @@
     .quick-input-wrapper {
       position: fixed;
       bottom: 72px;
-      left: 16px;
-      right: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 500px;
       z-index: 30;
       padding-bottom: env(safe-area-inset-bottom);
     }
@@ -281,41 +275,39 @@
       width: 100%;
       border: none;
       background: transparent;
-      font-size: 15px;
+      font-size: 14px;
       color: var(--text-primary);
       outline: none;
     }
     
-    .quick-input input::placeholder {
-      color: var(--text-muted);
-    }
+    .quick-input input::placeholder { color: var(--text-muted); }
     
     /* Bottom navigation */
     .bottom-nav {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      bottom: 0; left: 0; right: 0;
       z-index: 40;
       background: rgba(255, 253, 247, 0.95);
       backdrop-filter: blur(20px);
       -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid rgba(0,0,0,0.05);
-      padding: 8px 0;
-      padding-bottom: max(8px, env(safe-area-inset-bottom));
+      padding: 6px 0;
+      padding-bottom: max(6px, env(safe-area-inset-bottom));
     }
     
     .nav-items {
       display: flex;
       justify-content: space-around;
+      max-width: 400px;
+      margin: 0 auto;
     }
     
     .nav-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 8px 24px;
+      gap: 2px;
+      padding: 6px 20px;
       background: none;
       border: none;
       cursor: pointer;
@@ -323,22 +315,178 @@
       transition: color 0.2s;
     }
     
-    .nav-item.active {
+    .nav-item.active { color: var(--accent); }
+    .nav-item:hover { color: var(--text-secondary); }
+    .nav-item svg { width: 22px; height: 22px; }
+    .nav-item span { font-size: 10px; font-weight: 500; }
+    
+    /* Sidebar Menu */
+    .sidebar-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      z-index: 50;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s;
+    }
+    
+    .sidebar-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      width: 280px;
+      background: var(--cream);
+      z-index: 51;
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .sidebar.active {
+      transform: translateX(0);
+    }
+    
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+    
+    .sidebar-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .sidebar-logo-icon {
+      width: 40px; height: 40px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .sidebar-logo-text {
+      font-family: 'Playfair Display', serif;
+      font-size: 18px;
+      color: var(--text-primary);
+    }
+    
+    .sidebar-user {
+      margin-top: 16px;
+      padding: 12px;
+      background: white;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .sidebar-user-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: var(--warm-gray);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    .sidebar-user-avatar img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+    
+    .sidebar-user-info {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .sidebar-user-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .sidebar-user-email {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .sidebar-menu {
+      flex: 1;
+      padding: 12px;
+      overflow-y: auto;
+    }
+    
+    .sidebar-menu-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .sidebar-menu-item:hover {
+      background: var(--warm-gray);
+    }
+    
+    .sidebar-menu-item.active {
+      background: var(--accent-light);
       color: var(--accent);
     }
     
-    .nav-item:hover {
-      color: var(--text-secondary);
+    .sidebar-menu-item svg {
+      width: 20px; height: 20px;
     }
     
-    .nav-item svg {
-      width: 22px;
-      height: 22px;
+    .sidebar-menu-item span {
+      font-size: 14px;
     }
     
-    .nav-item span {
-      font-size: 11px;
-      font-weight: 500;
+    .sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid rgba(0,0,0,0.06);
+    }
+    
+    .sync-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    
+    .sync-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--text-muted);
+    }
+    
+    .sync-dot.synced { background: var(--success); }
+    .sync-dot.syncing { background: #FFC107; animation: pulse 1s infinite; }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
     
     /* Modal */
@@ -354,14 +502,10 @@
       justify-content: center;
     }
     
-    .modal-overlay.active {
-      display: flex;
-    }
+    .modal-overlay.active { display: flex; }
     
     @media (min-width: 640px) {
-      .modal-overlay {
-        align-items: center;
-      }
+      .modal-overlay { align-items: center; }
     }
     
     .modal-content {
@@ -381,16 +525,12 @@
       }
     }
     
-    .modal-body {
-      padding: 24px;
-    }
+    .modal-body { padding: 24px; }
     
     .modal-close {
       position: absolute;
-      top: 16px;
-      right: 16px;
-      width: 32px;
-      height: 32px;
+      top: 16px; right: 16px;
+      width: 32px; height: 32px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -398,14 +538,11 @@
       border: none;
       border-radius: 50%;
       cursor: pointer;
-      transition: background 0.2s;
     }
     
-    .modal-close:hover {
-      background: #E8E6E2;
-    }
+    .modal-close:hover { background: #E8E6E2; }
     
-    /* Add modal specific */
+    /* Add modal */
     .add-modal-title {
       font-family: 'Playfair Display', serif;
       font-size: 20px;
@@ -416,32 +553,26 @@
     .add-modal-textarea {
       width: 100%;
       height: 120px;
-      padding: 16px;
+      padding: 14px;
       background: white;
       border: 1px solid rgba(0,0,0,0.08);
       border-radius: 12px;
-      font-size: 15px;
+      font-size: 14px;
       color: var(--text-primary);
       resize: none;
       outline: none;
-      transition: border-color 0.2s;
       line-height: 1.6;
     }
     
-    .add-modal-textarea:focus {
-      border-color: var(--accent);
-    }
-    
-    .add-modal-textarea::placeholder {
-      color: var(--text-muted);
-    }
+    .add-modal-textarea:focus { border-color: var(--accent); }
+    .add-modal-textarea::placeholder { color: var(--text-muted); }
     
     .add-modal-hint {
       display: flex;
       align-items: center;
       gap: 8px;
       margin-top: 12px;
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
     }
     
@@ -453,37 +584,20 @@
     
     .btn {
       flex: 1;
-      padding: 14px 16px;
+      padding: 12px 16px;
       border: none;
-      border-radius: 12px;
-      font-size: 15px;
+      border-radius: 10px;
+      font-size: 14px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
     }
     
-    .btn-secondary {
-      background: var(--warm-gray);
-      color: var(--text-secondary);
-    }
-    
-    .btn-secondary:hover {
-      background: #E8E6E2;
-    }
-    
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-    }
-    
-    .btn-primary:hover {
-      background: #D55525;
-    }
-    
-    .btn-primary:disabled {
-      background: var(--text-muted);
-      cursor: not-allowed;
-    }
+    .btn-secondary { background: var(--warm-gray); color: var(--text-secondary); }
+    .btn-secondary:hover { background: #E8E6E2; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: #D55525; }
+    .btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; }
     
     /* Detail modal */
     .detail-header {
@@ -500,8 +614,7 @@
     }
     
     .type-dot {
-      width: 6px;
-      height: 6px;
+      width: 6px; height: 6px;
       border-radius: 50%;
     }
     
@@ -509,10 +622,7 @@
     .type-sentence { background: #85B8A0; }
     .type-paragraph { background: #9B8AA6; }
     
-    .detail-date {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
+    .detail-date { font-size: 12px; color: var(--text-muted); }
     
     .detail-content {
       font-size: 18px;
@@ -522,15 +632,8 @@
       margin-bottom: 8px;
     }
     
-    .detail-source {
-      font-size: 14px;
-      color: var(--text-muted);
-      font-style: italic;
-      margin-bottom: 16px;
-    }
-    
     .detail-translation {
-      font-size: 15px;
+      font-size: 14px;
       line-height: 1.6;
       color: var(--text-secondary);
       padding-bottom: 20px;
@@ -539,9 +642,7 @@
     }
     
     /* Keywords section */
-    .keywords-section {
-      margin-bottom: 20px;
-    }
+    .keywords-section { margin-bottom: 20px; }
     
     .keywords-title {
       display: flex;
@@ -551,8 +652,7 @@
     }
     
     .keywords-title-bar {
-      width: 3px;
-      height: 14px;
+      width: 3px; height: 14px;
       background: var(--accent);
       border-radius: 2px;
     }
@@ -574,7 +674,7 @@
       background: white;
       border: 1px solid rgba(0,0,0,0.08);
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-primary);
       cursor: pointer;
       transition: all 0.2s;
@@ -595,42 +695,62 @@
       margin-bottom: 20px;
     }
     
-    .etymology-word {
-      font-family: 'Playfair Display', serif;
-      font-size: 24px;
-      color: var(--text-primary);
+    .etymology-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 4px;
     }
     
+    .etymology-word {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      color: var(--text-primary);
+    }
+    
+    .speak-btn {
+      width: 36px; height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-light);
+      border: none;
+      border-radius: 50%;
+      color: var(--accent);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .speak-btn:hover {
+      background: var(--accent);
+      color: white;
+    }
+    
+    .speak-btn.speaking {
+      background: var(--accent);
+      color: white;
+      animation: pulse 0.5s infinite;
+    }
+    
     .etymology-phonetic {
-      font-size: 15px;
+      font-size: 14px;
       color: var(--text-muted);
       margin-bottom: 12px;
-      font-family: 'Lucida Sans Unicode', 'Arial Unicode MS', sans-serif;
     }
     
     .etymology-item {
-      font-size: 14px;
+      font-size: 13px;
       margin-bottom: 8px;
       line-height: 1.5;
     }
     
-    .etymology-item:last-child {
-      margin-bottom: 0;
-    }
+    .etymology-item:last-child { margin-bottom: 0; }
+    .etymology-label { color: var(--text-muted); }
+    .etymology-value { color: var(--text-secondary); }
     
-    .etymology-label {
-      color: var(--text-muted);
-    }
-    
-    .etymology-value {
-      color: var(--text-secondary);
-    }
-    
-    /* Loading spinner */
+    /* Spinner */
     .spinner {
-      width: 20px;
-      height: 20px;
+      width: 18px; height: 18px;
       border: 2px solid rgba(255,255,255,0.3);
       border-top-color: white;
       border-radius: 50%;
@@ -638,9 +758,7 @@
       margin: 0 auto;
     }
     
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     
     /* Toast */
     .toast {
@@ -660,42 +778,33 @@
       text-align: center;
     }
     
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-    }
-    
-    .toast.error {
-      background: var(--error);
-    }
-    
-    .toast.success {
-      background: var(--success);
-    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--error); }
+    .toast.success { background: var(--success); }
     
     /* Review tab */
     .review-container {
       display: none;
       padding: 40px 20px 160px;
       text-align: center;
+      max-width: 500px;
+      margin: 0 auto;
     }
     
-    .review-container.active {
-      display: block;
-    }
+    .review-container.active { display: block; }
     
     .flashcard {
       perspective: 1000px;
       width: 100%;
       max-width: 340px;
-      height: 240px;
-      margin: 0 auto 30px;
+      height: 220px;
+      margin: 0 auto 24px;
       cursor: pointer;
     }
     
     .flashcard-inner {
       position: relative;
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       transition: transform 0.6s;
       transform-style: preserve-3d;
     }
@@ -706,8 +815,7 @@
     
     .flashcard-front, .flashcard-back {
       position: absolute;
-      width: 100%;
-      height: 100%;
+      width: 100%; height: 100%;
       backface-visibility: hidden;
       -webkit-backface-visibility: hidden;
       background: var(--card-yellow);
@@ -726,50 +834,65 @@
       justify-content: flex-start;
       align-items: stretch;
       overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
     }
     
     .flashcard-word {
       font-family: 'Playfair Display', serif;
-      font-size: 32px;
+      font-size: 28px;
       color: var(--text-primary);
       margin-bottom: 8px;
     }
     
     .flashcard-phonetic {
-      font-size: 16px;
+      font-size: 15px;
       color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    
+    .flashcard-speak-btn {
+      width: 40px; height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: white;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 50%;
+      color: var(--accent);
+      cursor: pointer;
+    }
+    
+    .flashcard-speak-btn:hover {
+      background: var(--accent);
+      color: white;
     }
     
     .flashcard-back-word {
       font-family: 'Playfair Display', serif;
-      font-size: 22px;
+      font-size: 20px;
       color: var(--text-primary);
       margin-bottom: 4px;
     }
     
     .flashcard-back-phonetic {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-muted);
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     
     .flashcard-back-meaning {
-      font-size: 16px;
+      font-size: 15px;
       color: var(--text-primary);
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       font-weight: 500;
     }
     
     .flashcard-back-detail {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-secondary);
       line-height: 1.5;
     }
     
-    .flashcard-back-detail span {
-      color: var(--text-muted);
-    }
+    .flashcard-back-detail span { color: var(--text-muted); }
     
     .review-actions {
       display: flex;
@@ -778,66 +901,50 @@
     }
     
     .review-btn {
-      padding: 14px 32px;
+      padding: 12px 28px;
       border: none;
-      border-radius: 12px;
-      font-size: 15px;
+      border-radius: 10px;
+      font-size: 14px;
       font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s;
     }
     
-    .review-btn.know {
-      background: #4CAF50;
-      color: white;
-    }
-    
-    .review-btn.know:hover {
-      background: #43A047;
-    }
-    
-    .review-btn.dont-know {
-      background: #FF7043;
-      color: white;
-    }
-    
-    .review-btn.dont-know:hover {
-      background: #F4511E;
-    }
+    .review-btn.know { background: var(--success); color: white; }
+    .review-btn.know:hover { background: #43A047; }
+    .review-btn.dont-know { background: #FF7043; color: white; }
+    .review-btn.dont-know:hover { background: #F4511E; }
     
     .review-progress {
-      font-size: 14px;
+      font-size: 13px;
       color: var(--text-muted);
-      margin-bottom: 24px;
+      margin-bottom: 16px;
     }
     
     .review-hint {
-      font-size: 13px;
+      font-size: 12px;
       color: var(--text-muted);
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
     
     /* Settings tab */
     .settings-container {
       display: none;
       padding: 20px 16px 160px;
+      max-width: 500px;
+      margin: 0 auto;
     }
     
-    .settings-container.active {
-      display: block;
-    }
+    .settings-container.active { display: block; }
     
-    .settings-section {
-      margin-bottom: 24px;
-    }
+    .settings-section { margin-bottom: 24px; }
     
     .settings-title {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 500;
       color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
     
     .settings-card {
@@ -854,89 +961,156 @@
       border-bottom: 1px solid rgba(0,0,0,0.05);
     }
     
-    .settings-item:last-child {
-      border-bottom: none;
-    }
+    .settings-item:last-child { border-bottom: none; }
     
-    .settings-item-label {
-      font-size: 15px;
-      color: var(--text-primary);
-    }
-    
-    .settings-item-value {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
+    .settings-item-label { font-size: 14px; color: var(--text-primary); }
+    .settings-item-value { font-size: 13px; color: var(--text-muted); }
     
     .settings-input {
-      padding: 10px 14px;
+      padding: 8px 12px;
       border: 1px solid rgba(0,0,0,0.1);
       border-radius: 8px;
-      font-size: 14px;
-      width: 160px;
+      font-size: 13px;
+      width: 140px;
       text-align: right;
       outline: none;
-      transition: border-color 0.2s;
     }
     
-    .settings-input:focus {
-      border-color: var(--accent);
-    }
+    .settings-input:focus { border-color: var(--accent); }
     
     .settings-select {
-      padding: 10px 14px;
+      padding: 8px 12px;
       border: 1px solid rgba(0,0,0,0.1);
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 13px;
       background: white;
-      min-width: 140px;
+      min-width: 120px;
       outline: none;
     }
     
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      gap: 10px;
       margin-bottom: 24px;
     }
     
     .stat-card {
       background: white;
       border-radius: 12px;
-      padding: 16px 12px;
+      padding: 14px 10px;
       text-align: center;
     }
     
     .stat-value {
       font-family: 'Playfair Display', serif;
-      font-size: 28px;
+      font-size: 26px;
       color: var(--text-primary);
     }
     
     .stat-label {
-      font-size: 11px;
+      font-size: 10px;
       color: var(--text-muted);
-      margin-top: 4px;
+      margin-top: 2px;
+    }
+    
+    /* Google Sign In button */
+    .google-signin-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      padding: 12px;
+      background: white;
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 10px;
+      font-size: 14px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .google-signin-btn:hover {
+      background: var(--warm-gray);
+    }
+    
+    .google-signin-btn img {
+      width: 18px; height: 18px;
     }
     
     /* Hide class */
-    .hide {
-      display: none !important;
-    }
+    .hide { display: none !important; }
   </style>
 </head>
 <body>
-  <!-- Ambient background -->
   <div class="ambient-glow"></div>
   <div class="ambient-glow-2"></div>
   
-  <!-- Toast notification -->
   <div id="toast" class="toast"></div>
+  
+  <!-- Sidebar Overlay -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+  
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">En</div>
+        <div class="sidebar-logo-text">English Collector</div>
+      </div>
+      
+      <div class="sidebar-user" id="sidebarUser">
+        <div class="sidebar-user-avatar" id="userAvatar">
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path>
+          </svg>
+        </div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="userName">未登录</div>
+          <div class="sidebar-user-email" id="userEmail">点击登录同步数据</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="sidebar-menu">
+      <div class="sidebar-menu-item" onclick="handleGoogleAuth()">
+        <svg width="20" height="20" viewBox="0 0 24 24">
+          <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        <span id="googleAuthText">登录 Google 同步</span>
+      </div>
+      
+      <div class="sidebar-menu-item" onclick="syncToCloud()">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"></path>
+        </svg>
+        <span>同步到云端</span>
+      </div>
+      
+      <div class="sidebar-menu-item" onclick="syncFromCloud()">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75v6.75m0 0l-3-3m3 3l3-3m-8.25 6a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"></path>
+        </svg>
+        <span>从云端恢复</span>
+      </div>
+    </div>
+    
+    <div class="sidebar-footer">
+      <div class="sync-status">
+        <div class="sync-dot" id="syncDot"></div>
+        <span id="syncStatusText">本地存储</span>
+      </div>
+    </div>
+  </div>
   
   <!-- Header -->
   <header class="header">
     <div class="header-inner">
-      <button class="menu-btn" onclick="toggleMenu()">
+      <button class="menu-btn" onclick="openSidebar()">
         <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
         </svg>
@@ -947,14 +1121,14 @@
       </div>
       
       <button class="add-btn" onclick="openAddModal()">
-        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
         </svg>
       </button>
     </div>
   </header>
   
-  <!-- Main content - Everything tab -->
+  <!-- Main content -->
   <main class="main-content" id="everythingTab">
     <div class="masonry" id="cardGrid"></div>
     <div class="empty-state hide" id="emptyState">
@@ -972,17 +1146,20 @@
   <div class="review-container" id="reviewTab">
     <div id="reviewContent">
       <p class="review-progress" id="reviewProgress">1 / 20</p>
-      <p class="review-hint">点击卡片翻转</p>
+      <p class="review-hint">点击卡片翻转，点击喇叭听发音</p>
       
       <div class="flashcard" id="flashcard" onclick="flipCard()">
         <div class="flashcard-inner">
           <div class="flashcard-front">
             <div class="flashcard-word" id="flashcardWord">word</div>
             <div class="flashcard-phonetic" id="flashcardPhonetic">/wɜːrd/</div>
+            <button class="flashcard-speak-btn" onclick="event.stopPropagation(); speakWord(document.getElementById('flashcardWord').textContent)">
+              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"></path>
+              </svg>
+            </button>
           </div>
-          <div class="flashcard-back" id="flashcardBack">
-            <!-- Back content will be inserted here -->
-          </div>
+          <div class="flashcard-back" id="flashcardBack"></div>
         </div>
       </div>
       
@@ -1007,7 +1184,6 @@
   
   <!-- Settings tab -->
   <div class="settings-container" id="settingsTab">
-    <!-- Stats overview -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-value" id="statTotal">0</div>
@@ -1023,7 +1199,6 @@
       </div>
     </div>
     
-    <!-- API Settings -->
     <div class="settings-section">
       <div class="settings-title">AI 设置</div>
       <div class="settings-card">
@@ -1037,6 +1212,7 @@
         <div class="settings-item">
           <span class="settings-item-label">模型</span>
           <select class="settings-select" id="apiModel" onchange="saveSettings()">
+            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
             <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
             <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
           </select>
@@ -1048,7 +1224,6 @@
       </div>
     </div>
     
-    <!-- Data -->
     <div class="settings-section">
       <div class="settings-title">数据管理</div>
       <div class="settings-card">
@@ -1080,13 +1255,12 @@
       </div>
     </div>
     
-    <!-- About -->
     <div class="settings-section">
       <div class="settings-title">关于</div>
       <div class="settings-card">
         <div class="settings-item">
           <span class="settings-item-label">版本</span>
-          <span class="settings-item-value">1.0.0</span>
+          <span class="settings-item-value">1.1.0</span>
         </div>
       </div>
     </div>
@@ -1100,7 +1274,7 @@
     </div>
   </div>
   
-  <!-- Bottom navigation -->
+  <!-- Bottom nav -->
   <nav class="bottom-nav">
     <div class="nav-items">
       <button class="nav-item active" data-tab="everything" onclick="switchTab('everything')">
@@ -1112,14 +1286,12 @@
         </svg>
         <span>Everything</span>
       </button>
-      
       <button class="nav-item" data-tab="review" onclick="switchTab('review')">
         <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path>
         </svg>
         <span>Review</span>
       </button>
-      
       <button class="nav-item" data-tab="settings" onclick="switchTab('settings')">
         <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"></path>
@@ -1155,26 +1327,27 @@
   <!-- Detail Modal -->
   <div class="modal-overlay" id="detailModal" onclick="closeDetailModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
-      <div class="modal-body" id="detailBody">
-        <!-- Detail content will be inserted here -->
-      </div>
+      <div class="modal-body" id="detailBody"></div>
     </div>
   </div>
 
   <script>
+    // ==================== Config ====================
+    // REPLACE THIS WITH YOUR GOOGLE CLIENT ID
+    const GOOGLE_CLIENT_ID = '550666764387-5tofkeq6i4r9a8n15i50rfrgikdeinp6.apps.googleusercontent.com';
+    const DRIVE_FILE_NAME = 'english-collector-data.json';
+    
     // ==================== Data Store ====================
     let cards = [];
     let settings = {
       apiProvider: 'gemini',
-      apiModel: 'gemini-1.5-flash',
+      apiModel: 'gemini-2.0-flash',
       apiKey: '',
       firstUseDate: null
     };
-    let reviewState = {
-      words: [],
-      currentIndex: 0,
-      results: []
-    };
+    let reviewState = { words: [], currentIndex: 0, results: [] };
+    let googleUser = null;
+    let accessToken = null;
 
     // ==================== IndexedDB ====================
     const DB_NAME = 'EnglishCollectorDB';
@@ -1184,21 +1357,13 @@
     async function initDB() {
       return new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
-        
         request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          db = request.result;
-          resolve(db);
-        };
-        
+        request.onsuccess = () => { db = request.result; resolve(db); };
         request.onupgradeneeded = (event) => {
           const database = event.target.result;
-          
           if (!database.objectStoreNames.contains('cards')) {
-            const cardStore = database.createObjectStore('cards', { keyPath: 'id' });
-            cardStore.createIndex('createdAt', 'createdAt', { unique: false });
+            database.createObjectStore('cards', { keyPath: 'id' }).createIndex('createdAt', 'createdAt');
           }
-          
           if (!database.objectStoreNames.contains('settings')) {
             database.createObjectStore('settings', { keyPath: 'key' });
           }
@@ -1207,67 +1372,250 @@
     }
 
     async function loadData() {
-      // Load cards
-      const cardTransaction = db.transaction(['cards'], 'readonly');
-      const cardStore = cardTransaction.objectStore('cards');
-      const cardRequest = cardStore.getAll();
-      
+      const cardStore = db.transaction(['cards'], 'readonly').objectStore('cards');
       cards = await new Promise((resolve, reject) => {
-        cardRequest.onsuccess = () => resolve(cardRequest.result || []);
-        cardRequest.onerror = () => reject(cardRequest.error);
+        const req = cardStore.getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
       });
-      
-      // Sort by createdAt descending
       cards.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       
-      // Load settings
-      const settingsTransaction = db.transaction(['settings'], 'readonly');
-      const settingsStore = settingsTransaction.objectStore('settings');
-      const settingsRequest = settingsStore.get('main');
-      
-      const savedSettings = await new Promise((resolve, reject) => {
-        settingsRequest.onsuccess = () => resolve(settingsRequest.result);
-        settingsRequest.onerror = () => reject(settingsRequest.error);
+      const settingsStore = db.transaction(['settings'], 'readonly').objectStore('settings');
+      const saved = await new Promise((resolve, reject) => {
+        const req = settingsStore.get('main');
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
       });
+      if (saved) settings = { ...settings, ...saved.value };
       
-      if (savedSettings) {
-        settings = { ...settings, ...savedSettings.value };
-      }
-      
-      // Apply settings to UI
       document.getElementById('apiProvider').value = settings.apiProvider;
       document.getElementById('apiModel').value = settings.apiModel;
       document.getElementById('apiKey').value = settings.apiKey;
-      
       updateModelOptions();
     }
 
     async function saveCardToDB(card) {
-      const transaction = db.transaction(['cards'], 'readwrite');
-      const store = transaction.objectStore('cards');
+      const store = db.transaction(['cards'], 'readwrite').objectStore('cards');
       await store.put(card);
-      
-      // Update local array
-      const existingIndex = cards.findIndex(c => c.id === card.id);
-      if (existingIndex >= 0) {
-        cards[existingIndex] = card;
-      } else {
-        cards.unshift(card);
-      }
+      const idx = cards.findIndex(c => c.id === card.id);
+      if (idx >= 0) cards[idx] = card; else cards.unshift(card);
     }
 
     async function deleteCardFromDB(cardId) {
-      const transaction = db.transaction(['cards'], 'readwrite');
-      const store = transaction.objectStore('cards');
+      const store = db.transaction(['cards'], 'readwrite').objectStore('cards');
       await store.delete(cardId);
-      
       cards = cards.filter(c => c.id !== cardId);
     }
 
     async function saveSettingsToDB() {
-      const transaction = db.transaction(['settings'], 'readwrite');
-      const store = transaction.objectStore('settings');
+      const store = db.transaction(['settings'], 'readwrite').objectStore('settings');
       await store.put({ key: 'main', value: settings });
+    }
+
+    // ==================== Sidebar ====================
+    function openSidebar() {
+      document.getElementById('sidebar').classList.add('active');
+      document.getElementById('sidebarOverlay').classList.add('active');
+    }
+
+    function closeSidebar() {
+      document.getElementById('sidebar').classList.remove('active');
+      document.getElementById('sidebarOverlay').classList.remove('active');
+    }
+
+    // ==================== Google Auth ====================
+    function handleGoogleAuth() {
+      if (googleUser) {
+        // Logout
+        googleUser = null;
+        accessToken = null;
+        updateUserUI();
+        showToast('已退出登录', 'success');
+        return;
+      }
+      
+      if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
+        showToast('请先配置 Google Client ID', 'error');
+        return;
+      }
+
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID,
+        scope: 'https://www.googleapis.com/auth/drive.file',
+        callback: (response) => {
+          if (response.access_token) {
+            accessToken = response.access_token;
+            fetchUserInfo();
+          }
+        },
+      });
+      client.requestAccessToken();
+    }
+
+    async function fetchUserInfo() {
+      try {
+        const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        googleUser = await res.json();
+        updateUserUI();
+        showToast('登录成功！', 'success');
+      } catch (e) {
+        showToast('获取用户信息失败', 'error');
+      }
+    }
+
+    function updateUserUI() {
+      const avatar = document.getElementById('userAvatar');
+      const name = document.getElementById('userName');
+      const email = document.getElementById('userEmail');
+      const authText = document.getElementById('googleAuthText');
+      const syncDot = document.getElementById('syncDot');
+      const syncText = document.getElementById('syncStatusText');
+      
+      if (googleUser) {
+        avatar.innerHTML = googleUser.picture 
+          ? `<img src="${googleUser.picture}" alt="avatar">`
+          : `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>`;
+        name.textContent = googleUser.name || '用户';
+        email.textContent = googleUser.email || '';
+        authText.textContent = '退出登录';
+        syncDot.classList.add('synced');
+        syncText.textContent = '已连接 Google Drive';
+      } else {
+        avatar.innerHTML = `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>`;
+        name.textContent = '未登录';
+        email.textContent = '点击登录同步数据';
+        authText.textContent = '登录 Google 同步';
+        syncDot.classList.remove('synced');
+        syncText.textContent = '本地存储';
+      }
+    }
+
+    // ==================== Google Drive Sync ====================
+    async function findDriveFile() {
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}'&spaces=appDataFolder`, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      });
+      const data = await res.json();
+      return data.files && data.files.length > 0 ? data.files[0].id : null;
+    }
+
+    async function syncToCloud() {
+      if (!accessToken) {
+        showToast('请先登录 Google', 'error');
+        return;
+      }
+      
+      const syncDot = document.getElementById('syncDot');
+      const syncText = document.getElementById('syncStatusText');
+      syncDot.classList.remove('synced');
+      syncDot.classList.add('syncing');
+      syncText.textContent = '正在同步...';
+      
+      try {
+        const data = JSON.stringify({
+          version: '1.1.0',
+          syncDate: new Date().toISOString(),
+          cards: cards,
+          settings: { ...settings, apiKey: '' }
+        });
+        
+        let fileId = await findDriveFile();
+        
+        if (fileId) {
+          // Update existing file
+          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+            method: 'PATCH',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`,
+              'Content-Type': 'application/json'
+            },
+            body: data
+          });
+        } else {
+          // Create new file
+          const metadata = {
+            name: DRIVE_FILE_NAME,
+            parents: ['appDataFolder']
+          };
+          
+          const form = new FormData();
+          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+          form.append('file', new Blob([data], { type: 'application/json' }));
+          
+          await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${accessToken}` },
+            body: form
+          });
+        }
+        
+        syncDot.classList.remove('syncing');
+        syncDot.classList.add('synced');
+        syncText.textContent = '同步完成';
+        showToast('已同步到 Google Drive', 'success');
+        
+      } catch (e) {
+        console.error('Sync error:', e);
+        syncDot.classList.remove('syncing');
+        syncText.textContent = '同步失败';
+        showToast('同步失败: ' + e.message, 'error');
+      }
+    }
+
+    async function syncFromCloud() {
+      if (!accessToken) {
+        showToast('请先登录 Google', 'error');
+        return;
+      }
+      
+      try {
+        const fileId = await findDriveFile();
+        
+        if (!fileId) {
+          showToast('云端没有备份数据', 'error');
+          return;
+        }
+        
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+          headers: { 'Authorization': `Bearer ${accessToken}` }
+        });
+        
+        const data = await res.json();
+        
+        if (data.cards) {
+          for (const card of data.cards) {
+            await saveCardToDB(card);
+          }
+          renderCards();
+          updateStats();
+          showToast(`已恢复 ${data.cards.length} 条收藏`, 'success');
+        }
+        
+      } catch (e) {
+        console.error('Restore error:', e);
+        showToast('恢复失败: ' + e.message, 'error');
+      }
+    }
+
+    // ==================== Speech Synthesis ====================
+    function speakWord(word) {
+      if (!word) return;
+      
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
+      
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
+      utterance.rate = 0.8;
+      
+      // Try to find an English voice
+      const voices = window.speechSynthesis.getVoices();
+      const englishVoice = voices.find(v => v.lang.startsWith('en'));
+      if (englishVoice) utterance.voice = englishVoice;
+      
+      window.speechSynthesis.speak(utterance);
     }
 
     // ==================== UI Functions ====================
@@ -1276,25 +1624,24 @@
       const emptyState = document.getElementById('emptyState');
       const searchQuery = document.getElementById('searchInput').value.toLowerCase();
       
-      const filteredCards = cards.filter(card => {
+      const filtered = cards.filter(card => {
         const contentMatch = card.content.toLowerCase().includes(searchQuery);
-        const translationMatch = card.translation && card.translation.toLowerCase().includes(searchQuery);
-        const keywordMatch = card.keywords && card.keywords.some(k => k.word.toLowerCase().includes(searchQuery));
+        const translationMatch = card.translation?.toLowerCase().includes(searchQuery);
+        const keywordMatch = card.keywords?.some(k => k.word.toLowerCase().includes(searchQuery));
         return contentMatch || translationMatch || keywordMatch;
       });
       
-      if (filteredCards.length === 0) {
+      if (filtered.length === 0) {
         grid.innerHTML = '';
         emptyState.classList.remove('hide');
         return;
       }
       
       emptyState.classList.add('hide');
-      grid.innerHTML = filteredCards.map(card => `
+      grid.innerHTML = filtered.map(card => `
         <div class="card" onclick="openDetailModal('${card.id}')">
           <div class="card-content">${escapeHtml(card.content)}</div>
-          ${card.source ? `<div class="card-source">${escapeHtml(card.source)}</div>` : ''}
-          ${card.keywords && card.keywords.length > 0 ? `
+          ${card.keywords?.length > 0 ? `
             <div class="card-keywords">
               ${card.keywords.slice(0, 3).map(k => `<span class="keyword-tag">${escapeHtml(k.word)}</span>`).join('')}
             </div>
@@ -1312,7 +1659,7 @@
       const date = new Date(card.createdAt).toLocaleDateString('zh-CN');
       
       let keywordsHtml = '';
-      if (card.keywords && card.keywords.length > 0) {
+      if (card.keywords?.length > 0) {
         keywordsHtml = `
           <div class="keywords-section">
             <div class="keywords-title">
@@ -1343,13 +1690,9 @@
             </svg>
           </button>
         </div>
-        
         <p class="detail-content">${escapeHtml(card.content)}</p>
-        ${card.source ? `<p class="detail-source">${escapeHtml(card.source)}</p>` : ''}
         <p class="detail-translation">${escapeHtml(card.translation || '')}</p>
-        
         ${keywordsHtml}
-        
         <div class="add-modal-actions">
           <button class="btn btn-secondary" onclick="deleteCard('${cardId}')">删除</button>
           <button class="btn btn-primary" onclick="exportSingleAnki('${cardId}')">导出到 Anki</button>
@@ -1362,7 +1705,14 @@
     function renderEtymology(keyword) {
       if (!keyword) return '';
       return `
-        <div class="etymology-word">${escapeHtml(keyword.word)}</div>
+        <div class="etymology-header">
+          <div class="etymology-word">${escapeHtml(keyword.word)}</div>
+          <button class="speak-btn" onclick="speakWord('${escapeHtml(keyword.word)}')" title="听发音">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"></path>
+            </svg>
+          </button>
+        </div>
         ${keyword.phonetic ? `<div class="etymology-phonetic">${escapeHtml(keyword.phonetic)}</div>` : ''}
         <div class="etymology-item">
           <span class="etymology-label">构词 · </span>
@@ -1379,32 +1729,16 @@
       `;
     }
 
-    function showEtymology(cardId, keywordIndex) {
+    function showEtymology(cardId, idx) {
       const card = cards.find(c => c.id === cardId);
-      if (!card || !card.keywords) return;
-      
-      // Update active button
-      document.querySelectorAll('.keyword-btn').forEach((btn, i) => {
-        btn.classList.toggle('active', i === keywordIndex);
-      });
-      
-      // Update etymology box
-      document.getElementById('etymologyBox').innerHTML = renderEtymology(card.keywords[keywordIndex]);
+      if (!card?.keywords) return;
+      document.querySelectorAll('.keyword-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx));
+      document.getElementById('etymologyBox').innerHTML = renderEtymology(card.keywords[idx]);
     }
 
-    function closeDetailModal() {
-      document.getElementById('detailModal').classList.remove('active');
-    }
-
-    function openAddModal() {
-      document.getElementById('addModal').classList.add('active');
-      document.getElementById('addInput').focus();
-    }
-
-    function closeAddModal() {
-      document.getElementById('addModal').classList.remove('active');
-      document.getElementById('addInput').value = '';
-    }
+    function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
+    function openAddModal() { document.getElementById('addModal').classList.add('active'); document.getElementById('addInput').focus(); }
+    function closeAddModal() { document.getElementById('addModal').classList.remove('active'); document.getElementById('addInput').value = ''; }
 
     // ==================== Card Operations ====================
     async function saveCard() {
@@ -1422,39 +1756,30 @@
       saveBtnText.innerHTML = '<div class="spinner"></div>';
       
       try {
-        // Call AI API
         const analysis = await analyzeWithAI(content);
         
-        // Determine type
         const wordCount = content.split(/\s+/).length;
         let type = 'paragraph';
         if (wordCount <= 3) type = 'word';
         else if (content.split(/[.!?]/).filter(s => s.trim()).length <= 1) type = 'sentence';
         
-        // Create card
         const card = {
           id: 'card_' + Date.now(),
-          content: content,
-          type: type,
+          content, type,
           translation: analysis.translation,
           keywords: analysis.keywords,
           source: '',
           createdAt: new Date().toISOString(),
-          reviewCount: 0,
-          lastReviewed: null,
-          known: false
+          reviewCount: 0, lastReviewed: null, known: false
         };
         
-        // Save to DB
         await saveCardToDB(card);
         
-        // Update first use date
         if (!settings.firstUseDate) {
           settings.firstUseDate = new Date().toISOString();
           await saveSettingsToDB();
         }
         
-        // Update UI
         renderCards();
         updateStats();
         closeAddModal();
@@ -1471,7 +1796,6 @@
 
     async function deleteCard(cardId) {
       if (!confirm('确定要删除这条收藏吗？')) return;
-      
       await deleteCardFromDB(cardId);
       renderCards();
       updateStats();
@@ -1491,9 +1815,7 @@
       }
     }
 
-    function handleSearch() {
-      renderCards();
-    }
+    function handleSearch() { renderCards(); }
 
     // ==================== AI Analysis ====================
     async function analyzeWithAI(content) {
@@ -1520,7 +1842,7 @@
           provider: settings.apiProvider,
           model: settings.apiModel,
           apiKey: settings.apiKey,
-          prompt: prompt
+          prompt
         })
       });
       
@@ -1529,28 +1851,19 @@
         throw new Error(error.message || 'API request failed');
       }
       
-      const data = await response.json();
-      return data;
+      return await response.json();
     }
 
-    // ==================== Review Functions (Words Only) ====================
+    // ==================== Review ====================
     function initReview() {
-      // Collect all unique words from all cards
       const wordMap = new Map();
-      
       cards.forEach(card => {
-        if (card.keywords && card.keywords.length > 0) {
-          card.keywords.forEach(keyword => {
-            const wordLower = keyword.word.toLowerCase();
-            if (!wordMap.has(wordLower)) {
-              wordMap.set(wordLower, {
-                ...keyword,
-                cardId: card.id,
-                example: card.content
-              });
-            }
-          });
-        }
+        card.keywords?.forEach(keyword => {
+          const key = keyword.word.toLowerCase();
+          if (!wordMap.has(key)) {
+            wordMap.set(key, { ...keyword, cardId: card.id, example: card.content });
+          }
+        });
       });
       
       const allWords = Array.from(wordMap.values());
@@ -1564,12 +1877,9 @@
       document.getElementById('reviewContent').classList.remove('hide');
       document.getElementById('reviewEmpty').classList.add('hide');
       
-      // Shuffle and pick up to 20 words
-      const shuffled = allWords.sort(() => Math.random() - 0.5);
-      reviewState.words = shuffled.slice(0, 20);
+      reviewState.words = allWords.sort(() => Math.random() - 0.5).slice(0, 20);
       reviewState.currentIndex = 0;
       reviewState.results = [];
-      
       showCurrentWord();
     }
 
@@ -1577,14 +1887,10 @@
       const word = reviewState.words[reviewState.currentIndex];
       if (!word) return;
       
-      document.getElementById('reviewProgress').textContent = 
-        `${reviewState.currentIndex + 1} / ${reviewState.words.length}`;
-      
-      // Front side - word and phonetic
+      document.getElementById('reviewProgress').textContent = `${reviewState.currentIndex + 1} / ${reviewState.words.length}`;
       document.getElementById('flashcardWord').textContent = word.word;
       document.getElementById('flashcardPhonetic').textContent = word.phonetic || '';
       
-      // Back side - full details
       document.getElementById('flashcardBack').innerHTML = `
         <div class="flashcard-back-word">${escapeHtml(word.word)}</div>
         <div class="flashcard-back-phonetic">${escapeHtml(word.phonetic || '')}</div>
@@ -1599,24 +1905,16 @@
       document.getElementById('flashcard').classList.remove('flipped');
     }
 
-    function flipCard() {
-      document.getElementById('flashcard').classList.toggle('flipped');
-    }
+    function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
 
     async function markCard(known) {
-      const word = reviewState.words[reviewState.currentIndex];
-      if (!word) return;
-      
-      reviewState.results.push({ word: word.word, known });
-      
-      // Move to next word
+      reviewState.results.push({ word: reviewState.words[reviewState.currentIndex]?.word, known });
       reviewState.currentIndex++;
       
       if (reviewState.currentIndex >= reviewState.words.length) {
-        // Review complete
         const knownCount = reviewState.results.filter(r => r.known).length;
         showToast(`复习完成！认识 ${knownCount}/${reviewState.words.length} 个单词`, 'success');
-        initReview(); // Reset for another round
+        initReview();
       } else {
         showCurrentWord();
       }
@@ -1627,7 +1925,6 @@
       settings.apiProvider = document.getElementById('apiProvider').value;
       settings.apiModel = document.getElementById('apiModel').value;
       settings.apiKey = document.getElementById('apiKey').value;
-      
       updateModelOptions();
       saveSettingsToDB();
     }
@@ -1636,54 +1933,48 @@
       const modelSelect = document.getElementById('apiModel');
       const provider = document.getElementById('apiProvider').value;
       
-      if (provider === 'gemini') {
-        modelSelect.innerHTML = `
-          <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-          <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
-          <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-        `;
-      } else if (provider === 'deepseek') {
-        modelSelect.innerHTML = `
-          <option value="deepseek-chat">DeepSeek Chat</option>
-          <option value="deepseek-coder">DeepSeek Coder</option>
-        `;
-      }
+      const options = {
+        gemini: [
+          { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
+          { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
+          { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' }
+        ],
+        deepseek: [
+          { value: 'deepseek-chat', label: 'DeepSeek Chat' }
+        ]
+      };
       
-      // Restore selected model if it exists
+      modelSelect.innerHTML = (options[provider] || []).map(o => 
+        `<option value="${o.value}">${o.label}</option>`
+      ).join('');
+      
       if (settings.apiModel) {
-        const option = modelSelect.querySelector(`option[value="${settings.apiModel}"]`);
-        if (option) modelSelect.value = settings.apiModel;
+        const opt = modelSelect.querySelector(`option[value="${settings.apiModel}"]`);
+        if (opt) modelSelect.value = settings.apiModel;
       }
     }
 
     function updateStats() {
       document.getElementById('statTotal').textContent = cards.length;
       
-      // Count unique words
       const allWords = new Set();
-      cards.forEach(card => {
-        if (card.keywords) {
-          card.keywords.forEach(k => allWords.add(k.word.toLowerCase()));
-        }
-      });
+      cards.forEach(card => card.keywords?.forEach(k => allWords.add(k.word.toLowerCase())));
       document.getElementById('statWords').textContent = allWords.size;
       
-      // Calculate days since first use
       if (settings.firstUseDate) {
         const days = Math.ceil((new Date() - new Date(settings.firstUseDate)) / (1000 * 60 * 60 * 24));
         document.getElementById('statDays').textContent = days;
       }
     }
 
-    // ==================== Export Functions ====================
+    // ==================== Export ====================
     function exportJSON() {
       const data = {
-        version: '1.0.0',
+        version: '1.1.0',
         exportDate: new Date().toISOString(),
-        cards: cards,
-        settings: { ...settings, apiKey: '' } // Don't export API key
+        cards,
+        settings: { ...settings, apiKey: '' }
       };
-      
       downloadFile(JSON.stringify(data, null, 2), 'english-collector-backup.json', 'application/json');
       showToast('备份已导出', 'success');
     }
@@ -1696,16 +1987,9 @@
       reader.onload = async (e) => {
         try {
           const data = JSON.parse(e.target.result);
+          if (!data.cards?.length) throw new Error('无效的备份文件');
           
-          if (!data.cards || !Array.isArray(data.cards)) {
-            throw new Error('无效的备份文件');
-          }
-          
-          // Import cards
-          for (const card of data.cards) {
-            await saveCardToDB(card);
-          }
-          
+          for (const card of data.cards) await saveCardToDB(card);
           renderCards();
           updateStats();
           showToast(`已导入 ${data.cards.length} 条收藏`, 'success');
@@ -1714,38 +1998,26 @@
         }
       };
       reader.readAsText(file);
-      event.target.value = ''; // Reset input
+      event.target.value = '';
     }
 
     function exportAnki(type) {
-      if (cards.length === 0) {
-        showToast('没有可导出的内容', 'error');
-        return;
-      }
+      if (cards.length === 0) { showToast('没有可导出的内容', 'error'); return; }
       
       let csv = '';
-      
       if (type === 'sentences') {
-        // Export sentences: Front = content, Back = translation
         cards.forEach(card => {
-          const front = escapeCSV(card.content);
-          const back = escapeCSV(card.translation || '');
-          csv += `${front}\t${back}\n`;
+          csv += `${escapeCSV(card.content)}\t${escapeCSV(card.translation || '')}\n`;
         });
-      } else if (type === 'words') {
-        // Export words: Front = word, Back = phonetic + meaning + etymology + example
+      } else {
         const exported = new Set();
         cards.forEach(card => {
-          if (card.keywords) {
-            card.keywords.forEach(k => {
-              if (!exported.has(k.word.toLowerCase())) {
-                exported.add(k.word.toLowerCase());
-                const front = escapeCSV(k.word);
-                const back = escapeCSV(`${k.phonetic || ''}\n\n${k.meaning}\n\n词根: ${k.roots || '-'}\n来源: ${k.origin || '-'}\n\n例句: ${card.content}`);
-                csv += `${front}\t${back}\n`;
-              }
-            });
-          }
+          card.keywords?.forEach(k => {
+            if (!exported.has(k.word.toLowerCase())) {
+              exported.add(k.word.toLowerCase());
+              csv += `${escapeCSV(k.word)}\t${escapeCSV(`${k.phonetic || ''}\n\n${k.meaning}\n\n词根: ${k.roots || '-'}\n来源: ${k.origin || '-'}\n\n例句: ${card.content}`)}\n`;
+            }
+          });
         });
       }
       
@@ -1757,18 +2029,10 @@
       const card = cards.find(c => c.id === cardId);
       if (!card) return;
       
-      let csv = '';
-      
-      // Export the sentence
-      csv += `${escapeCSV(card.content)}\t${escapeCSV(card.translation || '')}\n`;
-      
-      // Export each word
-      if (card.keywords) {
-        card.keywords.forEach(k => {
-          const back = `${k.phonetic || ''}\n\n${k.meaning}\n\n词根: ${k.roots || '-'}\n来源: ${k.origin || '-'}\n\n例句: ${card.content}`;
-          csv += `${escapeCSV(k.word)}\t${escapeCSV(back)}\n`;
-        });
-      }
+      let csv = `${escapeCSV(card.content)}\t${escapeCSV(card.translation || '')}\n`;
+      card.keywords?.forEach(k => {
+        csv += `${escapeCSV(k.word)}\t${escapeCSV(`${k.phonetic || ''}\n\n${k.meaning}\n\n词根: ${k.roots || '-'}\n来源: ${k.origin || '-'}\n\n例句: ${card.content}`)}\n`;
+      });
       
       downloadFile(csv, `anki-card-${Date.now()}.txt`, 'text/plain');
       showToast('已导出到 Anki', 'success');
@@ -1776,27 +2040,41 @@
 
     // ==================== Tab Navigation ====================
     function switchTab(tab) {
-      // Update nav
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.classList.toggle('active', item.dataset.tab === tab);
-      });
+      document.querySelectorAll('.nav-item').forEach(item => 
+        item.classList.toggle('active', item.dataset.tab === tab)
+      );
       
-      // Update content visibility
       document.getElementById('everythingTab').classList.toggle('hide', tab !== 'everything');
       document.getElementById('reviewTab').classList.toggle('active', tab === 'review');
       document.getElementById('settingsTab').classList.toggle('active', tab === 'settings');
-      
-      // Update quick input visibility
       document.getElementById('quickInputWrapper').classList.toggle('hide', tab !== 'everything');
       
-      // Initialize review if needed
-      if (tab === 'review') {
-        initReview();
-      }
+      if (tab === 'review') initReview();
+      if (tab === 'settings') updateStats();
+    }
+
+    // ==================== URL Import ====================
+    async function checkUrlImport() {
+      const params = new URLSearchParams(window.location.search);
+      const importData = params.get('import');
       
-      // Update stats if settings
-      if (tab === 'settings') {
-        updateStats();
+      if (importData) {
+        try {
+          const card = JSON.parse(decodeURIComponent(atob(importData)));
+          await saveCardToDB(card);
+          
+          if (!settings.firstUseDate) {
+            settings.firstUseDate = new Date().toISOString();
+            await saveSettingsToDB();
+          }
+          
+          window.history.replaceState({}, document.title, window.location.pathname);
+          renderCards();
+          updateStats();
+          showToast('已从扩展导入收藏！', 'success');
+        } catch (e) {
+          console.error('Import error:', e);
+        }
       }
     }
 
@@ -1806,10 +2084,7 @@
       toast.textContent = message;
       toast.className = 'toast ' + type;
       toast.classList.add('show');
-      
-      setTimeout(() => {
-        toast.classList.remove('show');
-      }, 3000);
+      setTimeout(() => toast.classList.remove('show'), 3000);
     }
 
     function escapeHtml(text) {
@@ -1825,7 +2100,7 @@
     }
 
     function downloadFile(content, filename, type) {
-      const blob = new Blob([content], { type: type });
+      const blob = new Blob([content], { type });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -1836,53 +2111,18 @@
       URL.revokeObjectURL(url);
     }
 
-    function toggleMenu() {
-      // Placeholder for menu functionality
-      showToast('菜单功能开发中');
-    }
-
-    // ==================== Import from URL (Chrome Extension) ====================
-    async function checkUrlImport() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const importData = urlParams.get('import');
-      
-      if (importData) {
-        try {
-          // Decode the card data
-          const cardJson = decodeURIComponent(atob(importData));
-          const card = JSON.parse(cardJson);
-          
-          // Save to database
-          await saveCardToDB(card);
-          
-          // Update first use date if needed
-          if (!settings.firstUseDate) {
-            settings.firstUseDate = new Date().toISOString();
-            await saveSettingsToDB();
-          }
-          
-          // Clean URL
-          window.history.replaceState({}, document.title, window.location.pathname);
-          
-          // Update UI
-          renderCards();
-          updateStats();
-          showToast('已从扩展导入收藏！', 'success');
-          
-        } catch (error) {
-          console.error('Import error:', error);
-        }
-      }
-    }
-
     // ==================== Initialize ====================
     async function init() {
       try {
+        // Load voices for speech synthesis
+        window.speechSynthesis.getVoices();
+        
         await initDB();
         await loadData();
-        await checkUrlImport(); // Check for Chrome extension import
+        await checkUrlImport();
         renderCards();
         updateStats();
+        updateUserUI();
       } catch (error) {
         console.error('Init error:', error);
         showToast('初始化失败', 'error');
