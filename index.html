@@ -3,11 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#FFFDF7">
+  <meta name="theme-color" content="#E8612C">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="EnCollector">
   <title>English Collector</title>
+  
+  <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png">
+  
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
   
   <!-- Google Identity Services -->
@@ -28,22 +36,15 @@
       --error: #E53935;
     }
     
-    * { 
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-    }
-    
-    html {
-      -webkit-text-size-adjust: 100%;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html { -webkit-text-size-adjust: 100%; }
     
     body { 
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       background: var(--cream);
       -webkit-font-smoothing: antialiased;
       min-height: 100vh;
+      min-height: -webkit-fill-available;
       overflow-x: hidden;
       line-height: 1.5;
     }
@@ -52,547 +53,145 @@
     
     /* Ambient background */
     .ambient-glow {
-      position: fixed;
-      top: -20%; left: -10%;
-      width: 60%; height: 50%;
-      background: radial-gradient(ellipse at center, 
-        rgba(255, 180, 150, 0.25) 0%, 
-        rgba(255, 200, 180, 0.15) 30%,
-        transparent 70%);
-      pointer-events: none;
-      z-index: 0;
+      position: fixed; top: -20%; left: -10%; width: 60%; height: 50%;
+      background: radial-gradient(ellipse at center, rgba(255, 180, 150, 0.25) 0%, rgba(255, 200, 180, 0.15) 30%, transparent 70%);
+      pointer-events: none; z-index: 0;
     }
-    
     .ambient-glow-2 {
-      position: fixed;
-      bottom: -10%; right: -10%;
-      width: 50%; height: 40%;
-      background: radial-gradient(ellipse at center, 
-        rgba(200, 220, 255, 0.2) 0%, 
-        transparent 70%);
-      pointer-events: none;
-      z-index: 0;
+      position: fixed; bottom: -10%; right: -10%; width: 50%; height: 40%;
+      background: radial-gradient(ellipse at center, rgba(200, 220, 255, 0.2) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
     }
     
     /* Card styles */
     .card {
-      background: var(--card-yellow);
-      border-radius: 8px;
-      transition: all 0.2s ease;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-      cursor: pointer;
-      padding: 16px;
-      break-inside: avoid;
-      margin-bottom: 12px;
+      background: var(--card-yellow); border-radius: 8px;
+      transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      cursor: pointer; padding: 16px; break-inside: avoid; margin-bottom: 12px;
     }
-    
-    .card:hover {
-      background: var(--card-yellow-hover);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-    }
+    .card:hover { background: var(--card-yellow-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
     
     /* Header */
     .header {
-      position: sticky;
-      top: 0;
-      z-index: 40;
-      padding: 12px 16px;
-      padding-top: max(12px, env(safe-area-inset-top));
+      position: sticky; top: 0; z-index: 40;
+      padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top));
       background: linear-gradient(to bottom, var(--cream) 80%, transparent);
     }
-    
-    .header-inner {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+    .header-inner { display: flex; align-items: center; gap: 12px; max-width: 1200px; margin: 0 auto; }
     
     .menu-btn {
-      padding: 8px;
-      margin-left: -8px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text-secondary);
-      border-radius: 8px;
+      padding: 8px; margin-left: -8px; background: none; border: none;
+      cursor: pointer; color: var(--text-secondary); border-radius: 8px;
     }
-    
-    .menu-btn:hover {
-      background: var(--warm-gray);
-    }
+    .menu-btn:hover { background: var(--warm-gray); }
     
     .search-box {
-      flex: 1;
-      max-width: 400px;
-      display: flex;
-      align-items: center;
-      padding: 10px 16px;
-      background: white;
-      border: 1px solid rgba(0,0,0,0.06);
-      border-radius: 10px;
+      flex: 1; max-width: 400px; display: flex; align-items: center;
+      padding: 10px 16px; background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 10px;
     }
-    
-    .search-box input {
-      flex: 1;
-      border: none;
-      background: transparent;
-      font-size: 14px;
-      color: var(--text-primary);
-      outline: none;
-    }
-    
+    .search-box input { flex: 1; border: none; background: transparent; font-size: 14px; color: var(--text-primary); outline: none; }
     .search-box input::placeholder { color: var(--text-muted); }
     
     .add-btn {
-      width: 40px; height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--accent);
-      border: none;
-      border-radius: 10px;
-      color: white;
-      cursor: pointer;
-      box-shadow: 0 2px 8px rgba(232, 97, 44, 0.3);
+      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+      background: var(--accent); border: none; border-radius: 10px; color: white;
+      cursor: pointer; box-shadow: 0 2px 8px rgba(232, 97, 44, 0.3);
     }
-    
     .add-btn:hover { background: #D55525; }
     
     /* Main content */
-    .main-content {
-      position: relative;
-      z-index: 10;
-      padding: 8px 16px 160px;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
+    .main-content { position: relative; z-index: 10; padding: 8px 16px 160px; max-width: 1200px; margin: 0 auto; }
     
-    /* Masonry grid - responsive */
-    .masonry {
-      column-count: 1;
-      column-gap: 12px;
-    }
+    /* Masonry grid */
+    .masonry { column-count: 1; column-gap: 12px; }
+    @media (min-width: 500px) { .masonry { column-count: 2; } }
+    @media (min-width: 800px) { .masonry { column-count: 3; column-gap: 16px; } }
+    @media (min-width: 1100px) { .masonry { column-count: 4; } }
     
-    @media (min-width: 500px) {
-      .masonry { column-count: 2; }
-    }
-    
-    @media (min-width: 800px) {
-      .masonry { column-count: 3; column-gap: 16px; }
-    }
-    
-    @media (min-width: 1100px) {
-      .masonry { column-count: 4; }
-    }
-    
-    .card-content {
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--text-primary);
-      display: -webkit-box;
-      -webkit-line-clamp: 4;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    
-    .card-keywords {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 12px;
-      padding-top: 12px;
-      border-top: 1px solid rgba(0,0,0,0.05);
-    }
-    
-    .keyword-tag {
-      font-size: 11px;
-      padding: 3px 8px;
-      background: rgba(232, 97, 44, 0.1);
-      color: var(--accent);
-      border-radius: 4px;
-    }
+    .card-content { font-size: 14px; line-height: 1.6; color: var(--text-primary); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); }
+    .keyword-tag { font-size: 11px; padding: 3px 8px; background: rgba(232, 97, 44, 0.1); color: var(--accent); border-radius: 4px; }
     
     /* Empty state */
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-    }
-    
-    .empty-state-icon {
-      width: 64px; height: 64px;
-      margin: 0 auto 16px;
-      background: var(--warm-gray);
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    .empty-state-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 20px;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-    }
-    
-    .empty-state-desc {
-      font-size: 14px;
-      color: var(--text-muted);
-    }
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-state-icon { width: 64px; height: 64px; margin: 0 auto 16px; background: var(--warm-gray); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+    .empty-state-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-primary); margin-bottom: 8px; }
+    .empty-state-desc { font-size: 14px; color: var(--text-muted); }
     
     /* Quick input */
-    .quick-input-wrapper {
-      position: fixed;
-      bottom: 72px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 32px);
-      max-width: 500px;
-      z-index: 30;
-      padding-bottom: env(safe-area-inset-bottom);
-    }
-    
-    .quick-input {
-      background: white;
-      border: 1px solid rgba(0,0,0,0.06);
-      border-radius: 12px;
-      padding: 12px 16px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    }
-    
-    .quick-input-label {
-      font-size: 11px;
-      font-weight: 500;
-      letter-spacing: 0.5px;
-      color: var(--accent);
-      margin-bottom: 4px;
-    }
-    
-    .quick-input input {
-      width: 100%;
-      border: none;
-      background: transparent;
-      font-size: 14px;
-      color: var(--text-primary);
-      outline: none;
-    }
-    
+    .quick-input-wrapper { position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 500px; z-index: 30; padding-bottom: env(safe-area-inset-bottom); }
+    .quick-input { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 12px; padding: 12px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .quick-input-label { font-size: 11px; font-weight: 500; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 4px; }
+    .quick-input input { width: 100%; border: none; background: transparent; font-size: 14px; color: var(--text-primary); outline: none; }
     .quick-input input::placeholder { color: var(--text-muted); }
     
     /* Bottom navigation */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0; left: 0; right: 0;
-      z-index: 40;
-      background: rgba(255, 253, 247, 0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(0,0,0,0.05);
-      padding: 6px 0;
-      padding-bottom: max(6px, env(safe-area-inset-bottom));
-    }
-    
-    .nav-items {
-      display: flex;
-      justify-content: space-around;
-      max-width: 400px;
-      margin: 0 auto;
-    }
-    
-    .nav-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      padding: 6px 20px;
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text-muted);
-      transition: color 0.2s;
-    }
-    
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; background: rgba(255, 253, 247, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(0,0,0,0.05); padding: 6px 0; padding-bottom: max(6px, env(safe-area-inset-bottom)); }
+    .nav-items { display: flex; justify-content: space-around; max-width: 400px; margin: 0 auto; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 20px; background: none; border: none; cursor: pointer; color: var(--text-muted); transition: color 0.2s; }
     .nav-item.active { color: var(--accent); }
     .nav-item:hover { color: var(--text-secondary); }
     .nav-item svg { width: 22px; height: 22px; }
     .nav-item span { font-size: 10px; font-weight: 500; }
     
-    /* Sidebar Menu */
-    .sidebar-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.3);
-      z-index: 50;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s;
-    }
-    
-    .sidebar-overlay.active {
-      opacity: 1;
-      visibility: visible;
-    }
-    
-    .sidebar {
-      position: fixed;
-      top: 0; left: 0; bottom: 0;
-      width: 280px;
-      background: var(--cream);
-      z-index: 51;
-      transform: translateX(-100%);
-      transition: transform 0.3s ease;
-      display: flex;
-      flex-direction: column;
-    }
-    
-    .sidebar.active {
-      transform: translateX(0);
-    }
-    
-    .sidebar-header {
-      padding: 20px;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
-    }
-    
-    .sidebar-logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    
-    .sidebar-logo-icon {
-      width: 40px; height: 40px;
-      background: var(--accent);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-weight: 600;
-      font-size: 14px;
-    }
-    
-    .sidebar-logo-text {
-      font-family: 'Playfair Display', serif;
-      font-size: 18px;
-      color: var(--text-primary);
-    }
-    
-    .sidebar-user {
-      margin-top: 16px;
-      padding: 12px;
-      background: white;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    
-    .sidebar-user-avatar {
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      background: var(--warm-gray);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-    }
-    
-    .sidebar-user-avatar img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
-    
-    .sidebar-user-info {
-      flex: 1;
-      min-width: 0;
-    }
-    
-    .sidebar-user-name {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    .sidebar-user-email {
-      font-size: 11px;
-      color: var(--text-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    .sidebar-menu {
-      flex: 1;
-      padding: 12px;
-      overflow-y: auto;
-    }
-    
-    .sidebar-menu-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px;
-      border-radius: 8px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .sidebar-menu-item:hover {
-      background: var(--warm-gray);
-    }
-    
-    .sidebar-menu-item.active {
-      background: var(--accent-light);
-      color: var(--accent);
-    }
-    
-    .sidebar-menu-item svg {
-      width: 20px; height: 20px;
-    }
-    
-    .sidebar-menu-item span {
-      font-size: 14px;
-    }
-    
-    .sidebar-footer {
-      padding: 16px;
-      border-top: 1px solid rgba(0,0,0,0.06);
-    }
-    
-    .sync-status {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    
-    .sync-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--text-muted);
-    }
-    
+    /* Sidebar */
+    .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 50; opacity: 0; visibility: hidden; transition: all 0.3s; }
+    .sidebar-overlay.active { opacity: 1; visibility: visible; }
+    .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; background: var(--cream); z-index: 51; transform: translateX(-100%); transition: transform 0.3s ease; display: flex; flex-direction: column; }
+    .sidebar.active { transform: translateX(0); }
+    .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .sidebar-logo { display: flex; align-items: center; gap: 12px; }
+    .sidebar-logo-icon { width: 40px; height: 40px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px; }
+    .sidebar-logo-text { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--text-primary); }
+    .sidebar-user { margin-top: 16px; padding: 12px; background: white; border-radius: 10px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .sidebar-user:hover { background: var(--warm-gray); }
+    .sidebar-user-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--warm-gray); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .sidebar-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .sidebar-user-info { flex: 1; min-width: 0; }
+    .sidebar-user-name { font-size: 13px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-user-email { font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sidebar-menu { flex: 1; padding: 12px; overflow-y: auto; }
+    .sidebar-menu-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; }
+    .sidebar-menu-item:hover { background: var(--warm-gray); }
+    .sidebar-menu-item.active { background: var(--accent-light); color: var(--accent); }
+    .sidebar-menu-item svg { width: 20px; height: 20px; }
+    .sidebar-menu-item span { font-size: 14px; }
+    .sidebar-footer { padding: 16px; border-top: 1px solid rgba(0,0,0,0.06); }
+    .sync-status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); }
+    .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
     .sync-dot.synced { background: var(--success); }
     .sync-dot.syncing { background: #FFC107; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
+    /* Toggle switch */
+    .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; }
+    .toggle-label { font-size: 13px; color: var(--text-secondary); }
+    .toggle { position: relative; width: 44px; height: 24px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: #ccc; border-radius: 24px; transition: 0.3s; }
+    .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
+    .toggle input:checked + .toggle-slider { background: var(--accent); }
+    .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
     
     /* Modal */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.15);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      z-index: 50;
-      display: none;
-      align-items: flex-end;
-      justify-content: center;
-    }
-    
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 50; display: none; align-items: flex-end; justify-content: center; }
     .modal-overlay.active { display: flex; }
-    
-    @media (min-width: 640px) {
-      .modal-overlay { align-items: center; }
-    }
-    
-    .modal-content {
-      background: var(--cream);
-      border-radius: 20px 20px 0 0;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-    
-    @media (min-width: 640px) {
-      .modal-content {
-        max-width: 500px;
-        border-radius: 20px;
-        max-height: 85vh;
-      }
-    }
-    
+    @media (min-width: 640px) { .modal-overlay { align-items: center; } }
+    .modal-content { background: var(--cream); border-radius: 20px 20px 0 0; width: 100%; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    @media (min-width: 640px) { .modal-content { max-width: 500px; border-radius: 20px; max-height: 85vh; } }
     .modal-body { padding: 24px; }
-    
-    .modal-close {
-      position: absolute;
-      top: 16px; right: 16px;
-      width: 32px; height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--warm-gray);
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-    }
-    
+    .modal-close { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--warm-gray); border: none; border-radius: 50%; cursor: pointer; }
     .modal-close:hover { background: #E8E6E2; }
     
     /* Add modal */
-    .add-modal-title {
-      font-family: 'Playfair Display', serif;
-      font-size: 20px;
-      color: var(--text-primary);
-      margin-bottom: 16px;
-    }
-    
-    .add-modal-textarea {
-      width: 100%;
-      height: 120px;
-      padding: 14px;
-      background: white;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 12px;
-      font-size: 14px;
-      color: var(--text-primary);
-      resize: none;
-      outline: none;
-      line-height: 1.6;
-    }
-    
+    .add-modal-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-primary); margin-bottom: 16px; }
+    .add-modal-textarea { width: 100%; height: 120px; padding: 14px; background: white; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; font-size: 14px; color: var(--text-primary); resize: none; outline: none; line-height: 1.6; }
     .add-modal-textarea:focus { border-color: var(--accent); }
     .add-modal-textarea::placeholder { color: var(--text-muted); }
+    .add-modal-hint { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--text-muted); }
+    .add-modal-actions { display: flex; gap: 12px; margin-top: 20px; }
     
-    .add-modal-hint {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-top: 12px;
-      font-size: 12px;
-      color: var(--text-muted);
-    }
-    
-    .add-modal-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-    }
-    
-    .btn {
-      flex: 1;
-      padding: 12px 16px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
+    .btn { flex: 1; padding: 12px 16px; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
     .btn-secondary { background: var(--warm-gray); color: var(--text-secondary); }
     .btn-secondary:hover { background: #E8E6E2; }
     .btn-primary { background: var(--accent); color: white; }
@@ -600,467 +199,106 @@
     .btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; }
     
     /* Detail modal */
-    .detail-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 16px;
-    }
-    
-    .detail-meta {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    
-    .type-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-    }
-    
+    .detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .detail-meta { display: flex; align-items: center; gap: 8px; }
+    .type-dot { width: 6px; height: 6px; border-radius: 50%; }
     .type-word { background: #E8A87C; }
     .type-sentence { background: #85B8A0; }
     .type-paragraph { background: #9B8AA6; }
-    
     .detail-date { font-size: 12px; color: var(--text-muted); }
+    .detail-content { font-size: 18px; line-height: 1.6; color: var(--text-primary); font-weight: 300; margin-bottom: 8px; }
+    .detail-translation { font-size: 14px; line-height: 1.6; color: var(--text-secondary); padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.06); }
     
-    .detail-content {
-      font-size: 18px;
-      line-height: 1.6;
-      color: var(--text-primary);
-      font-weight: 300;
-      margin-bottom: 8px;
-    }
-    
-    .detail-translation {
-      font-size: 14px;
-      line-height: 1.6;
-      color: var(--text-secondary);
-      padding-bottom: 20px;
-      margin-bottom: 20px;
-      border-bottom: 1px solid rgba(0,0,0,0.06);
-    }
-    
-    /* Keywords section */
+    /* Keywords */
     .keywords-section { margin-bottom: 20px; }
+    .keywords-title { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .keywords-title-bar { width: 3px; height: 14px; background: var(--accent); border-radius: 2px; }
+    .keywords-title-text { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+    .keywords-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .keyword-btn { padding: 8px 14px; background: white; border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; font-size: 13px; color: var(--text-primary); cursor: pointer; transition: all 0.2s; }
+    .keyword-btn:hover, .keyword-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
     
-    .keywords-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    
-    .keywords-title-bar {
-      width: 3px; height: 14px;
-      background: var(--accent);
-      border-radius: 2px;
-    }
-    
-    .keywords-title-text {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-secondary);
-    }
-    
-    .keywords-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    
-    .keyword-btn {
-      padding: 8px 14px;
-      background: white;
-      border: 1px solid rgba(0,0,0,0.08);
-      border-radius: 8px;
-      font-size: 13px;
-      color: var(--text-primary);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .keyword-btn:hover, .keyword-btn.active {
-      background: var(--accent-light);
-      border-color: var(--accent);
-      color: var(--accent);
-    }
-    
-    /* Etymology box */
-    .etymology-box {
-      background: white;
-      border: 1px solid rgba(0,0,0,0.06);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-    
-    .etymology-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 4px;
-    }
-    
-    .etymology-word {
-      font-family: 'Playfair Display', serif;
-      font-size: 22px;
-      color: var(--text-primary);
-    }
-    
-    .speak-btn {
-      width: 36px; height: 36px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--accent-light);
-      border: none;
-      border-radius: 50%;
-      color: var(--accent);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .speak-btn:hover {
-      background: var(--accent);
-      color: white;
-    }
-    
-    .speak-btn.speaking {
-      background: var(--accent);
-      color: white;
-      animation: pulse 0.5s infinite;
-    }
-    
-    .etymology-phonetic {
-      font-size: 14px;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-    }
-    
-    .etymology-item {
-      font-size: 13px;
-      margin-bottom: 8px;
-      line-height: 1.5;
-    }
-    
+    /* Etymology */
+    .etymology-box { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+    .etymology-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .etymology-word { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--text-primary); }
+    .speak-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--accent-light); border: none; border-radius: 50%; color: var(--accent); cursor: pointer; transition: all 0.2s; }
+    .speak-btn:hover { background: var(--accent); color: white; }
+    .etymology-phonetic { font-size: 14px; color: var(--text-muted); margin-bottom: 12px; }
+    .etymology-item { font-size: 13px; margin-bottom: 8px; line-height: 1.5; }
     .etymology-item:last-child { margin-bottom: 0; }
     .etymology-label { color: var(--text-muted); }
     .etymology-value { color: var(--text-secondary); }
     
-    /* Spinner */
-    .spinner {
-      width: 18px; height: 18px;
-      border: 2px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      margin: 0 auto;
-    }
-    
+    /* Spinner & Toast */
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    
-    /* Toast */
-    .toast {
-      position: fixed;
-      top: 20px;
-      top: max(20px, env(safe-area-inset-top));
-      left: 50%;
-      transform: translateX(-50%) translateY(-100px);
-      background: var(--text-primary);
-      color: white;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-size: 14px;
-      z-index: 100;
-      transition: transform 0.3s ease;
-      max-width: 90%;
-      text-align: center;
-    }
-    
+    .toast { position: fixed; top: 20px; top: max(20px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--text-primary); color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 100; transition: transform 0.3s ease; max-width: 90%; text-align: center; }
     .toast.show { transform: translateX(-50%) translateY(0); }
     .toast.error { background: var(--error); }
     .toast.success { background: var(--success); }
     
-    /* Review tab */
-    .review-container {
-      display: none;
-      padding: 40px 20px 160px;
-      text-align: center;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-    
+    /* Review */
+    .review-container { display: none; padding: 40px 20px 160px; text-align: center; max-width: 500px; margin: 0 auto; }
     .review-container.active { display: block; }
-    
-    .flashcard {
-      perspective: 1000px;
-      width: 100%;
-      max-width: 340px;
-      height: 220px;
-      margin: 0 auto 24px;
-      cursor: pointer;
-    }
-    
-    .flashcard-inner {
-      position: relative;
-      width: 100%; height: 100%;
-      transition: transform 0.6s;
-      transform-style: preserve-3d;
-    }
-    
-    .flashcard.flipped .flashcard-inner {
-      transform: rotateY(180deg);
-    }
-    
-    .flashcard-front, .flashcard-back {
-      position: absolute;
-      width: 100%; height: 100%;
-      backface-visibility: hidden;
-      -webkit-backface-visibility: hidden;
-      background: var(--card-yellow);
-      border-radius: 16px;
-      padding: 24px;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-    }
-    
-    .flashcard-back {
-      transform: rotateY(180deg);
-      text-align: left;
-      justify-content: flex-start;
-      align-items: stretch;
-      overflow-y: auto;
-    }
-    
-    .flashcard-word {
-      font-family: 'Playfair Display', serif;
-      font-size: 28px;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-    }
-    
-    .flashcard-phonetic {
-      font-size: 15px;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-    }
-    
-    .flashcard-speak-btn {
-      width: 40px; height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: white;
-      border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 50%;
-      color: var(--accent);
-      cursor: pointer;
-    }
-    
-    .flashcard-speak-btn:hover {
-      background: var(--accent);
-      color: white;
-    }
-    
-    .flashcard-back-word {
-      font-family: 'Playfair Display', serif;
-      font-size: 20px;
-      color: var(--text-primary);
-      margin-bottom: 4px;
-    }
-    
-    .flashcard-back-phonetic {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 10px;
-    }
-    
-    .flashcard-back-meaning {
-      font-size: 15px;
-      color: var(--text-primary);
-      margin-bottom: 10px;
-      font-weight: 500;
-    }
-    
-    .flashcard-back-detail {
-      font-size: 12px;
-      color: var(--text-secondary);
-      line-height: 1.5;
-    }
-    
+    .flashcard { perspective: 1000px; width: 100%; max-width: 340px; height: 220px; margin: 0 auto 24px; cursor: pointer; }
+    .flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+    .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
+    .flashcard-front, .flashcard-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: var(--card-yellow); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .flashcard-back { transform: rotateY(180deg); text-align: left; justify-content: flex-start; align-items: stretch; overflow-y: auto; }
+    .flashcard-word { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--text-primary); margin-bottom: 8px; }
+    .flashcard-phonetic { font-size: 15px; color: var(--text-muted); margin-bottom: 12px; }
+    .flashcard-speak-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid rgba(0,0,0,0.1); border-radius: 50%; color: var(--accent); cursor: pointer; }
+    .flashcard-speak-btn:hover { background: var(--accent); color: white; }
+    .flashcard-back-word { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-primary); margin-bottom: 4px; }
+    .flashcard-back-phonetic { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
+    .flashcard-back-meaning { font-size: 15px; color: var(--text-primary); margin-bottom: 10px; font-weight: 500; }
+    .flashcard-back-detail { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
     .flashcard-back-detail span { color: var(--text-muted); }
-    
-    .review-actions {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-    }
-    
-    .review-btn {
-      padding: 12px 28px;
-      border: none;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-    
+    .review-actions { display: flex; gap: 16px; justify-content: center; }
+    .review-btn { padding: 12px 28px; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; }
     .review-btn.know { background: var(--success); color: white; }
     .review-btn.know:hover { background: #43A047; }
     .review-btn.dont-know { background: #FF7043; color: white; }
     .review-btn.dont-know:hover { background: #F4511E; }
+    .review-progress { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+    .review-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
     
-    .review-progress {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-    }
-    
-    .review-hint {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-    }
-    
-    /* Settings tab */
-    .settings-container {
-      display: none;
-      padding: 20px 16px 160px;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-    
+    /* Settings */
+    .settings-container { display: none; padding: 20px 16px 160px; max-width: 500px; margin: 0 auto; }
     .settings-container.active { display: block; }
-    
     .settings-section { margin-bottom: 24px; }
-    
-    .settings-title {
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 10px;
-    }
-    
-    .settings-card {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    
-    .settings-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 16px;
-      border-bottom: 1px solid rgba(0,0,0,0.05);
-    }
-    
+    .settings-title { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
+    .settings-card { background: white; border-radius: 12px; overflow: hidden; }
+    .settings-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,0.05); }
     .settings-item:last-child { border-bottom: none; }
-    
     .settings-item-label { font-size: 14px; color: var(--text-primary); }
     .settings-item-value { font-size: 13px; color: var(--text-muted); }
-    
-    .settings-input {
-      padding: 8px 12px;
-      border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 8px;
-      font-size: 13px;
-      width: 140px;
-      text-align: right;
-      outline: none;
-    }
-    
+    .settings-input { padding: 8px 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; font-size: 13px; width: 140px; text-align: right; outline: none; }
     .settings-input:focus { border-color: var(--accent); }
+    .settings-select { padding: 8px 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; font-size: 13px; background: white; min-width: 120px; outline: none; }
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+    .stat-card { background: white; border-radius: 12px; padding: 14px 10px; text-align: center; }
+    .stat-value { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--text-primary); }
+    .stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
     
-    .settings-select {
-      padding: 8px 12px;
-      border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 8px;
-      font-size: 13px;
-      background: white;
-      min-width: 120px;
-      outline: none;
-    }
-    
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-bottom: 24px;
-    }
-    
-    .stat-card {
-      background: white;
-      border-radius: 12px;
-      padding: 14px 10px;
-      text-align: center;
-    }
-    
-    .stat-value {
-      font-family: 'Playfair Display', serif;
-      font-size: 26px;
-      color: var(--text-primary);
-    }
-    
-    .stat-label {
-      font-size: 10px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-    
-    /* Google Sign In button */
-    .google-signin-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      width: 100%;
-      padding: 12px;
-      background: white;
-      border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 10px;
-      font-size: 14px;
-      color: var(--text-primary);
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    
-    .google-signin-btn:hover {
-      background: var(--warm-gray);
-    }
-    
-    .google-signin-btn img {
-      width: 18px; height: 18px;
-    }
-    
-    /* Hide class */
     .hide { display: none !important; }
   </style>
 </head>
 <body>
   <div class="ambient-glow"></div>
   <div class="ambient-glow-2"></div>
-  
   <div id="toast" class="toast"></div>
   
-  <!-- Sidebar Overlay -->
-  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
-  
   <!-- Sidebar -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="sidebar-logo">
         <div class="sidebar-logo-icon">En</div>
         <div class="sidebar-logo-text">English Collector</div>
       </div>
-      
-      <div class="sidebar-user" id="sidebarUser">
+      <div class="sidebar-user" id="sidebarUser" onclick="handleGoogleAuth()">
         <div class="sidebar-user-avatar" id="userAvatar">
           <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path>
@@ -1068,27 +306,25 @@
         </div>
         <div class="sidebar-user-info">
           <div class="sidebar-user-name" id="userName">未登录</div>
-          <div class="sidebar-user-email" id="userEmail">点击登录同步数据</div>
+          <div class="sidebar-user-email" id="userEmail">点击登录 Google 同步</div>
         </div>
       </div>
     </div>
     
     <div class="sidebar-menu">
-      <div class="sidebar-menu-item" onclick="handleGoogleAuth()">
-        <svg width="20" height="20" viewBox="0 0 24 24">
-          <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-          <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-          <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-          <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-        </svg>
-        <span id="googleAuthText">登录 Google 同步</span>
+      <div class="toggle-row">
+        <span class="toggle-label">自动同步</span>
+        <label class="toggle">
+          <input type="checkbox" id="autoSyncToggle" onchange="toggleAutoSync()">
+          <span class="toggle-slider"></span>
+        </label>
       </div>
       
-      <div class="sidebar-menu-item" onclick="syncToCloud()">
+      <div class="sidebar-menu-item" onclick="manualSync()">
         <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l3 3m-3-3l-3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
         </svg>
-        <span>同步到云端</span>
+        <span>立即同步</span>
       </div>
       
       <div class="sidebar-menu-item" onclick="syncFromCloud()">
@@ -1115,11 +351,9 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
         </svg>
       </button>
-      
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="Search my mind..." oninput="handleSearch()">
       </div>
-      
       <button class="add-btn" onclick="openAddModal()">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
@@ -1147,7 +381,6 @@
     <div id="reviewContent">
       <p class="review-progress" id="reviewProgress">1 / 20</p>
       <p class="review-hint">点击卡片翻转，点击喇叭听发音</p>
-      
       <div class="flashcard" id="flashcard" onclick="flipCard()">
         <div class="flashcard-inner">
           <div class="flashcard-front">
@@ -1162,13 +395,11 @@
           <div class="flashcard-back" id="flashcardBack"></div>
         </div>
       </div>
-      
       <div class="review-actions">
         <button class="review-btn dont-know" onclick="markCard(false)">不认识</button>
         <button class="review-btn know" onclick="markCard(true)">认识</button>
       </div>
     </div>
-    
     <div id="reviewEmpty" class="hide">
       <div class="empty-state">
         <div class="empty-state-icon">
@@ -1185,20 +416,10 @@
   <!-- Settings tab -->
   <div class="settings-container" id="settingsTab">
     <div class="stats-grid">
-      <div class="stat-card">
-        <div class="stat-value" id="statTotal">0</div>
-        <div class="stat-label">收藏</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="statWords">0</div>
-        <div class="stat-label">单词</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-value" id="statDays">0</div>
-        <div class="stat-label">天</div>
-      </div>
+      <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">收藏</div></div>
+      <div class="stat-card"><div class="stat-value" id="statWords">0</div><div class="stat-label">单词</div></div>
+      <div class="stat-card"><div class="stat-value" id="statDays">0</div><div class="stat-label">天</div></div>
     </div>
-    
     <div class="settings-section">
       <div class="settings-title">AI 设置</div>
       <div class="settings-card">
@@ -1213,8 +434,6 @@
           <span class="settings-item-label">模型</span>
           <select class="settings-select" id="apiModel" onchange="saveSettings()">
             <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-            <option value="gemini-1.5-flash">Gemini 1.5 Flash</option>
-            <option value="gemini-1.5-pro">Gemini 1.5 Pro</option>
           </select>
         </div>
         <div class="settings-item">
@@ -1223,45 +442,28 @@
         </div>
       </div>
     </div>
-    
     <div class="settings-section">
       <div class="settings-title">数据管理</div>
       <div class="settings-card">
         <div class="settings-item" style="cursor: pointer;" onclick="exportJSON()">
           <span class="settings-item-label">导出备份 (JSON)</span>
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
-          </svg>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path></svg>
         </div>
         <div class="settings-item" style="cursor: pointer;" onclick="document.getElementById('importFile').click()">
           <span class="settings-item-label">导入备份</span>
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"></path>
-          </svg>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"></path></svg>
           <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importJSON(event)">
         </div>
-        <div class="settings-item" style="cursor: pointer;" onclick="exportAnki('sentences')">
-          <span class="settings-item-label">导出到 Anki (句子)</span>
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
-          </svg>
-        </div>
         <div class="settings-item" style="cursor: pointer;" onclick="exportAnki('words')">
-          <span class="settings-item-label">导出到 Anki (单词)</span>
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path>
-          </svg>
+          <span class="settings-item-label">导出到 Anki</span>
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path></svg>
         </div>
       </div>
     </div>
-    
     <div class="settings-section">
       <div class="settings-title">关于</div>
       <div class="settings-card">
-        <div class="settings-item">
-          <span class="settings-item-label">版本</span>
-          <span class="settings-item-value">1.1.0</span>
-        </div>
+        <div class="settings-item"><span class="settings-item-label">版本</span><span class="settings-item-value">1.2.0</span></div>
       </div>
     </div>
   </div>
@@ -1278,25 +480,15 @@
   <nav class="bottom-nav">
     <div class="nav-items">
       <button class="nav-item active" data-tab="everything" onclick="switchTab('everything')">
-        <svg fill="currentColor" viewBox="0 0 24 24">
-          <rect x="3" y="3" width="7" height="7" rx="1.5"></rect>
-          <rect x="14" y="3" width="7" height="7" rx="1.5"></rect>
-          <rect x="3" y="14" width="7" height="7" rx="1.5"></rect>
-          <rect x="14" y="14" width="7" height="7" rx="1.5"></rect>
-        </svg>
+        <svg fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
         <span>Everything</span>
       </button>
       <button class="nav-item" data-tab="review" onclick="switchTab('review')">
-        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path>
-        </svg>
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
         <span>Review</span>
       </button>
       <button class="nav-item" data-tab="settings" onclick="switchTab('settings')">
-        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-        </svg>
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
         <span>Settings</span>
       </button>
     </div>
@@ -1309,16 +501,12 @@
         <h2 class="add-modal-title">Save to your mind</h2>
         <textarea class="add-modal-textarea" id="addInput" placeholder="粘贴或输入英文内容..."></textarea>
         <div class="add-modal-hint">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"></path>
-          </svg>
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"></path></svg>
           <span>AI 将自动分析并提取重点词汇</span>
         </div>
         <div class="add-modal-actions">
           <button class="btn btn-secondary" onclick="closeAddModal()">取消</button>
-          <button class="btn btn-primary" id="saveBtn" onclick="saveCard()">
-            <span id="saveBtnText">保存</span>
-          </button>
+          <button class="btn btn-primary" id="saveBtn" onclick="saveCard()"><span id="saveBtnText">保存</span></button>
         </div>
       </div>
     </div>
@@ -1333,56 +521,43 @@
 
   <script>
     // ==================== Config ====================
-    // REPLACE THIS WITH YOUR GOOGLE CLIENT ID
     const GOOGLE_CLIENT_ID = '550666764387-5tofkeq6i4r9a8n15i50rfrgikdeinp6.apps.googleusercontent.com';
-    const DRIVE_FILE_NAME = 'english-collector-data.json';
+    const DRIVE_FILE_NAME = 'english-collector-backup.json';
     
-    // ==================== Data Store ====================
+    // ==================== State ====================
     let cards = [];
-    let settings = {
-      apiProvider: 'gemini',
-      apiModel: 'gemini-2.0-flash',
-      apiKey: '',
-      firstUseDate: null
-    };
+    let settings = { apiProvider: 'gemini', apiModel: 'gemini-2.0-flash', apiKey: '', firstUseDate: null, autoSync: false };
     let reviewState = { words: [], currentIndex: 0, results: [] };
     let googleUser = null;
     let accessToken = null;
 
     // ==================== IndexedDB ====================
     const DB_NAME = 'EnglishCollectorDB';
-    const DB_VERSION = 1;
     let db;
 
     async function initDB() {
       return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        const request = indexedDB.open(DB_NAME, 1);
         request.onerror = () => reject(request.error);
         request.onsuccess = () => { db = request.result; resolve(db); };
-        request.onupgradeneeded = (event) => {
-          const database = event.target.result;
-          if (!database.objectStoreNames.contains('cards')) {
-            database.createObjectStore('cards', { keyPath: 'id' }).createIndex('createdAt', 'createdAt');
-          }
-          if (!database.objectStoreNames.contains('settings')) {
-            database.createObjectStore('settings', { keyPath: 'key' });
-          }
+        request.onupgradeneeded = (e) => {
+          const database = e.target.result;
+          if (!database.objectStoreNames.contains('cards')) database.createObjectStore('cards', { keyPath: 'id' });
+          if (!database.objectStoreNames.contains('settings')) database.createObjectStore('settings', { keyPath: 'key' });
         };
       });
     }
 
     async function loadData() {
-      const cardStore = db.transaction(['cards'], 'readonly').objectStore('cards');
       cards = await new Promise((resolve, reject) => {
-        const req = cardStore.getAll();
+        const req = db.transaction(['cards'], 'readonly').objectStore('cards').getAll();
         req.onsuccess = () => resolve(req.result || []);
         req.onerror = () => reject(req.error);
       });
       cards.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       
-      const settingsStore = db.transaction(['settings'], 'readonly').objectStore('settings');
       const saved = await new Promise((resolve, reject) => {
-        const req = settingsStore.get('main');
+        const req = db.transaction(['settings'], 'readonly').objectStore('settings').get('main');
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
       });
@@ -1391,61 +566,52 @@
       document.getElementById('apiProvider').value = settings.apiProvider;
       document.getElementById('apiModel').value = settings.apiModel;
       document.getElementById('apiKey').value = settings.apiKey;
+      document.getElementById('autoSyncToggle').checked = settings.autoSync;
       updateModelOptions();
     }
 
     async function saveCardToDB(card) {
-      const store = db.transaction(['cards'], 'readwrite').objectStore('cards');
-      await store.put(card);
+      await db.transaction(['cards'], 'readwrite').objectStore('cards').put(card);
       const idx = cards.findIndex(c => c.id === card.id);
       if (idx >= 0) cards[idx] = card; else cards.unshift(card);
     }
 
     async function deleteCardFromDB(cardId) {
-      const store = db.transaction(['cards'], 'readwrite').objectStore('cards');
-      await store.delete(cardId);
+      await db.transaction(['cards'], 'readwrite').objectStore('cards').delete(cardId);
       cards = cards.filter(c => c.id !== cardId);
     }
 
     async function saveSettingsToDB() {
-      const store = db.transaction(['settings'], 'readwrite').objectStore('settings');
-      await store.put({ key: 'main', value: settings });
+      await db.transaction(['settings'], 'readwrite').objectStore('settings').put({ key: 'main', value: settings });
     }
 
     // ==================== Sidebar ====================
-    function openSidebar() {
-      document.getElementById('sidebar').classList.add('active');
-      document.getElementById('sidebarOverlay').classList.add('active');
-    }
-
-    function closeSidebar() {
-      document.getElementById('sidebar').classList.remove('active');
-      document.getElementById('sidebarOverlay').classList.remove('active');
-    }
+    function openSidebar() { document.getElementById('sidebar').classList.add('active'); document.getElementById('sidebarOverlay').classList.add('active'); }
+    function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); document.getElementById('sidebarOverlay').classList.remove('active'); }
 
     // ==================== Google Auth ====================
     function handleGoogleAuth() {
       if (googleUser) {
-        // Logout
-        googleUser = null;
-        accessToken = null;
-        updateUserUI();
-        showToast('已退出登录', 'success');
+        if (confirm('确定要退出登录吗？')) {
+          googleUser = null; accessToken = null;
+          localStorage.removeItem('ec_access_token');
+          localStorage.removeItem('ec_user');
+          updateUserUI();
+          showToast('已退出登录', 'success');
+        }
         return;
       }
       
-      if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
-        showToast('请先配置 Google Client ID', 'error');
-        return;
-      }
-
       const client = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
-        scope: 'https://www.googleapis.com/auth/drive.file',
-        callback: (response) => {
+        scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+        callback: async (response) => {
           if (response.access_token) {
             accessToken = response.access_token;
-            fetchUserInfo();
+            localStorage.setItem('ec_access_token', accessToken);
+            await fetchUserInfo();
+            // Auto sync on login
+            if (settings.autoSync) await syncFromCloud();
           }
         },
       });
@@ -1457,11 +623,16 @@
         const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
           headers: { 'Authorization': `Bearer ${accessToken}` }
         });
+        if (!res.ok) throw new Error('Token expired');
         googleUser = await res.json();
+        localStorage.setItem('ec_user', JSON.stringify(googleUser));
         updateUserUI();
         showToast('登录成功！', 'success');
       } catch (e) {
-        showToast('获取用户信息失败', 'error');
+        accessToken = null;
+        localStorage.removeItem('ec_access_token');
+        localStorage.removeItem('ec_user');
+        updateUserUI();
       }
     }
 
@@ -1469,24 +640,19 @@
       const avatar = document.getElementById('userAvatar');
       const name = document.getElementById('userName');
       const email = document.getElementById('userEmail');
-      const authText = document.getElementById('googleAuthText');
       const syncDot = document.getElementById('syncDot');
       const syncText = document.getElementById('syncStatusText');
       
       if (googleUser) {
-        avatar.innerHTML = googleUser.picture 
-          ? `<img src="${googleUser.picture}" alt="avatar">`
-          : `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>`;
+        avatar.innerHTML = googleUser.picture ? `<img src="${googleUser.picture}" alt="">` : '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>';
         name.textContent = googleUser.name || '用户';
-        email.textContent = googleUser.email || '';
-        authText.textContent = '退出登录';
+        email.textContent = googleUser.email || '点击退出登录';
         syncDot.classList.add('synced');
-        syncText.textContent = '已连接 Google Drive';
+        syncText.textContent = '已连接 Google';
       } else {
-        avatar.innerHTML = `<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>`;
+        avatar.innerHTML = '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>';
         name.textContent = '未登录';
-        email.textContent = '点击登录同步数据';
-        authText.textContent = '登录 Google 同步';
+        email.textContent = '点击登录 Google 同步';
         syncDot.classList.remove('synced');
         syncText.textContent = '本地存储';
       }
@@ -1494,28 +660,25 @@
 
     // ==================== Google Drive Sync ====================
     async function findDriveFile() {
-      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}'&spaces=appDataFolder`, {
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}' and trashed=false&fields=files(id,name)`, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
+      if (!res.ok) throw new Error('Failed to search files');
       const data = await res.json();
       return data.files && data.files.length > 0 ? data.files[0].id : null;
     }
 
     async function syncToCloud() {
-      if (!accessToken) {
-        showToast('请先登录 Google', 'error');
-        return;
-      }
+      if (!accessToken) { showToast('请先登录 Google', 'error'); return false; }
       
       const syncDot = document.getElementById('syncDot');
       const syncText = document.getElementById('syncStatusText');
-      syncDot.classList.remove('synced');
-      syncDot.classList.add('syncing');
-      syncText.textContent = '正在同步...';
+      syncDot.classList.remove('synced'); syncDot.classList.add('syncing');
+      syncText.textContent = '同步中...';
       
       try {
         const data = JSON.stringify({
-          version: '1.1.0',
+          version: '1.2.0',
           syncDate: new Date().toISOString(),
           cards: cards,
           settings: { ...settings, apiKey: '' }
@@ -1524,26 +687,18 @@
         let fileId = await findDriveFile();
         
         if (fileId) {
-          // Update existing file
+          // Update
           await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
             method: 'PATCH',
-            headers: {
-              'Authorization': `Bearer ${accessToken}`,
-              'Content-Type': 'application/json'
-            },
+            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
             body: data
           });
         } else {
-          // Create new file
-          const metadata = {
-            name: DRIVE_FILE_NAME,
-            parents: ['appDataFolder']
-          };
-          
+          // Create
+          const metadata = { name: DRIVE_FILE_NAME, mimeType: 'application/json' };
           const form = new FormData();
           form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
           form.append('file', new Blob([data], { type: 'application/json' }));
-          
           await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${accessToken}` },
@@ -1551,101 +706,101 @@
           });
         }
         
-        syncDot.classList.remove('syncing');
-        syncDot.classList.add('synced');
-        syncText.textContent = '同步完成';
-        showToast('已同步到 Google Drive', 'success');
-        
+        syncDot.classList.remove('syncing'); syncDot.classList.add('synced');
+        syncText.textContent = '已同步';
+        return true;
       } catch (e) {
         console.error('Sync error:', e);
         syncDot.classList.remove('syncing');
         syncText.textContent = '同步失败';
-        showToast('同步失败: ' + e.message, 'error');
+        return false;
       }
     }
 
     async function syncFromCloud() {
-      if (!accessToken) {
-        showToast('请先登录 Google', 'error');
-        return;
-      }
+      if (!accessToken) { showToast('请先登录 Google', 'error'); return; }
       
       try {
         const fileId = await findDriveFile();
-        
-        if (!fileId) {
-          showToast('云端没有备份数据', 'error');
-          return;
-        }
+        if (!fileId) { showToast('云端没有备份', 'error'); return; }
         
         const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
           headers: { 'Authorization': `Bearer ${accessToken}` }
         });
+        if (!res.ok) throw new Error('Failed to download');
         
         const data = await res.json();
-        
         if (data.cards) {
-          for (const card of data.cards) {
-            await saveCardToDB(card);
-          }
+          // Merge: keep newer version of each card
+          const cardMap = new Map(cards.map(c => [c.id, c]));
+          data.cards.forEach(c => {
+            const existing = cardMap.get(c.id);
+            if (!existing || new Date(c.createdAt) > new Date(existing.createdAt)) {
+              cardMap.set(c.id, c);
+            }
+          });
+          
+          // Save all to DB
+          for (const card of cardMap.values()) await saveCardToDB(card);
+          
+          cards = Array.from(cardMap.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
           renderCards();
           updateStats();
-          showToast(`已恢复 ${data.cards.length} 条收藏`, 'success');
+          showToast(`已同步 ${cards.length} 条收藏`, 'success');
         }
-        
       } catch (e) {
         console.error('Restore error:', e);
         showToast('恢复失败: ' + e.message, 'error');
       }
     }
 
-    // ==================== Speech Synthesis ====================
+    async function manualSync() {
+      if (!accessToken) { showToast('请先登录 Google', 'error'); return; }
+      closeSidebar();
+      
+      const success = await syncToCloud();
+      if (success) showToast('同步完成！', 'success');
+      else showToast('同步失败', 'error');
+    }
+
+    function toggleAutoSync() {
+      settings.autoSync = document.getElementById('autoSyncToggle').checked;
+      saveSettingsToDB();
+      showToast(settings.autoSync ? '已开启自动同步' : '已关闭自动同步', 'success');
+    }
+
+    // ==================== Speech ====================
     function speakWord(word) {
       if (!word) return;
-      
-      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
-      
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
       utterance.rate = 0.8;
-      
-      // Try to find an English voice
       const voices = window.speechSynthesis.getVoices();
-      const englishVoice = voices.find(v => v.lang.startsWith('en'));
-      if (englishVoice) utterance.voice = englishVoice;
-      
+      const voice = voices.find(v => v.lang.startsWith('en'));
+      if (voice) utterance.voice = voice;
       window.speechSynthesis.speak(utterance);
     }
 
-    // ==================== UI Functions ====================
+    // ==================== UI ====================
     function renderCards() {
       const grid = document.getElementById('cardGrid');
       const emptyState = document.getElementById('emptyState');
-      const searchQuery = document.getElementById('searchInput').value.toLowerCase();
+      const query = document.getElementById('searchInput').value.toLowerCase();
       
-      const filtered = cards.filter(card => {
-        const contentMatch = card.content.toLowerCase().includes(searchQuery);
-        const translationMatch = card.translation?.toLowerCase().includes(searchQuery);
-        const keywordMatch = card.keywords?.some(k => k.word.toLowerCase().includes(searchQuery));
-        return contentMatch || translationMatch || keywordMatch;
-      });
+      const filtered = cards.filter(c => 
+        c.content.toLowerCase().includes(query) ||
+        c.translation?.toLowerCase().includes(query) ||
+        c.keywords?.some(k => k.word.toLowerCase().includes(query))
+      );
       
-      if (filtered.length === 0) {
-        grid.innerHTML = '';
-        emptyState.classList.remove('hide');
-        return;
-      }
-      
+      if (filtered.length === 0) { grid.innerHTML = ''; emptyState.classList.remove('hide'); return; }
       emptyState.classList.add('hide');
+      
       grid.innerHTML = filtered.map(card => `
         <div class="card" onclick="openDetailModal('${card.id}')">
           <div class="card-content">${escapeHtml(card.content)}</div>
-          ${card.keywords?.length > 0 ? `
-            <div class="card-keywords">
-              ${card.keywords.slice(0, 3).map(k => `<span class="keyword-tag">${escapeHtml(k.word)}</span>`).join('')}
-            </div>
-          ` : ''}
+          ${card.keywords?.length > 0 ? `<div class="card-keywords">${card.keywords.slice(0, 3).map(k => `<span class="keyword-tag">${escapeHtml(k.word)}</span>`).join('')}</div>` : ''}
         </div>
       `).join('');
     }
@@ -1662,70 +817,42 @@
       if (card.keywords?.length > 0) {
         keywordsHtml = `
           <div class="keywords-section">
-            <div class="keywords-title">
-              <div class="keywords-title-bar"></div>
-              <span class="keywords-title-text">重点词汇 (点击查看详情)</span>
-            </div>
-            <div class="keywords-list">
-              ${card.keywords.map((k, i) => `
-                <button class="keyword-btn ${i === 0 ? 'active' : ''}" onclick="showEtymology('${cardId}', ${i})">${escapeHtml(k.word)}</button>
-              `).join('')}
-            </div>
+            <div class="keywords-title"><div class="keywords-title-bar"></div><span class="keywords-title-text">重点词汇</span></div>
+            <div class="keywords-list">${card.keywords.map((k, i) => `<button class="keyword-btn ${i === 0 ? 'active' : ''}" onclick="showEtymology('${cardId}', ${i})">${escapeHtml(k.word)}</button>`).join('')}</div>
           </div>
-          <div class="etymology-box" id="etymologyBox">
-            ${renderEtymology(card.keywords[0])}
-          </div>
+          <div class="etymology-box" id="etymologyBox">${renderEtymology(card.keywords[0])}</div>
         `;
       }
       
       document.getElementById('detailBody').innerHTML = `
         <div class="detail-header">
-          <div class="detail-meta">
-            <span class="type-dot ${typeClass}"></span>
-            <span class="detail-date">${typeLabel} · ${date}</span>
-          </div>
-          <button class="modal-close" onclick="closeDetailModal()">
-            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path>
-            </svg>
-          </button>
+          <div class="detail-meta"><span class="type-dot ${typeClass}"></span><span class="detail-date">${typeLabel} · ${date}</span></div>
+          <button class="modal-close" onclick="closeDetailModal()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
         </div>
         <p class="detail-content">${escapeHtml(card.content)}</p>
         <p class="detail-translation">${escapeHtml(card.translation || '')}</p>
         ${keywordsHtml}
         <div class="add-modal-actions">
           <button class="btn btn-secondary" onclick="deleteCard('${cardId}')">删除</button>
-          <button class="btn btn-primary" onclick="exportSingleAnki('${cardId}')">导出到 Anki</button>
+          <button class="btn btn-primary" onclick="exportSingleAnki('${cardId}')">导出 Anki</button>
         </div>
       `;
-      
       document.getElementById('detailModal').classList.add('active');
     }
 
-    function renderEtymology(keyword) {
-      if (!keyword) return '';
+    function renderEtymology(kw) {
+      if (!kw) return '';
       return `
         <div class="etymology-header">
-          <div class="etymology-word">${escapeHtml(keyword.word)}</div>
-          <button class="speak-btn" onclick="speakWord('${escapeHtml(keyword.word)}')" title="听发音">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"></path>
-            </svg>
+          <div class="etymology-word">${escapeHtml(kw.word)}</div>
+          <button class="speak-btn" onclick="speakWord('${escapeHtml(kw.word)}')" title="听发音">
+            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"></path></svg>
           </button>
         </div>
-        ${keyword.phonetic ? `<div class="etymology-phonetic">${escapeHtml(keyword.phonetic)}</div>` : ''}
-        <div class="etymology-item">
-          <span class="etymology-label">构词 · </span>
-          <span class="etymology-value">${escapeHtml(keyword.roots || '-')}</span>
-        </div>
-        <div class="etymology-item">
-          <span class="etymology-label">来源 · </span>
-          <span class="etymology-value">${escapeHtml(keyword.origin || '-')}</span>
-        </div>
-        <div class="etymology-item">
-          <span class="etymology-label">释义 · </span>
-          <span class="etymology-value">${escapeHtml(keyword.meaning || '-')}</span>
-        </div>
+        ${kw.phonetic ? `<div class="etymology-phonetic">${escapeHtml(kw.phonetic)}</div>` : ''}
+        <div class="etymology-item"><span class="etymology-label">构词 · </span><span class="etymology-value">${escapeHtml(kw.roots || '-')}</span></div>
+        <div class="etymology-item"><span class="etymology-label">来源 · </span><span class="etymology-value">${escapeHtml(kw.origin || '-')}</span></div>
+        <div class="etymology-item"><span class="etymology-label">释义 · </span><span class="etymology-value">${escapeHtml(kw.meaning || '-')}</span></div>
       `;
     }
 
@@ -1740,71 +867,59 @@
     function openAddModal() { document.getElementById('addModal').classList.add('active'); document.getElementById('addInput').focus(); }
     function closeAddModal() { document.getElementById('addModal').classList.remove('active'); document.getElementById('addInput').value = ''; }
 
-    // ==================== Card Operations ====================
+    // ==================== Card Ops ====================
     async function saveCard() {
       const content = document.getElementById('addInput').value.trim();
       if (!content) return;
-      
-      if (!settings.apiKey) {
-        showToast('请先在 Settings 中设置 API Key', 'error');
-        return;
-      }
+      if (!settings.apiKey) { showToast('请先设置 API Key', 'error'); return; }
       
       const saveBtn = document.getElementById('saveBtn');
-      const saveBtnText = document.getElementById('saveBtnText');
       saveBtn.disabled = true;
-      saveBtnText.innerHTML = '<div class="spinner"></div>';
+      document.getElementById('saveBtnText').innerHTML = '<div class="spinner"></div>';
       
       try {
         const analysis = await analyzeWithAI(content);
-        
         const wordCount = content.split(/\s+/).length;
-        let type = 'paragraph';
-        if (wordCount <= 3) type = 'word';
-        else if (content.split(/[.!?]/).filter(s => s.trim()).length <= 1) type = 'sentence';
+        let type = wordCount <= 3 ? 'word' : content.split(/[.!?]/).filter(s => s.trim()).length <= 1 ? 'sentence' : 'paragraph';
         
         const card = {
-          id: 'card_' + Date.now(),
-          content, type,
-          translation: analysis.translation,
-          keywords: analysis.keywords,
-          source: '',
-          createdAt: new Date().toISOString(),
-          reviewCount: 0, lastReviewed: null, known: false
+          id: 'card_' + Date.now(), content, type,
+          translation: analysis.translation, keywords: analysis.keywords,
+          createdAt: new Date().toISOString()
         };
         
         await saveCardToDB(card);
-        
-        if (!settings.firstUseDate) {
-          settings.firstUseDate = new Date().toISOString();
-          await saveSettingsToDB();
-        }
+        if (!settings.firstUseDate) { settings.firstUseDate = new Date().toISOString(); await saveSettingsToDB(); }
         
         renderCards();
         updateStats();
         closeAddModal();
         showToast('保存成功！', 'success');
         
-      } catch (error) {
-        console.error('Save error:', error);
-        showToast('保存失败: ' + error.message, 'error');
+        // Auto sync
+        if (settings.autoSync && accessToken) syncToCloud();
+        
+      } catch (e) {
+        console.error('Save error:', e);
+        showToast('保存失败: ' + e.message, 'error');
       } finally {
         saveBtn.disabled = false;
-        saveBtnText.textContent = '保存';
+        document.getElementById('saveBtnText').textContent = '保存';
       }
     }
 
     async function deleteCard(cardId) {
-      if (!confirm('确定要删除这条收藏吗？')) return;
+      if (!confirm('确定删除？')) return;
       await deleteCardFromDB(cardId);
       renderCards();
       updateStats();
       closeDetailModal();
       showToast('已删除', 'success');
+      if (settings.autoSync && accessToken) syncToCloud();
     }
 
-    function handleQuickInput(event) {
-      if (event.key === 'Enter') {
+    function handleQuickInput(e) {
+      if (e.key === 'Enter') {
         const content = document.getElementById('quickInput').value.trim();
         if (content) {
           document.getElementById('addInput').value = content;
@@ -1817,57 +932,41 @@
 
     function handleSearch() { renderCards(); }
 
-    // ==================== AI Analysis ====================
+    // ==================== AI ====================
     async function analyzeWithAI(content) {
       const prompt = `分析以下英文内容，返回JSON格式（不要markdown代码块）：
 
 内容："${content}"
 
 要求：
-1. translation: 整句/整段的中文翻译
-2. keywords: 数组，包含最多5个重点词汇（选择有学习价值的词，不要选 the, is, a 等简单词），每个词汇包含：
-   - word: 单词本身
-   - phonetic: 国际音标（如 /ˌserənˈdɪpəti/）
-   - roots: 词根构成（如 "re- (再) + mem- (记住) + -ber"）
-   - origin: 词源说明（来自哪种语言，历史演变）
+1. translation: 中文翻译
+2. keywords: 数组，最多5个重点词汇（不要选 the, is, a 等简单词），每个包含：
+   - word: 单词
+   - phonetic: 音标
+   - roots: 词根构成
+   - origin: 词源
    - meaning: 中文释义
 
-只返回纯JSON，格式如下：
-{"translation":"...","keywords":[{"word":"...","phonetic":"...","roots":"...","origin":"...","meaning":"..."}]}`;
+返回格式：{"translation":"...","keywords":[{"word":"...","phonetic":"...","roots":"...","origin":"...","meaning":"..."}]}`;
 
-      const response = await fetch('/api/analyze', {
+      const res = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider: settings.apiProvider,
-          model: settings.apiModel,
-          apiKey: settings.apiKey,
-          prompt
-        })
+        body: JSON.stringify({ provider: settings.apiProvider, model: settings.apiModel, apiKey: settings.apiKey, prompt })
       });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'API request failed');
-      }
-      
-      return await response.json();
+      if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'API failed'); }
+      return await res.json();
     }
 
     // ==================== Review ====================
     function initReview() {
       const wordMap = new Map();
-      cards.forEach(card => {
-        card.keywords?.forEach(keyword => {
-          const key = keyword.word.toLowerCase();
-          if (!wordMap.has(key)) {
-            wordMap.set(key, { ...keyword, cardId: card.id, example: card.content });
-          }
-        });
-      });
+      cards.forEach(card => card.keywords?.forEach(kw => {
+        const key = kw.word.toLowerCase();
+        if (!wordMap.has(key)) wordMap.set(key, { ...kw, example: card.content });
+      }));
       
       const allWords = Array.from(wordMap.values());
-      
       if (allWords.length === 0) {
         document.getElementById('reviewContent').classList.add('hide');
         document.getElementById('reviewEmpty').classList.remove('hide');
@@ -1890,34 +989,25 @@
       document.getElementById('reviewProgress').textContent = `${reviewState.currentIndex + 1} / ${reviewState.words.length}`;
       document.getElementById('flashcardWord').textContent = word.word;
       document.getElementById('flashcardPhonetic').textContent = word.phonetic || '';
-      
       document.getElementById('flashcardBack').innerHTML = `
         <div class="flashcard-back-word">${escapeHtml(word.word)}</div>
         <div class="flashcard-back-phonetic">${escapeHtml(word.phonetic || '')}</div>
         <div class="flashcard-back-meaning">${escapeHtml(word.meaning || '')}</div>
-        <div class="flashcard-back-detail">
-          <span>构词:</span> ${escapeHtml(word.roots || '-')}<br>
-          <span>来源:</span> ${escapeHtml(word.origin || '-')}<br>
-          <span>例句:</span> ${escapeHtml(word.example || '')}
-        </div>
+        <div class="flashcard-back-detail"><span>构词:</span> ${escapeHtml(word.roots || '-')}<br><span>来源:</span> ${escapeHtml(word.origin || '-')}<br><span>例句:</span> ${escapeHtml(word.example || '')}</div>
       `;
-      
       document.getElementById('flashcard').classList.remove('flipped');
     }
 
     function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
 
-    async function markCard(known) {
+    function markCard(known) {
       reviewState.results.push({ word: reviewState.words[reviewState.currentIndex]?.word, known });
       reviewState.currentIndex++;
-      
       if (reviewState.currentIndex >= reviewState.words.length) {
         const knownCount = reviewState.results.filter(r => r.known).length;
-        showToast(`复习完成！认识 ${knownCount}/${reviewState.words.length} 个单词`, 'success');
+        showToast(`完成！认识 ${knownCount}/${reviewState.words.length} 个`, 'success');
         initReview();
-      } else {
-        showCurrentWord();
-      }
+      } else showCurrentWord();
     }
 
     // ==================== Settings ====================
@@ -1930,125 +1020,83 @@
     }
 
     function updateModelOptions() {
-      const modelSelect = document.getElementById('apiModel');
-      const provider = document.getElementById('apiProvider').value;
-      
-      const options = {
-        gemini: [
-          { value: 'gemini-2.0-flash', label: 'Gemini 2.0 Flash' },
-          { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash' },
-          { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' }
-        ],
-        deepseek: [
-          { value: 'deepseek-chat', label: 'DeepSeek Chat' }
-        ]
+      const models = {
+        gemini: [{ v: 'gemini-2.0-flash', l: 'Gemini 2.0 Flash' }, { v: 'gemini-1.5-flash', l: 'Gemini 1.5 Flash' }],
+        deepseek: [{ v: 'deepseek-chat', l: 'DeepSeek Chat' }]
       };
-      
-      modelSelect.innerHTML = (options[provider] || []).map(o => 
-        `<option value="${o.value}">${o.label}</option>`
-      ).join('');
-      
-      if (settings.apiModel) {
-        const opt = modelSelect.querySelector(`option[value="${settings.apiModel}"]`);
-        if (opt) modelSelect.value = settings.apiModel;
-      }
+      const sel = document.getElementById('apiModel');
+      sel.innerHTML = (models[settings.apiProvider] || []).map(m => `<option value="${m.v}">${m.l}</option>`).join('');
+      if (settings.apiModel) sel.value = settings.apiModel;
     }
 
     function updateStats() {
       document.getElementById('statTotal').textContent = cards.length;
-      
-      const allWords = new Set();
-      cards.forEach(card => card.keywords?.forEach(k => allWords.add(k.word.toLowerCase())));
-      document.getElementById('statWords').textContent = allWords.size;
-      
+      const words = new Set();
+      cards.forEach(c => c.keywords?.forEach(k => words.add(k.word.toLowerCase())));
+      document.getElementById('statWords').textContent = words.size;
       if (settings.firstUseDate) {
-        const days = Math.ceil((new Date() - new Date(settings.firstUseDate)) / (1000 * 60 * 60 * 24));
-        document.getElementById('statDays').textContent = days;
+        document.getElementById('statDays').textContent = Math.ceil((new Date() - new Date(settings.firstUseDate)) / 86400000);
       }
     }
 
     // ==================== Export ====================
     function exportJSON() {
-      const data = {
-        version: '1.1.0',
-        exportDate: new Date().toISOString(),
-        cards,
-        settings: { ...settings, apiKey: '' }
-      };
-      downloadFile(JSON.stringify(data, null, 2), 'english-collector-backup.json', 'application/json');
+      downloadFile(JSON.stringify({ version: '1.2.0', exportDate: new Date().toISOString(), cards, settings: { ...settings, apiKey: '' } }, null, 2), 'english-collector-backup.json', 'application/json');
       showToast('备份已导出', 'success');
     }
 
     function importJSON(event) {
       const file = event.target.files[0];
       if (!file) return;
-      
       const reader = new FileReader();
       reader.onload = async (e) => {
         try {
           const data = JSON.parse(e.target.result);
-          if (!data.cards?.length) throw new Error('无效的备份文件');
-          
+          if (!data.cards?.length) throw new Error('无效文件');
           for (const card of data.cards) await saveCardToDB(card);
+          cards = Array.from(new Map([...cards, ...data.cards].map(c => [c.id, c])).values());
+          cards.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
           renderCards();
           updateStats();
-          showToast(`已导入 ${data.cards.length} 条收藏`, 'success');
-        } catch (error) {
-          showToast('导入失败: ' + error.message, 'error');
-        }
+          showToast(`已导入 ${data.cards.length} 条`, 'success');
+        } catch (err) { showToast('导入失败: ' + err.message, 'error'); }
       };
       reader.readAsText(file);
       event.target.value = '';
     }
 
     function exportAnki(type) {
-      if (cards.length === 0) { showToast('没有可导出的内容', 'error'); return; }
-      
+      if (!cards.length) { showToast('没有内容', 'error'); return; }
+      const exported = new Set();
       let csv = '';
-      if (type === 'sentences') {
-        cards.forEach(card => {
-          csv += `${escapeCSV(card.content)}\t${escapeCSV(card.translation || '')}\n`;
-        });
-      } else {
-        const exported = new Set();
-        cards.forEach(card => {
-          card.keywords?.forEach(k => {
-            if (!exported.has(k.word.toLowerCase())) {
-              exported.add(k.word.toLowerCase());
-              csv += `${escapeCSV(k.word)}\t${escapeCSV(`${k.phonetic || ''}\n\n${k.meaning}\n\n词根: ${k.roots || '-'}\n来源: ${k.origin || '-'}\n\n例句: ${card.content}`)}\n`;
-            }
-          });
-        });
-      }
-      
-      downloadFile(csv, `anki-${type}-${Date.now()}.txt`, 'text/plain');
-      showToast('Anki 卡片已导出', 'success');
+      cards.forEach(c => c.keywords?.forEach(k => {
+        if (!exported.has(k.word.toLowerCase())) {
+          exported.add(k.word.toLowerCase());
+          csv += `${escapeCSV(k.word)}\t${escapeCSV(`${k.phonetic||''}\n${k.meaning}\n词根: ${k.roots||'-'}\n来源: ${k.origin||'-'}\n例句: ${c.content}`)}\n`;
+        }
+      }));
+      downloadFile(csv, `anki-words-${Date.now()}.txt`, 'text/plain');
+      showToast('已导出', 'success');
     }
 
     function exportSingleAnki(cardId) {
       const card = cards.find(c => c.id === cardId);
       if (!card) return;
-      
-      let csv = `${escapeCSV(card.content)}\t${escapeCSV(card.translation || '')}\n`;
+      let csv = '';
       card.keywords?.forEach(k => {
-        csv += `${escapeCSV(k.word)}\t${escapeCSV(`${k.phonetic || ''}\n\n${k.meaning}\n\n词根: ${k.roots || '-'}\n来源: ${k.origin || '-'}\n\n例句: ${card.content}`)}\n`;
+        csv += `${escapeCSV(k.word)}\t${escapeCSV(`${k.phonetic||''}\n${k.meaning}\n词根: ${k.roots||'-'}\n来源: ${k.origin||'-'}\n例句: ${card.content}`)}\n`;
       });
-      
-      downloadFile(csv, `anki-card-${Date.now()}.txt`, 'text/plain');
-      showToast('已导出到 Anki', 'success');
+      downloadFile(csv, `anki-${Date.now()}.txt`, 'text/plain');
+      showToast('已导出', 'success');
     }
 
-    // ==================== Tab Navigation ====================
+    // ==================== Tabs ====================
     function switchTab(tab) {
-      document.querySelectorAll('.nav-item').forEach(item => 
-        item.classList.toggle('active', item.dataset.tab === tab)
-      );
-      
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.tab === tab));
       document.getElementById('everythingTab').classList.toggle('hide', tab !== 'everything');
       document.getElementById('reviewTab').classList.toggle('active', tab === 'review');
       document.getElementById('settingsTab').classList.toggle('active', tab === 'settings');
       document.getElementById('quickInputWrapper').classList.toggle('hide', tab !== 'everything');
-      
       if (tab === 'review') initReview();
       if (tab === 'settings') updateStats();
     }
@@ -2057,74 +1105,66 @@
     async function checkUrlImport() {
       const params = new URLSearchParams(window.location.search);
       const importData = params.get('import');
-      
       if (importData) {
         try {
           const card = JSON.parse(decodeURIComponent(atob(importData)));
           await saveCardToDB(card);
-          
-          if (!settings.firstUseDate) {
-            settings.firstUseDate = new Date().toISOString();
-            await saveSettingsToDB();
-          }
-          
-          window.history.replaceState({}, document.title, window.location.pathname);
+          if (!settings.firstUseDate) { settings.firstUseDate = new Date().toISOString(); await saveSettingsToDB(); }
+          window.history.replaceState({}, '', location.pathname);
           renderCards();
           updateStats();
-          showToast('已从扩展导入收藏！', 'success');
-        } catch (e) {
-          console.error('Import error:', e);
-        }
+          showToast('已导入！', 'success');
+          if (settings.autoSync && accessToken) syncToCloud();
+        } catch (e) { console.error('Import error:', e); }
       }
     }
 
-    // ==================== Utilities ====================
-    function showToast(message, type = '') {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.className = 'toast ' + type;
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 3000);
+    // ==================== Utils ====================
+    function showToast(msg, type = '') {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.className = 'toast ' + type;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 3000);
     }
 
-    function escapeHtml(text) {
-      if (!text) return '';
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
-    }
-
-    function escapeCSV(text) {
-      if (!text) return '';
-      return text.replace(/"/g, '""').replace(/\n/g, '<br>');
-    }
-
+    function escapeHtml(text) { if (!text) return ''; const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
+    function escapeCSV(text) { return (text || '').replace(/"/g, '""').replace(/\n/g, '<br>'); }
     function downloadFile(content, filename, type) {
-      const blob = new Blob([content], { type });
-      const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = URL.createObjectURL(new Blob([content], { type }));
       a.download = filename;
-      document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
     }
 
-    // ==================== Initialize ====================
+    // ==================== Init ====================
     async function init() {
       try {
-        // Load voices for speech synthesis
         window.speechSynthesis.getVoices();
-        
         await initDB();
         await loadData();
+        
+        // Restore Google session
+        const savedToken = localStorage.getItem('ec_access_token');
+        const savedUser = localStorage.getItem('ec_user');
+        if (savedToken && savedUser) {
+          accessToken = savedToken;
+          googleUser = JSON.parse(savedUser);
+          updateUserUI();
+          // Verify token is still valid
+          fetchUserInfo();
+        }
+        
         await checkUrlImport();
         renderCards();
         updateStats();
-        updateUserUI();
-      } catch (error) {
-        console.error('Init error:', error);
+        
+        // Auto sync on load
+        if (settings.autoSync && accessToken) {
+          setTimeout(() => syncFromCloud(), 1000);
+        }
+      } catch (e) {
+        console.error('Init error:', e);
         showToast('初始化失败', 'error');
       }
     }
