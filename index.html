@@ -551,7 +551,7 @@
     async function loadData() {
       cards = await new Promise((resolve, reject) => {
         const req = db.transaction(['cards'], 'readonly').objectStore('cards').getAll();
-        req.onsuccess = () => resolve(req.result || []);
+        req.onsuccess = () => { console.log('DB loaded cards:', req.result?.length); resolve(req.result || []); };
         req.onerror = () => reject(req.error);
       });
       cards.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -677,7 +677,15 @@
 
     async function syncToCloud() {
       if (!accessToken) { showToast('请先登录 Google', 'error'); return false; }
-      if (cards.length === 0) { showToast('本地没有数据可同步', 'error'); return false; }
+      
+      // Reload cards from IndexedDB first
+      const freshCards = await new Promise((resolve, reject) => {
+        const req = db.transaction(['cards'], 'readonly').objectStore('cards').getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+      
+      if (freshCards.length === 0) { showToast('本地没有数据可同步', 'error'); return false; }
       
       const syncDot = document.getElementById('syncDot');
       const syncText = document.getElementById('syncStatusText');
@@ -688,11 +696,11 @@
         const data = JSON.stringify({
           version: '1.2.0',
           syncDate: new Date().toISOString(),
-          cards: cards,
+          cards: freshCards,
           settings: { ...settings, apiKey: '' }
         });
         
-        console.log('Syncing cards:', cards.length);
+        console.log('Syncing cards:', freshCards.length);
         
         let fileId = await findDriveFile();
         console.log('Found file ID:', fileId);
@@ -727,9 +735,12 @@
         const result = await res.json();
         console.log('Upload success:', result);
         
+        // Update memory
+        cards = freshCards;
+        
         syncDot.classList.remove('syncing'); syncDot.classList.add('synced');
         syncText.textContent = '已同步';
-        showToast(`已同步 ${cards.length} 条到云端`, 'success');
+        showToast(`已同步 ${freshCards.length} 条到云端`, 'success');
         return true;
       } catch (e) {
         console.error('Sync error:', e);
@@ -794,11 +805,20 @@
       if (!accessToken) { showToast('请先登录 Google', 'error'); return; }
       closeSidebar();
       
-      if (cards.length === 0) {
-        showToast('本地没有数据，尝试从云端恢复...', '');
-        await syncFromCloud();
-      } else {
+      // Always try to upload local data first
+      const localCards = await new Promise((resolve, reject) => {
+        const req = db.transaction(['cards'], 'readonly').objectStore('cards').getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+      
+      console.log('Local cards for sync:', localCards.length);
+      
+      if (localCards.length > 0) {
         await syncToCloud();
+      } else {
+        showToast('本地无数据，尝试从云端恢复...', '');
+        await syncFromCloud();
       }
     }
 
@@ -827,11 +847,15 @@
       const emptyState = document.getElementById('emptyState');
       const query = document.getElementById('searchInput').value.toLowerCase();
       
+      console.log('Rendering cards, total:', cards.length, 'search:', query);
+      
       const filtered = cards.filter(c => 
         c.content.toLowerCase().includes(query) ||
         c.translation?.toLowerCase().includes(query) ||
         c.keywords?.some(k => k.word.toLowerCase().includes(query))
       );
+      
+      console.log('Filtered cards:', filtered.length);
       
       if (filtered.length === 0) { grid.innerHTML = ''; emptyState.classList.remove('hide'); return; }
       emptyState.classList.add('hide');
@@ -1183,6 +1207,8 @@
         await initDB();
         await loadData();
         
+        console.log('Loaded cards from DB:', cards.length);
+        
         // Restore Google session
         const savedToken = localStorage.getItem('ec_access_token');
         const savedUser = localStorage.getItem('ec_user');
@@ -1198,9 +1224,11 @@
         renderCards();
         updateStats();
         
+        console.log('Page initialized, displaying', cards.length, 'cards');
+        
         // Auto sync on load
-        if (settings.autoSync && accessToken) {
-          setTimeout(() => syncFromCloud(), 1000);
+        if (settings.autoSync && accessToken && cards.length > 0) {
+          setTimeout(() => syncToCloud(), 2000);
         }
       } catch (e) {
         console.error('Init error:', e);
