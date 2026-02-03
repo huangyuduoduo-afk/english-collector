@@ -660,16 +660,24 @@
 
     // ==================== Google Drive Sync ====================
     async function findDriveFile() {
-      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}' and trashed=false&fields=files(id,name)`, {
+      const url = `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}' and trashed=false&fields=files(id,name)`;
+      console.log('Searching for file:', DRIVE_FILE_NAME);
+      const res = await fetch(url, {
         headers: { 'Authorization': `Bearer ${accessToken}` }
       });
-      if (!res.ok) throw new Error('Failed to search files');
+      if (!res.ok) {
+        const err = await res.text();
+        console.error('Search failed:', err);
+        throw new Error('Failed to search files');
+      }
       const data = await res.json();
+      console.log('Search result:', data);
       return data.files && data.files.length > 0 ? data.files[0].id : null;
     }
 
     async function syncToCloud() {
       if (!accessToken) { showToast('请先登录 Google', 'error'); return false; }
+      if (cards.length === 0) { showToast('本地没有数据可同步', 'error'); return false; }
       
       const syncDot = document.getElementById('syncDot');
       const syncText = document.getElementById('syncStatusText');
@@ -684,35 +692,50 @@
           settings: { ...settings, apiKey: '' }
         });
         
-        let fileId = await findDriveFile();
+        console.log('Syncing cards:', cards.length);
         
+        let fileId = await findDriveFile();
+        console.log('Found file ID:', fileId);
+        
+        let res;
         if (fileId) {
-          // Update
-          await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
+          // Update existing file
+          res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
             method: 'PATCH',
             headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
             body: data
           });
         } else {
-          // Create
+          // Create new file in root (not appDataFolder)
           const metadata = { name: DRIVE_FILE_NAME, mimeType: 'application/json' };
           const form = new FormData();
           form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
           form.append('file', new Blob([data], { type: 'application/json' }));
-          await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+          res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
             method: 'POST',
             headers: { 'Authorization': `Bearer ${accessToken}` },
             body: form
           });
         }
         
+        if (!res.ok) {
+          const errData = await res.json();
+          console.error('Upload failed:', errData);
+          throw new Error(errData.error?.message || 'Upload failed');
+        }
+        
+        const result = await res.json();
+        console.log('Upload success:', result);
+        
         syncDot.classList.remove('syncing'); syncDot.classList.add('synced');
         syncText.textContent = '已同步';
+        showToast(`已同步 ${cards.length} 条到云端`, 'success');
         return true;
       } catch (e) {
         console.error('Sync error:', e);
         syncDot.classList.remove('syncing');
         syncText.textContent = '同步失败';
+        showToast('同步失败: ' + e.message, 'error');
         return false;
       }
     }
@@ -721,33 +744,46 @@
       if (!accessToken) { showToast('请先登录 Google', 'error'); return; }
       
       try {
+        showToast('正在从云端获取...', '');
         const fileId = await findDriveFile();
-        if (!fileId) { showToast('云端没有备份', 'error'); return; }
+        console.log('Found cloud file:', fileId);
+        
+        if (!fileId) { showToast('云端没有备份文件', 'error'); return; }
         
         const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
           headers: { 'Authorization': `Bearer ${accessToken}` }
         });
-        if (!res.ok) throw new Error('Failed to download');
+        
+        if (!res.ok) {
+          const errData = await res.text();
+          console.error('Download failed:', errData);
+          throw new Error('下载失败');
+        }
         
         const data = await res.json();
-        if (data.cards) {
-          // Merge: keep newer version of each card
-          const cardMap = new Map(cards.map(c => [c.id, c]));
-          data.cards.forEach(c => {
-            const existing = cardMap.get(c.id);
-            if (!existing || new Date(c.createdAt) > new Date(existing.createdAt)) {
-              cardMap.set(c.id, c);
-            }
-          });
-          
-          // Save all to DB
-          for (const card of cardMap.values()) await saveCardToDB(card);
-          
-          cards = Array.from(cardMap.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          renderCards();
-          updateStats();
-          showToast(`已同步 ${cards.length} 条收藏`, 'success');
+        console.log('Downloaded data:', data);
+        
+        if (!data.cards || data.cards.length === 0) {
+          showToast('云端备份为空', 'error');
+          return;
         }
+        
+        // Merge: keep newer version of each card
+        const cardMap = new Map(cards.map(c => [c.id, c]));
+        data.cards.forEach(c => {
+          const existing = cardMap.get(c.id);
+          if (!existing || new Date(c.createdAt) > new Date(existing.createdAt)) {
+            cardMap.set(c.id, c);
+          }
+        });
+        
+        // Save all to DB
+        for (const card of cardMap.values()) await saveCardToDB(card);
+        
+        cards = Array.from(cardMap.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        renderCards();
+        updateStats();
+        showToast(`已恢复 ${cards.length} 条收藏`, 'success');
       } catch (e) {
         console.error('Restore error:', e);
         showToast('恢复失败: ' + e.message, 'error');
@@ -758,9 +794,12 @@
       if (!accessToken) { showToast('请先登录 Google', 'error'); return; }
       closeSidebar();
       
-      const success = await syncToCloud();
-      if (success) showToast('同步完成！', 'success');
-      else showToast('同步失败', 'error');
+      if (cards.length === 0) {
+        showToast('本地没有数据，尝试从云端恢复...', '');
+        await syncFromCloud();
+      } else {
+        await syncToCloud();
+      }
     }
 
     function toggleAutoSync() {
