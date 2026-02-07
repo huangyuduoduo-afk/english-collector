@@ -8,138 +8,84 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="EnCollector">
   <title>English Collector</title>
-  
-  <!-- PWA -->
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16.png">
-  
-  <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-  
-  <!-- Google Identity Services -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-  
   <style>
+    /* ==================== Variables ==================== */
     :root {
-      --cream: #FFFDF7;
-      --card-yellow: #FFF9E6;
-      --card-yellow-hover: #FFF5D6;
-      --warm-gray: #F5F3EF;
-      --text-primary: #2D2A26;
-      --text-secondary: #6B665C;
-      --text-muted: #A8A299;
-      --accent: #E8612C;
-      --accent-light: #FFEEE8;
-      --success: #4CAF50;
-      --error: #E53935;
+      --cream: #FFFDF7; --card-yellow: #FFF9E6; --card-yellow-hover: #FFF5D6;
+      --warm-gray: #F5F3EF; --text-primary: #2D2A26; --text-secondary: #6B665C;
+      --text-muted: #A8A299; --accent: #E8612C; --accent-light: #FFEEE8;
+      --success: #4CAF50; --error: #E53935; --border: rgba(0,0,0,0.06);
     }
-    
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
     html { -webkit-text-size-adjust: 100%; }
-    
-    body { 
+    body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: var(--cream);
-      -webkit-font-smoothing: antialiased;
-      min-height: 100vh;
-      min-height: -webkit-fill-available;
-      overflow-x: hidden;
-      line-height: 1.5;
+      background: var(--cream); -webkit-font-smoothing: antialiased;
+      min-height: 100vh; overflow-x: hidden; line-height: 1.5;
     }
-    
     .font-serif { font-family: 'Playfair Display', Georgia, serif; }
-    
-    /* Ambient background */
-    .ambient-glow {
-      position: fixed; top: -20%; left: -10%; width: 60%; height: 50%;
-      background: radial-gradient(ellipse at center, rgba(255, 180, 150, 0.25) 0%, rgba(255, 200, 180, 0.15) 30%, transparent 70%);
-      pointer-events: none; z-index: 0;
-    }
-    .ambient-glow-2 {
-      position: fixed; bottom: -10%; right: -10%; width: 50%; height: 40%;
-      background: radial-gradient(ellipse at center, rgba(200, 220, 255, 0.2) 0%, transparent 70%);
-      pointer-events: none; z-index: 0;
-    }
-    
-    /* Card styles */
-    .card {
-      background: var(--card-yellow); border-radius: 8px;
-      transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-      cursor: pointer; padding: 16px; break-inside: avoid; margin-bottom: 12px;
-    }
-    .card:hover { background: var(--card-yellow-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
-    
-    /* Header */
-    .header {
-      position: sticky; top: 0; z-index: 40;
-      padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top));
-      background: linear-gradient(to bottom, var(--cream) 80%, transparent);
-    }
+
+    /* ==================== Ambient ==================== */
+    .ambient-glow { position: fixed; top: -20%; left: -10%; width: 60%; height: 50%; background: radial-gradient(ellipse at center, rgba(255,180,150,0.25) 0%, rgba(255,200,180,0.15) 30%, transparent 70%); pointer-events: none; z-index: 0; }
+    .ambient-glow-2 { position: fixed; bottom: -10%; right: -10%; width: 50%; height: 40%; background: radial-gradient(ellipse at center, rgba(200,220,255,0.2) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+
+    /* ==================== Header ==================== */
+    .header { position: sticky; top: 0; z-index: 40; padding: 12px 16px; padding-top: max(12px, env(safe-area-inset-top)); background: linear-gradient(to bottom, var(--cream) 80%, transparent); }
     .header-inner { display: flex; align-items: center; gap: 12px; max-width: 1200px; margin: 0 auto; }
-    
-    .menu-btn {
-      padding: 8px; margin-left: -8px; background: none; border: none;
-      cursor: pointer; color: var(--text-secondary); border-radius: 8px;
-    }
+    .menu-btn { padding: 8px; margin-left: -8px; background: none; border: none; cursor: pointer; color: var(--text-secondary); border-radius: 8px; }
     .menu-btn:hover { background: var(--warm-gray); }
-    
-    .search-box {
-      flex: 1; max-width: 400px; display: flex; align-items: center;
-      padding: 10px 16px; background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 10px;
-    }
+    .search-box { flex: 1; max-width: 400px; display: flex; align-items: center; padding: 10px 16px; background: white; border: 1px solid var(--border); border-radius: 10px; }
     .search-box input { flex: 1; border: none; background: transparent; font-size: 14px; color: var(--text-primary); outline: none; }
     .search-box input::placeholder { color: var(--text-muted); }
-    
-    .add-btn {
-      width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-      background: var(--accent); border: none; border-radius: 10px; color: white;
-      cursor: pointer; box-shadow: 0 2px 8px rgba(232, 97, 44, 0.3);
-    }
+    .add-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--accent); border: none; border-radius: 10px; color: white; cursor: pointer; box-shadow: 0 2px 8px rgba(232,97,44,0.3); }
     .add-btn:hover { background: #D55525; }
-    
-    /* Main content */
-    .main-content { position: relative; z-index: 10; padding: 8px 16px 160px; max-width: 1200px; margin: 0 auto; }
-    
-    /* Masonry grid */
-    .masonry { column-count: 1; column-gap: 12px; }
-    @media (min-width: 500px) { .masonry { column-count: 2; } }
-    @media (min-width: 800px) { .masonry { column-count: 3; column-gap: 16px; } }
-    @media (min-width: 1100px) { .masonry { column-count: 4; } }
-    
-    .card-content { font-size: 14px; line-height: 1.6; color: var(--text-primary); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-    .card-keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); }
-    .keyword-tag { font-size: 11px; padding: 3px 8px; background: rgba(232, 97, 44, 0.1); color: var(--accent); border-radius: 4px; }
-    
-    /* Empty state */
-    .empty-state { text-align: center; padding: 60px 20px; }
-    .empty-state-icon { width: 64px; height: 64px; margin: 0 auto 16px; background: var(--warm-gray); border-radius: 16px; display: flex; align-items: center; justify-content: center; }
-    .empty-state-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-primary); margin-bottom: 8px; }
-    .empty-state-desc { font-size: 14px; color: var(--text-muted); }
-    
-    /* Quick input */
-    .quick-input-wrapper { position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 500px; z-index: 30; padding-bottom: env(safe-area-inset-bottom); }
-    .quick-input { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 12px; padding: 12px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    .quick-input-label { font-size: 11px; font-weight: 500; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 4px; }
-    .quick-input input { width: 100%; border: none; background: transparent; font-size: 14px; color: var(--text-primary); outline: none; }
-    .quick-input input::placeholder { color: var(--text-muted); }
-    
-    /* Bottom navigation */
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; background: rgba(255, 253, 247, 0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid rgba(0,0,0,0.05); padding: 6px 0; padding-bottom: max(6px, env(safe-area-inset-bottom)); }
-    .nav-items { display: flex; justify-content: space-around; max-width: 400px; margin: 0 auto; }
-    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 20px; background: none; border: none; cursor: pointer; color: var(--text-muted); transition: color 0.2s; }
+
+    /* ==================== Bottom Nav ==================== */
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 40; background: rgba(255,253,247,0.95); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--border); padding: 4px 0; padding-bottom: max(4px, env(safe-area-inset-bottom)); }
+    .nav-items { display: flex; justify-content: space-around; max-width: 500px; margin: 0 auto; }
+    .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 12px; background: none; border: none; cursor: pointer; color: var(--text-muted); transition: color 0.2s; }
     .nav-item.active { color: var(--accent); }
     .nav-item:hover { color: var(--text-secondary); }
     .nav-item svg { width: 22px; height: 22px; }
     .nav-item span { font-size: 10px; font-weight: 500; }
-    
-    /* Sidebar */
+
+    /* ==================== Tab Panels ==================== */
+    .tab-panel { position: relative; z-index: 10; padding: 8px 16px 140px; max-width: 1200px; margin: 0 auto; display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ==================== Cards & Masonry ==================== */
+    .masonry { column-count: 1; column-gap: 12px; }
+    @media (min-width: 500px) { .masonry { column-count: 2; } }
+    @media (min-width: 800px) { .masonry { column-count: 3; column-gap: 16px; } }
+    @media (min-width: 1100px) { .masonry { column-count: 4; } }
+    .card { background: var(--card-yellow); border-radius: 8px; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03); cursor: pointer; padding: 16px; break-inside: avoid; margin-bottom: 12px; }
+    .card:hover { background: var(--card-yellow-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .card-content { font-size: 14px; line-height: 1.6; color: var(--text-primary); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); }
+    .keyword-tag { font-size: 11px; padding: 3px 8px; background: rgba(232,97,44,0.1); color: var(--accent); border-radius: 4px; }
+
+    /* ==================== Quick Input ==================== */
+    .quick-input-wrapper { position: fixed; bottom: 68px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 500px; z-index: 30; padding-bottom: env(safe-area-inset-bottom); }
+    .quick-input { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    .quick-input-label { font-size: 11px; font-weight: 500; letter-spacing: 0.5px; color: var(--accent); margin-bottom: 4px; }
+    .quick-input input { width: 100%; border: none; background: transparent; font-size: 14px; color: var(--text-primary); outline: none; }
+
+    /* ==================== Empty State ==================== */
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-state-icon { width: 64px; height: 64px; margin: 0 auto 16px; background: var(--warm-gray); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .empty-state-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-primary); margin-bottom: 8px; }
+    .empty-state-desc { font-size: 14px; color: var(--text-muted); }
+
+    /* ==================== Sidebar ==================== */
     .sidebar-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 50; opacity: 0; visibility: hidden; transition: all 0.3s; }
     .sidebar-overlay.active { opacity: 1; visibility: visible; }
     .sidebar { position: fixed; top: 0; left: 0; bottom: 0; width: 280px; background: var(--cream); z-index: 51; transform: translateX(-100%); transition: transform 0.3s ease; display: flex; flex-direction: column; }
     .sidebar.active { transform: translateX(0); }
-    .sidebar-header { padding: 20px; border-bottom: 1px solid rgba(0,0,0,0.06); }
+    .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
     .sidebar-logo { display: flex; align-items: center; gap: 12px; }
     .sidebar-logo-icon { width: 40px; height: 40px; background: var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 600; font-size: 14px; }
     .sidebar-logo-text { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--text-primary); }
@@ -153,17 +99,13 @@
     .sidebar-menu { flex: 1; padding: 12px; overflow-y: auto; }
     .sidebar-menu-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 8px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; }
     .sidebar-menu-item:hover { background: var(--warm-gray); }
-    .sidebar-menu-item.active { background: var(--accent-light); color: var(--accent); }
-    .sidebar-menu-item svg { width: 20px; height: 20px; }
+    .sidebar-menu-item svg { width: 20px; height: 20px; flex-shrink: 0; }
     .sidebar-menu-item span { font-size: 14px; }
-    .sidebar-footer { padding: 16px; border-top: 1px solid rgba(0,0,0,0.06); }
+    .sidebar-footer { padding: 16px; border-top: 1px solid var(--border); }
     .sync-status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); }
     .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); }
     .sync-dot.synced { background: var(--success); }
     .sync-dot.syncing { background: #FFC107; animation: pulse 1s infinite; }
-    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-    
-    /* Toggle switch */
     .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; }
     .toggle-label { font-size: 13px; color: var(--text-secondary); }
     .toggle { position: relative; width: 44px; height: 24px; }
@@ -172,44 +114,43 @@
     .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: 0.3s; }
     .toggle input:checked + .toggle-slider { background: var(--accent); }
     .toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
-    
-    /* Modal */
+
+    /* ==================== Modals ==================== */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.15); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 50; display: none; align-items: flex-end; justify-content: center; }
     .modal-overlay.active { display: flex; }
     @media (min-width: 640px) { .modal-overlay { align-items: center; } }
-    .modal-content { background: var(--cream); border-radius: 20px 20px 0 0; width: 100%; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+    .modal-content { background: var(--cream); border-radius: 20px 20px 0 0; width: 100%; max-height: 90vh; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative; }
     @media (min-width: 640px) { .modal-content { max-width: 500px; border-radius: 20px; max-height: 85vh; } }
     .modal-body { padding: 24px; }
-    .modal-close { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--warm-gray); border: none; border-radius: 50%; cursor: pointer; }
+    .modal-close { position: absolute; top: 16px; right: 16px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--warm-gray); border: none; border-radius: 50%; cursor: pointer; z-index: 2; }
     .modal-close:hover { background: #E8E6E2; }
-    
-    /* Add modal */
-    .add-modal-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-primary); margin-bottom: 16px; }
-    .add-modal-textarea { width: 100%; height: 120px; padding: 14px; background: white; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; font-size: 14px; color: var(--text-primary); resize: none; outline: none; line-height: 1.6; }
-    .add-modal-textarea:focus { border-color: var(--accent); }
-    .add-modal-textarea::placeholder { color: var(--text-muted); }
-    .add-modal-hint { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--text-muted); }
-    .add-modal-actions { display: flex; gap: 12px; margin-top: 20px; }
-    
-    .btn { flex: 1; padding: 12px 16px; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+
+    /* ==================== Buttons ==================== */
+    .btn { padding: 12px 16px; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
     .btn-secondary { background: var(--warm-gray); color: var(--text-secondary); }
     .btn-secondary:hover { background: #E8E6E2; }
     .btn-primary { background: var(--accent); color: white; }
     .btn-primary:hover { background: #D55525; }
     .btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; }
-    
-    /* Detail modal */
+    .btn-small { padding: 8px 14px; font-size: 13px; border-radius: 8px; }
+
+    /* ==================== Add Modal ==================== */
+    .add-modal-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-primary); margin-bottom: 16px; }
+    .add-modal-textarea { width: 100%; height: 120px; padding: 14px; background: white; border: 1px solid rgba(0,0,0,0.08); border-radius: 12px; font-size: 14px; color: var(--text-primary); resize: none; outline: none; line-height: 1.6; font-family: inherit; }
+    .add-modal-textarea:focus { border-color: var(--accent); }
+    .add-modal-textarea::placeholder { color: var(--text-muted); }
+    .add-modal-hint { display: flex; align-items: center; gap: 8px; margin-top: 12px; font-size: 12px; color: var(--text-muted); }
+    .add-modal-actions { display: flex; gap: 12px; margin-top: 20px; }
+    .add-modal-actions .btn { flex: 1; }
+
+    /* ==================== Detail Modal ==================== */
     .detail-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
     .detail-meta { display: flex; align-items: center; gap: 8px; }
     .type-dot { width: 6px; height: 6px; border-radius: 50%; }
-    .type-word { background: #E8A87C; }
-    .type-sentence { background: #85B8A0; }
-    .type-paragraph { background: #9B8AA6; }
+    .type-word { background: #E8A87C; } .type-sentence { background: #85B8A0; } .type-paragraph { background: #9B8AA6; }
     .detail-date { font-size: 12px; color: var(--text-muted); }
     .detail-content { font-size: 18px; line-height: 1.6; color: var(--text-primary); font-weight: 300; margin-bottom: 8px; }
-    .detail-translation { font-size: 14px; line-height: 1.6; color: var(--text-secondary); padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.06); }
-    
-    /* Keywords */
+    .detail-translation { font-size: 14px; line-height: 1.6; color: var(--text-secondary); padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
     .keywords-section { margin-bottom: 20px; }
     .keywords-title { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
     .keywords-title-bar { width: 3px; height: 14px; background: var(--accent); border-radius: 2px; }
@@ -217,56 +158,124 @@
     .keywords-list { display: flex; flex-wrap: wrap; gap: 8px; }
     .keyword-btn { padding: 8px 14px; background: white; border: 1px solid rgba(0,0,0,0.08); border-radius: 8px; font-size: 13px; color: var(--text-primary); cursor: pointer; transition: all 0.2s; }
     .keyword-btn:hover, .keyword-btn.active { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
-    
-    /* Etymology */
-    .etymology-box { background: white; border: 1px solid rgba(0,0,0,0.06); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
+    .etymology-box { background: white; border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 20px; }
     .etymology-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
     .etymology-word { font-family: 'Playfair Display', serif; font-size: 22px; color: var(--text-primary); }
-    .speak-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--accent-light); border: none; border-radius: 50%; color: var(--accent); cursor: pointer; transition: all 0.2s; }
+    .speak-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--accent-light); border: none; border-radius: 50%; color: var(--accent); cursor: pointer; }
     .speak-btn:hover { background: var(--accent); color: white; }
     .etymology-phonetic { font-size: 14px; color: var(--text-muted); margin-bottom: 12px; }
     .etymology-item { font-size: 13px; margin-bottom: 8px; line-height: 1.5; }
-    .etymology-item:last-child { margin-bottom: 0; }
     .etymology-label { color: var(--text-muted); }
     .etymology-value { color: var(--text-secondary); }
-    
-    /* Spinner & Toast */
-    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .toast { position: fixed; top: 20px; top: max(20px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--text-primary); color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 100; transition: transform 0.3s ease; max-width: 90%; text-align: center; }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast.error { background: var(--error); }
-    .toast.success { background: var(--success); }
-    
-    /* Review */
-    .review-container { display: none; padding: 40px 20px 160px; text-align: center; max-width: 500px; margin: 0 auto; }
-    .review-container.active { display: block; }
-    .flashcard { perspective: 1000px; width: 100%; max-width: 340px; height: 220px; margin: 0 auto 24px; cursor: pointer; }
+
+    /* ==================== Etymology Tab ==================== */
+    .ety-search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+    .ety-search-input { flex: 1; padding: 14px 18px; font-size: 15px; background: white; border: 1px solid var(--border); border-radius: 12px; color: var(--text-primary); outline: none; font-family: inherit; }
+    .ety-search-input:focus { border-color: var(--accent); }
+    .ety-search-input::placeholder { color: var(--text-muted); }
+    .ety-search-btn { padding: 14px 24px; font-size: 14px; font-weight: 600; color: white; background: var(--accent); border: none; border-radius: 12px; cursor: pointer; white-space: nowrap; }
+    .ety-search-btn:hover { background: #D55525; }
+    .ety-search-btn:disabled { background: var(--text-muted); }
+
+    .ety-sub-nav { display: flex; gap: 6px; margin-bottom: 20px; flex-wrap: wrap; }
+    .ety-sub-btn { padding: 8px 16px; font-size: 13px; font-weight: 500; background: white; border: 1px solid var(--border); border-radius: 20px; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; }
+    .ety-sub-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .ety-sub-btn:hover:not(.active) { background: var(--warm-gray); }
+
+    /* Result card */
+    .ety-result { animation: fadeIn 0.3s ease; }
+    .ety-result-header { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+    .ety-result-word { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--text-primary); }
+    .ety-result-phonetic { font-size: 15px; color: var(--text-muted); margin: 4px 0 8px; }
+    .ety-result-meaning { font-size: 16px; color: var(--text-secondary); line-height: 1.6; }
+    .ety-result-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
+
+    .ety-card { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 14px; }
+    .ety-card-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; }
+    .ety-root-item { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 10px 12px; background: var(--warm-gray); border-radius: 10px; margin-bottom: 8px; }
+    .ety-root-part { padding: 4px 10px; font-size: 13px; font-weight: 700; color: var(--accent); background: var(--accent-light); border-radius: 6px; font-family: monospace; }
+    .ety-root-origin { font-size: 11px; color: var(--text-muted); padding: 2px 6px; background: white; border-radius: 4px; }
+    .ety-root-meaning { font-size: 13px; color: var(--text-secondary); }
+    .ety-story { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
+    .ety-memory-tip { padding: 12px; font-size: 13px; color: #B8860B; background: #FFF8DC; border-radius: 10px; border: 1px solid #F0E68C; margin-top: 12px; }
+    .ety-example { padding: 12px 0; border-bottom: 1px solid var(--border); }
+    .ety-example:last-child { border-bottom: none; }
+    .ety-example-en { font-size: 14px; color: var(--text-primary); line-height: 1.5; display: flex; align-items: flex-start; gap: 8px; }
+    .ety-example-cn { font-size: 13px; color: var(--text-muted); padding-left: 30px; margin-top: 4px; }
+    .ety-related { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .ety-related-tag { padding: 6px 14px; font-size: 13px; color: var(--accent); background: var(--accent-light); border: 1px solid rgba(232,97,44,0.2); border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+    .ety-related-tag:hover { background: var(--accent); color: white; }
+
+    /* Categories grid */
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
+    .cat-card { padding: 18px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: white; border-radius: 14px; border: 2px solid var(--border); cursor: pointer; transition: all 0.2s; text-align: center; }
+    .cat-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .cat-icon { font-size: 32px; }
+    .cat-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .cat-count { font-size: 11px; color: var(--text-muted); }
+
+    /* Course */
+    .level-tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .level-tab { padding: 10px 18px; font-size: 13px; font-weight: 500; background: white; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; color: var(--text-secondary); }
+    .level-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .unit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+    .unit-card { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .unit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .unit-number { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+    .unit-badge { padding: 3px 8px; font-size: 11px; font-weight: 600; color: var(--success); background: rgba(76,175,80,0.1); border-radius: 8px; }
+    .unit-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .unit-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 12px; font-family: monospace; }
+    .unit-stats { display: flex; gap: 14px; font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+    .unit-actions { display: flex; gap: 8px; }
+    .unit-actions .btn { flex: 1; text-align: center; }
+
+    /* Word list */
+    .word-list { display: flex; flex-direction: column; gap: 6px; }
+    .word-list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--warm-gray); border-radius: 10px; cursor: pointer; transition: all 0.2s; }
+    .word-list-item:hover { background: var(--accent-light); }
+    .word-list-item span:first-child { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+    .word-list-item span:last-child { font-size: 13px; color: var(--text-muted); }
+
+    /* Daily article */
+    .daily-article { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+    .article-badge { padding: 4px 10px; font-size: 12px; font-weight: 600; color: #B8860B; background: #FFF8DC; border-radius: 8px; display: inline-block; margin-bottom: 12px; }
+    .article-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-primary); margin-bottom: 12px; }
+    .article-content { font-size: 14px; color: var(--text-secondary); line-height: 1.8; white-space: pre-line; margin-bottom: 16px; }
+    .article-roots { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+    .article-root-tag { padding: 5px 12px; font-size: 13px; color: var(--accent); background: var(--accent-light); border-radius: 8px; font-family: monospace; }
+    .article-examples { display: flex; gap: 10px; flex-wrap: wrap; }
+    .article-word-btn { padding: 10px 16px; background: var(--warm-gray); border: none; border-radius: 10px; cursor: pointer; text-align: left; transition: all 0.2s; }
+    .article-word-btn:hover { background: var(--accent-light); }
+    .article-word-text { font-size: 15px; font-weight: 600; color: var(--accent); display: block; }
+    .article-word-meaning { font-size: 12px; color: var(--text-muted); display: block; margin-top: 2px; }
+
+    /* ==================== Review Tab ==================== */
+    .review-container { text-align: center; max-width: 500px; margin: 0 auto; padding-top: 20px; }
+    .flashcard { perspective: 1000px; width: 100%; max-width: 360px; height: 240px; margin: 0 auto 24px; cursor: pointer; }
     .flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
     .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
     .flashcard-front, .flashcard-back { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; -webkit-backface-visibility: hidden; background: var(--card-yellow); border-radius: 16px; padding: 24px; display: flex; flex-direction: column; justify-content: center; align-items: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
     .flashcard-back { transform: rotateY(180deg); text-align: left; justify-content: flex-start; align-items: stretch; overflow-y: auto; }
     .flashcard-word { font-family: 'Playfair Display', serif; font-size: 28px; color: var(--text-primary); margin-bottom: 8px; }
     .flashcard-phonetic { font-size: 15px; color: var(--text-muted); margin-bottom: 12px; }
-    .flashcard-speak-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid rgba(0,0,0,0.1); border-radius: 50%; color: var(--accent); cursor: pointer; }
-    .flashcard-speak-btn:hover { background: var(--accent); color: white; }
+    .flashcard-speak { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: white; border: 1px solid var(--border); border-radius: 50%; color: var(--accent); cursor: pointer; font-size: 18px; }
+    .flashcard-speak:hover { background: var(--accent); color: white; }
     .flashcard-back-word { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-primary); margin-bottom: 4px; }
-    .flashcard-back-phonetic { font-size: 13px; color: var(--text-muted); margin-bottom: 10px; }
     .flashcard-back-meaning { font-size: 15px; color: var(--text-primary); margin-bottom: 10px; font-weight: 500; }
     .flashcard-back-detail { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
     .flashcard-back-detail span { color: var(--text-muted); }
     .review-actions { display: flex; gap: 16px; justify-content: center; }
     .review-btn { padding: 12px 28px; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; }
     .review-btn.know { background: var(--success); color: white; }
-    .review-btn.know:hover { background: #43A047; }
     .review-btn.dont-know { background: #FF7043; color: white; }
-    .review-btn.dont-know:hover { background: #F4511E; }
-    .review-progress { font-size: 13px; color: var(--text-muted); margin-bottom: 16px; }
+    .review-progress { font-size: 13px; color: var(--text-muted); margin-bottom: 12px; }
     .review-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
-    
-    /* Settings */
-    .settings-container { display: none; padding: 20px 16px 160px; max-width: 500px; margin: 0 auto; }
-    .settings-container.active { display: block; }
+
+    /* ==================== Settings ==================== */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+    .stat-card { background: white; border-radius: 12px; padding: 14px 10px; text-align: center; }
+    .stat-value { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--text-primary); }
+    .stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
     .settings-section { margin-bottom: 24px; }
     .settings-title { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
     .settings-card { background: white; border-radius: 12px; overflow: hidden; }
@@ -274,14 +283,20 @@
     .settings-item:last-child { border-bottom: none; }
     .settings-item-label { font-size: 14px; color: var(--text-primary); }
     .settings-item-value { font-size: 13px; color: var(--text-muted); }
-    .settings-input { padding: 8px 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; font-size: 13px; width: 140px; text-align: right; outline: none; }
+    .settings-input { padding: 8px 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; font-size: 13px; width: 160px; text-align: right; outline: none; }
     .settings-input:focus { border-color: var(--accent); }
-    .settings-select { padding: 8px 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; font-size: 13px; background: white; min-width: 120px; outline: none; }
-    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
-    .stat-card { background: white; border-radius: 12px; padding: 14px 10px; text-align: center; }
-    .stat-value { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--text-primary); }
-    .stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
-    
+    .settings-select { padding: 8px 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 8px; font-size: 13px; background: white; min-width: 140px; outline: none; }
+
+    /* ==================== Toast & Spinner ==================== */
+    .spinner { width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
+    .spinner-dark { border-color: rgba(0,0,0,0.1); border-top-color: var(--accent); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .toast { position: fixed; top: 20px; top: max(20px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--text-primary); color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; z-index: 100; transition: transform 0.3s ease; max-width: 90%; text-align: center; }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--error); }
+    .toast.success { background: var(--success); }
     .hide { display: none !important; }
   </style>
 </head>
@@ -289,8 +304,8 @@
   <div class="ambient-glow"></div>
   <div class="ambient-glow-2"></div>
   <div id="toast" class="toast"></div>
-  
-  <!-- Sidebar -->
+
+  <!-- ==================== Sidebar ==================== -->
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
   <div class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -300,9 +315,7 @@
       </div>
       <div class="sidebar-user" id="sidebarUser" onclick="handleGoogleAuth()">
         <div class="sidebar-user-avatar" id="userAvatar">
-          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path>
-          </svg>
+          <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>
         </div>
         <div class="sidebar-user-info">
           <div class="sidebar-user-name" id="userName">未登录</div>
@@ -310,87 +323,80 @@
         </div>
       </div>
     </div>
-    
     <div class="sidebar-menu">
       <div class="toggle-row">
         <span class="toggle-label">自动同步</span>
-        <label class="toggle">
-          <input type="checkbox" id="autoSyncToggle" onchange="toggleAutoSync()">
-          <span class="toggle-slider"></span>
-        </label>
+        <label class="toggle"><input type="checkbox" id="autoSyncToggle" onchange="toggleAutoSync()"><span class="toggle-slider"></span></label>
       </div>
-      
       <div class="sidebar-menu-item" onclick="manualSync()">
-        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"></path>
-        </svg>
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
         <span>立即同步</span>
       </div>
-      
       <div class="sidebar-menu-item" onclick="syncFromCloud()">
-        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75v6.75m0 0l-3-3m3 3l3-3m-8.25 6a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"></path>
-        </svg>
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9.75v6.75m0 0l-3-3m3 3l3-3m-8.25 6a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.233-2.33 3 3 0 013.758 3.848A3.752 3.752 0 0118 19.5H6.75z"/></svg>
         <span>从云端恢复</span>
       </div>
     </div>
-    
     <div class="sidebar-footer">
-      <div class="sync-status">
-        <div class="sync-dot" id="syncDot"></div>
-        <span id="syncStatusText">本地存储</span>
-      </div>
+      <div class="sync-status"><div class="sync-dot" id="syncDot"></div><span id="syncStatusText">本地存储</span></div>
     </div>
   </div>
-  
-  <!-- Header -->
-  <header class="header">
+
+  <!-- ==================== Header ==================== -->
+  <header class="header" id="mainHeader">
     <div class="header-inner">
       <button class="menu-btn" onclick="openSidebar()">
-        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"></path>
-        </svg>
+        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg>
       </button>
       <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search my mind..." oninput="handleSearch()">
+        <input type="text" id="searchInput" placeholder="搜索收藏内容..." oninput="handleSearch()">
       </div>
       <button class="add-btn" onclick="openAddModal()">
-        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
-        </svg>
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
       </button>
     </div>
   </header>
-  
-  <!-- Main content -->
-  <main class="main-content" id="everythingTab">
+
+  <!-- ==================== Tab 1: Collection ==================== -->
+  <div class="tab-panel active" id="tabCollection">
     <div class="masonry" id="cardGrid"></div>
     <div class="empty-state hide" id="emptyState">
-      <div class="empty-state-icon">
-        <svg width="28" height="28" fill="none" stroke="#A8A299" stroke-width="1.5" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"></path>
-        </svg>
-      </div>
+      <div class="empty-state-icon">📝</div>
       <h2 class="empty-state-title">Your mind is empty</h2>
       <p class="empty-state-desc">Start collecting words and sentences</p>
     </div>
-  </main>
-  
-  <!-- Review tab -->
-  <div class="review-container" id="reviewTab">
-    <div id="reviewContent">
+  </div>
+
+  <!-- ==================== Tab 2: Etymology ==================== -->
+  <div class="tab-panel" id="tabEtymology">
+    <!-- Search -->
+    <div class="ety-search-box">
+      <input class="ety-search-input" id="etySearchInput" placeholder="输入英文单词，探索词源..." onkeydown="if(event.key==='Enter')etySearch()">
+      <button class="ety-search-btn" id="etySearchBtn" onclick="etySearch()">解析</button>
+    </div>
+    <!-- Sub navigation -->
+    <div class="ety-sub-nav">
+      <button class="ety-sub-btn active" data-view="search" onclick="switchEtyView('search')">🔍 搜索</button>
+      <button class="ety-sub-btn" data-view="explore" onclick="switchEtyView('explore')">🗺️ 探索</button>
+      <button class="ety-sub-btn" data-view="course" onclick="switchEtyView('course')">📖 课程</button>
+    </div>
+    <!-- Content areas -->
+    <div id="etySearchView"></div>
+    <div id="etyExploreView" class="hide"></div>
+    <div id="etyCourseView" class="hide"></div>
+  </div>
+
+  <!-- ==================== Tab 3: Review ==================== -->
+  <div class="tab-panel" id="tabReview">
+    <div class="review-container" id="reviewContent">
       <p class="review-progress" id="reviewProgress">1 / 20</p>
-      <p class="review-hint">点击卡片翻转，点击喇叭听发音</p>
+      <p class="review-hint">点击卡片翻转，点击 🔊 听发音</p>
       <div class="flashcard" id="flashcard" onclick="flipCard()">
         <div class="flashcard-inner">
           <div class="flashcard-front">
             <div class="flashcard-word" id="flashcardWord">word</div>
             <div class="flashcard-phonetic" id="flashcardPhonetic">/wɜːrd/</div>
-            <button class="flashcard-speak-btn" onclick="event.stopPropagation(); speakWord(document.getElementById('flashcardWord').textContent)">
-              <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"></path>
-              </svg>
-            </button>
+            <button class="flashcard-speak" onclick="event.stopPropagation();speakWord(document.getElementById('flashcardWord').textContent)">🔊</button>
           </div>
           <div class="flashcard-back" id="flashcardBack"></div>
         </div>
@@ -402,39 +408,34 @@
     </div>
     <div id="reviewEmpty" class="hide">
       <div class="empty-state">
-        <div class="empty-state-icon">
-          <svg width="28" height="28" fill="none" stroke="#A8A299" stroke-width="1.5" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path>
-          </svg>
-        </div>
+        <div class="empty-state-icon">🎴</div>
         <h2 class="empty-state-title">没有可复习的单词</h2>
-        <p class="empty-state-desc">先去收藏一些内容吧</p>
+        <p class="empty-state-desc">先去收藏一些内容或学习词根吧</p>
       </div>
     </div>
   </div>
-  
-  <!-- Settings tab -->
-  <div class="settings-container" id="settingsTab">
+
+  <!-- ==================== Tab 4: Settings ==================== -->
+  <div class="tab-panel" id="tabSettings">
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">收藏</div></div>
-      <div class="stat-card"><div class="stat-value" id="statWords">0</div><div class="stat-label">单词</div></div>
-      <div class="stat-card"><div class="stat-value" id="statDays">0</div><div class="stat-label">天</div></div>
+      <div class="stat-card"><div class="stat-value" id="statWords">0</div><div class="stat-label">词汇</div></div>
+      <div class="stat-card"><div class="stat-value" id="statDays">0</div><div class="stat-label">天数</div></div>
     </div>
     <div class="settings-section">
       <div class="settings-title">AI 设置</div>
       <div class="settings-card">
         <div class="settings-item">
           <span class="settings-item-label">服务商</span>
-          <select class="settings-select" id="apiProvider" onchange="saveSettings()">
-            <option value="gemini">Gemini</option>
+          <select class="settings-select" id="apiProvider" onchange="onProviderChange()">
+            <option value="gemini">Gemini（免费）</option>
+            <option value="openrouter">OpenRouter (Claude)</option>
             <option value="deepseek">DeepSeek</option>
           </select>
         </div>
         <div class="settings-item">
           <span class="settings-item-label">模型</span>
-          <select class="settings-select" id="apiModel" onchange="saveSettings()">
-            <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-          </select>
+          <select class="settings-select" id="apiModel" onchange="saveSettings()"></select>
         </div>
         <div class="settings-item">
           <span class="settings-item-label">API Key</span>
@@ -445,64 +446,67 @@
     <div class="settings-section">
       <div class="settings-title">数据管理</div>
       <div class="settings-card">
-        <div class="settings-item" style="cursor: pointer;" onclick="exportJSON()">
+        <div class="settings-item" style="cursor:pointer" onclick="exportJSON()">
           <span class="settings-item-label">导出备份 (JSON)</span>
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path></svg>
+          <span class="settings-item-value">↓</span>
         </div>
-        <div class="settings-item" style="cursor: pointer;" onclick="document.getElementById('importFile').click()">
+        <div class="settings-item" style="cursor:pointer" onclick="document.getElementById('importFile').click()">
           <span class="settings-item-label">导入备份</span>
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"></path></svg>
-          <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importJSON(event)">
+          <span class="settings-item-value">↑</span>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
         </div>
-        <div class="settings-item" style="cursor: pointer;" onclick="exportAnki('words')">
+        <div class="settings-item" style="cursor:pointer" onclick="exportAnki()">
           <span class="settings-item-label">导出到 Anki</span>
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"></path></svg>
+          <span class="settings-item-value">↓</span>
         </div>
       </div>
     </div>
     <div class="settings-section">
       <div class="settings-title">关于</div>
       <div class="settings-card">
-        <div class="settings-item"><span class="settings-item-label">版本</span><span class="settings-item-value">1.2.0</span></div>
+        <div class="settings-item"><span class="settings-item-label">版本</span><span class="settings-item-value">2.0.0</span></div>
       </div>
     </div>
   </div>
-  
-  <!-- Quick input -->
+
+  <!-- ==================== Quick Input (Collection tab only) ==================== -->
   <div class="quick-input-wrapper" id="quickInputWrapper">
     <div class="quick-input">
       <div class="quick-input-label">添加新内容</div>
       <input type="text" id="quickInput" placeholder="输入英文内容..." onkeydown="handleQuickInput(event)">
     </div>
   </div>
-  
-  <!-- Bottom nav -->
+
+  <!-- ==================== Bottom Nav ==================== -->
   <nav class="bottom-nav">
     <div class="nav-items">
-      <button class="nav-item active" data-tab="everything" onclick="switchTab('everything')">
-        <svg fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="7" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="14" width="7" height="7" rx="1.5"></rect></svg>
-        <span>Everything</span>
+      <button class="nav-item active" data-tab="collection" onclick="switchTab('collection')">
+        <svg fill="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        <span>收藏</span>
+      </button>
+      <button class="nav-item" data-tab="etymology" onclick="switchTab('etymology')">
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/></svg>
+        <span>词根</span>
       </button>
       <button class="nav-item" data-tab="review" onclick="switchTab('review')">
-        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"></path></svg>
-        <span>Review</span>
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.436 60.436 0 00-.491 6.347A48.627 48.627 0 0112 20.904a48.627 48.627 0 018.232-4.41 60.46 60.46 0 00-.491-6.347m-15.482 0a50.57 50.57 0 00-2.658-.813A59.905 59.905 0 0112 3.493a59.902 59.902 0 0110.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.697 50.697 0 0112 13.489a50.702 50.702 0 017.74-3.342M6.75 15a.75.75 0 100-1.5.75.75 0 000 1.5zm0 0v-3.675A55.378 55.378 0 0112 8.443m-7.007 11.55A5.981 5.981 0 006.75 15.75v-1.5"/></svg>
+        <span>复习</span>
       </button>
       <button class="nav-item" data-tab="settings" onclick="switchTab('settings')">
-        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-        <span>Settings</span>
+        <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span>设置</span>
       </button>
     </div>
   </nav>
-  
-  <!-- Add Modal -->
+
+  <!-- ==================== Add Modal ==================== -->
   <div class="modal-overlay" id="addModal" onclick="closeAddModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
       <div class="modal-body">
         <h2 class="add-modal-title">Save to your mind</h2>
         <textarea class="add-modal-textarea" id="addInput" placeholder="粘贴或输入英文内容..."></textarea>
         <div class="add-modal-hint">
-          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"></path></svg>
-          <span>AI 将自动分析并提取重点词汇</span>
+          <span>✨ AI 将自动分析并提取重点词汇</span>
         </div>
         <div class="add-modal-actions">
           <button class="btn btn-secondary" onclick="closeAddModal()">取消</button>
@@ -511,493 +515,616 @@
       </div>
     </div>
   </div>
-  
-  <!-- Detail Modal -->
+
+  <!-- ==================== Detail Modal ==================== -->
   <div class="modal-overlay" id="detailModal" onclick="closeDetailModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
       <div class="modal-body" id="detailBody"></div>
     </div>
   </div>
 
-  <script>
-    // ==================== Config ====================
-    const GOOGLE_CLIENT_ID = '550666764387-5tofkeq6i4r9a8n15i50rfrgikdeinp6.apps.googleusercontent.com';
-    const DRIVE_FILE_NAME = 'english-collector-backup.json';
-    
-    // ==================== State ====================
-    let cards = [];
-    let settings = { apiProvider: 'gemini', apiModel: 'gemini-2.0-flash', apiKey: '', firstUseDate: null, autoSync: false };
-    let reviewState = { words: [], currentIndex: 0, results: [] };
-    let googleUser = null;
-    let accessToken = null;
+<script>
+// ======================================================================
+// CONFIG & DATA
+// ======================================================================
+const GOOGLE_CLIENT_ID = '550666764387-5tofkeq6i4r9a8n15i50rfrgikdeinp6.apps.googleusercontent.com';
+const DRIVE_FILE_NAME = 'english-collector-backup.json';
 
-    // ==================== IndexedDB ====================
-    const DB_NAME = 'EnglishCollectorDB';
-    let db;
+const EXPLORE_CATEGORIES = [
+  { id: 'film', icon: '🎬', name: '影视编剧', color: '#f43f5e', keywords: ['screenplay','protagonist','antagonist','cinematography','montage','denouement','narrative','dialogue','subplot','exposition','climax','resolution','storyboard','voiceover','protagonist'] },
+  { id: 'law', icon: '⚖️', name: '法律', color: '#8b5cf6', keywords: ['jurisdiction','litigation','plaintiff','defendant','testimony','verdict','prosecution','acquittal','statute','precedent','liability','injunction','subpoena','affidavit','deposition'] },
+  { id: 'medical', icon: '💊', name: '医学', color: '#10b981', keywords: ['diagnosis','prognosis','pathology','syndrome','chronic','acute','benign','malignant','inflammation','antibiotic','cardiovascular','neurological','immunology','metabolism','biopsy'] },
+  { id: 'finance', icon: '💰', name: '金融投资', color: '#f59e0b', keywords: ['portfolio','dividend','equity','liability','liquidity','amortization','appreciation','depreciation','derivative','hedge','arbitrage','leverage','collateral','fiduciary','insolvency'] },
+  { id: 'tech', icon: '💻', name: '计算机科技', color: '#3b82f6', keywords: ['algorithm','encryption','protocol','bandwidth','latency','synchronous','asynchronous','repository','compiler','recursion','polymorphism','virtualization','authentication','deprecated','iteration'] },
+  { id: 'biology', icon: '🧬', name: '生物科学', color: '#14b8a6', keywords: ['photosynthesis','mitochondria','chromosome','genome','enzyme','organism','cellular','mutation','symbiosis','metabolism','prokaryote','eukaryote','homeostasis','phylogeny','biodiversity'] },
+  { id: 'psychology', icon: '🧠', name: '心理学', color: '#ec4899', keywords: ['cognition','perception','consciousness','subconscious','neurosis','psychosis','empathy','introspection','behaviorism','conditioning','reinforcement','catharsis','projection','repression','transference'] },
+];
 
-    async function initDB() {
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, 1);
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => { db = request.result; resolve(db); };
-        request.onupgradeneeded = (e) => {
-          const database = e.target.result;
-          if (!database.objectStoreNames.contains('cards')) database.createObjectStore('cards', { keyPath: 'id' });
-          if (!database.objectStoreNames.contains('settings')) database.createObjectStore('settings', { keyPath: 'key' });
-        };
-      });
+const COURSE_DATA = {
+  level1: { title: 'Level 1：核心词根入门', description: '掌握50个最常用词根，解锁3000+单词', units: [
+    { id:'u1', title:'数字词根', subtitle:'uni-, bi-, tri-, cent-...', rootCount:8, wordCount:80, roots:['uni- (一)','bi- (二)','tri- (三)','quad- (四)','pent- (五)','hex- (六)','cent- (百)','milli- (千)'], words:['universe','unique','bicycle','bilingual','triangle','tripod','quadrant','pentagon','hexagon','century','millennium'] },
+    { id:'u2', title:'方向与位置', subtitle:'ex-, in-, pro-, re-, trans-...', rootCount:10, wordCount:120, roots:['ex- (出)','in- (进入)','pro- (向前)','re- (返回)','trans- (穿越)','sub- (下)','super- (上)','inter- (之间)','circum- (环绕)','pre- (前)'], words:['export','import','progress','return','transport','submarine','superior','international','circumstance','predict'] },
+    { id:'u3', title:'动作词根（上）', subtitle:'duct-, port-, scrib-, spec-...', rootCount:8, wordCount:100, roots:['duct- (引导)','port- (携带)','scrib-/script- (写)','spec-/spect- (看)','aud- (听)','dict- (说)','fac-/fact- (做)','ject- (投掷)'], words:['conduct','portable','describe','inspect','audience','dictate','factory','project'] },
+    { id:'u4', title:'动作词根（下）', subtitle:'vert-, mit-, cred-, struct-...', rootCount:8, wordCount:100, roots:['vert-/vers- (转)','mit-/miss- (送)','cred- (相信)','struct- (建造)','rupt- (破)','tract- (拉)','pos-/pon- (放置)','cap-/cept- (抓取)'], words:['convert','transmit','credit','construct','interrupt','attract','compose','capture'] },
+    { id:'u5', title:'状态与性质', subtitle:'viv-, mort-, nov-, sens-...', rootCount:8, wordCount:80, roots:['viv- (活)','mort- (死)','nov- (新)','sens-/sent- (感觉)','sol- (单独)','grat- (感谢)','liber- (自由)','simil- (相似)'], words:['survive','mortal','novel','sensitive','solitary','grateful','liberty','similar'] },
+  ]},
+  level2: { title: 'Level 2：希腊语系词根', description: '科学与学术领域的核心词根', units: [
+    { id:'u6', title:'科学词根', subtitle:'bio-, geo-, hydro-, thermo-...', rootCount:10, wordCount:100, roots:['bio- (生命)','geo- (地球)','hydro- (水)','thermo- (热)','photo- (光)','tele- (远)','auto- (自我)','micro- (小)','macro- (大)','poly- (多)'], words:['biology','geography','hydrogen','thermometer','photograph','telephone','automatic','microscope','macroeconomics','polygon'] },
+    { id:'u7', title:'思维与知识', subtitle:'log-, soph-, phil-, psych-...', rootCount:8, wordCount:80, roots:['log-/logy (学问)','soph- (智慧)','phil- (爱)','psych- (心灵)','gno-/gnos- (知道)','crit- (判断)','theo- (神)','arch- (统治/古老)'], words:['psychology','philosophy','technology','sophisticated','diagnosis','criticism','theology','archaeology'] },
+  ]},
+  level3: { title: 'Level 3：专业领域词根', description: '法律、医学、商业领域专用词根', units: [
+    { id:'u8', title:'医学词根', subtitle:'cardio-, neuro-, derm-, path-...', rootCount:10, wordCount:100, roots:['cardio- (心脏)','neuro- (神经)','derm- (皮肤)','path- (疾病/感受)','hemo- (血)','osteo- (骨)','gastro- (胃)','hepat- (肝)','ren- (肾)','pulmo- (肺)'], words:['cardiology','neuroscience','dermatology','pathology','hemorrhage','osteoporosis','gastritis','hepatitis','renal','pulmonary'] },
+    { id:'u9', title:'法律词根', subtitle:'jud-, leg-, jur-, dict-...', rootCount:8, wordCount:80, roots:['jud-/judic- (判断)','leg- (法律)','jur- (宣誓/法律)','licit- (合法)','crim- (罪)','poen-/pun- (惩罚)','test- (见证)','advoc- (声援)'], words:['judicial','legal','jury','illicit','criminal','punish','testimony','advocate'] },
+  ]}
+};
+
+const DAILY_ARTICLES = [
+  { day:0, theme:'数字词根', title:'从uni-到milli-: 数字如何塑造语言', content:'你知道吗？university（大学）和universe（宇宙）有着相同的词根！uni-来自拉丁语unus，意为"一"。大学最初的含义是"师生统一体"——所有人united为一个整体。而宇宙则是"一切转向同一个方向"的意思。\n\n同样，bicycle的bi-表示"二"（两个轮子），triangle的tri-表示"三"（三个角），而century来自cent-表示"一百"（一百年）。掌握这些数字词根，你就能轻松理解几百个单词！', roots:['uni-','bi-','tri-','cent-'], examples:[{word:'universe',meaning:'宇宙（一个整体）'},{word:'bicycle',meaning:'自行车（两个轮子）'}] },
+  { day:1, theme:'方向词根', title:'进与出：ex-和in-的奇妙世界', content:'export和import是一对有趣的反义词。ex-表示"出"，port表示"携带"，所以export就是"携带出去"=出口。而in-表示"进入"，import就是"携带进来"=进口。\n\n这个规律适用于很多词：exclude（排除在外）vs include（包含在内），external（外部的）vs internal（内部的）。记住这些前缀的方向感，词汇学习事半功倍！', roots:['ex-','in-','port-'], examples:[{word:'export',meaning:'出口（带出去）'},{word:'import',meaning:'进口（带进来）'}] },
+  { day:2, theme:'科学词根', title:'希腊人的智慧：bio-, geo-, photo-', content:'biology为什么叫生物学？因为bio-来自希腊语bios，意为"生命"，而-logy表示"学问"。所以biology就是"关于生命的学问"。\n\n同理，geography（地理学）= geo-（地球）+ -graphy（书写/描述），photograph（照片）= photo-（光）+ -graph（写），是"用光来书写"，因为早期摄影确实是用光在胶片上"写"下图像！', roots:['bio-','geo-','photo-','-logy'], examples:[{word:'biology',meaning:'生物学'},{word:'photograph',meaning:'照片（光写）'}] },
+  { day:3, theme:'身体词根', title:'从心到脑：医学词根的故事', content:'cardiology（心脏病学）的cardio-来自希腊语kardia，意为"心脏"。有趣的是，英语中的heart和希腊语kardia其实有共同的印欧语祖先！\n\nneurology（神经病学）的neuro-来自希腊语neuron，原意是"弦、腱"，后来引申为"神经"——因为神经看起来像身体里的细弦。dermatology（皮肤科）的derm-则来自希腊语derma，意为"皮肤"。', roots:['cardio-','neuro-','derm-'], examples:[{word:'cardiology',meaning:'心脏病学'},{word:'neurology',meaning:'神经病学'}] },
+  { day:4, theme:'动作词根', title:'duct, port, scrib：三个万能动词根', content:'duct-来自拉丁语ducere，意为"引导、带领"。所以conductor是"一起引导的人"（指挥/售票员），introduction是"引导进入"（介绍/引言）。\n\nport-来自拉丁语portare，意为"携带"。portable是"可携带的"，transport是"跨越携带"=运输。\n\nscrib-/script-来自拉丁语scribere，意为"写"。describe是"向下写"=描述，manuscript是"手写的"=手稿。', roots:['duct-','port-','scrib-'], examples:[{word:'conduct',meaning:'引导、指挥'},{word:'describe',meaning:'描述（向下写）'}] },
+  { day:5, theme:'思维词根', title:'phil-和soph-：爱与智慧', content:'philosophy是什么意思？phil-来自希腊语philos，意为"爱"，soph-来自sophia，意为"智慧"。所以philosophy就是"爱智慧"——对智慧的热爱与追求。\n\nphilanthropy（慈善）= phil-（爱）+ anthrop-（人类），爱人类。\nsophisticated（复杂精密的）原本指"像智者一样"，后来引申为"老练的、精密的"。', roots:['phil-','soph-','anthrop-'], examples:[{word:'philosophy',meaning:'哲学（爱智慧）'},{word:'philanthropy',meaning:'慈善（爱人类）'}] },
+  { day:6, theme:'生死词根', title:'viv-和mort-：生与死的语言密码', content:'survive为什么表示"幸存"？sur-表示"超越"，viv-来自拉丁语vivere，意为"活"。所以survive就是"超越了死亡继续活着"=幸存。vivid（生动的）也来自同一词根——充满生命力的。\n\n相反，mort-来自拉丁语mors/mortis，意为"死亡"。mortal是"会死的"（凡人），immortal是"不死的"（神仙）。mortgage（抵押贷款）字面意思是"死亡承诺"——要么还清贷款，要么失去财产！', roots:['viv-','mort-','sur-'], examples:[{word:'survive',meaning:'幸存（超越死亡）'},{word:'mortal',meaning:'凡人（会死的）'}] },
+];
+
+// ======================================================================
+// STATE
+// ======================================================================
+let cards = [];
+let etymologyWords = []; // saved from etymology analysis
+let settings = { apiProvider:'gemini', apiModel:'gemini-2.5-flash', apiKey:'', firstUseDate:null, autoSync:false };
+let reviewState = { words:[], currentIndex:0, results:[] };
+let googleUser = null, accessToken = null;
+let etyAnalysis = null, etyLoading = false;
+let currentEtyView = 'search';
+let currentCourseLevel = 'level1', currentCourseUnit = null;
+
+// ======================================================================
+// IndexedDB
+// ======================================================================
+const DB_NAME = 'EnglishCollectorDB';
+let db;
+
+async function initDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, 2);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains('cards')) d.createObjectStore('cards', { keyPath: 'id' });
+      if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' });
+      if (!d.objectStoreNames.contains('etymologyWords')) d.createObjectStore('etymologyWords', { keyPath: 'word' });
+    };
+  });
+}
+
+async function dbGetAll(store) {
+  return new Promise((r, e) => { const q = db.transaction([store],'readonly').objectStore(store).getAll(); q.onsuccess = () => r(q.result||[]); q.onerror = () => e(q.error); });
+}
+async function dbGet(store, key) {
+  return new Promise((r, e) => { const q = db.transaction([store],'readonly').objectStore(store).get(key); q.onsuccess = () => r(q.result); q.onerror = () => e(q.error); });
+}
+async function dbPut(store, data) {
+  return new Promise((r, e) => { const q = db.transaction([store],'readwrite').objectStore(store).put(data); q.onsuccess = () => r(); q.onerror = () => e(q.error); });
+}
+async function dbDelete(store, key) {
+  return new Promise((r, e) => { const q = db.transaction([store],'readwrite').objectStore(store).delete(key); q.onsuccess = () => r(); q.onerror = () => e(q.error); });
+}
+
+async function loadData() {
+  cards = await dbGetAll('cards');
+  cards.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+  etymologyWords = await dbGetAll('etymologyWords');
+  const saved = await dbGet('settings', 'main');
+  if (saved) settings = { ...settings, ...saved.value };
+  document.getElementById('apiProvider').value = settings.apiProvider;
+  document.getElementById('apiKey').value = settings.apiKey;
+  document.getElementById('autoSyncToggle').checked = settings.autoSync;
+  updateModelOptions();
+}
+
+async function saveCardToDB(card) {
+  await dbPut('cards', card);
+  const idx = cards.findIndex(c => c.id === card.id);
+  if (idx >= 0) cards[idx] = card; else cards.unshift(card);
+}
+async function deleteCardFromDB(cardId) {
+  await dbDelete('cards', cardId);
+  cards = cards.filter(c => c.id !== cardId);
+}
+async function saveEtyWord(wordData) {
+  await dbPut('etymologyWords', wordData);
+  const idx = etymologyWords.findIndex(w => w.word === wordData.word);
+  if (idx >= 0) etymologyWords[idx] = wordData; else etymologyWords.push(wordData);
+}
+async function deleteEtyWord(word) {
+  await dbDelete('etymologyWords', word);
+  etymologyWords = etymologyWords.filter(w => w.word !== word);
+}
+async function saveSettingsToDB() {
+  await dbPut('settings', { key:'main', value: settings });
+}
+
+// ======================================================================
+// SIDEBAR & AUTH
+// ======================================================================
+function openSidebar() { document.getElementById('sidebar').classList.add('active'); document.getElementById('sidebarOverlay').classList.add('active'); }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); document.getElementById('sidebarOverlay').classList.remove('active'); }
+
+function handleGoogleAuth() {
+  if (googleUser) {
+    if (confirm('确定要退出登录吗？')) { googleUser=null; accessToken=null; localStorage.removeItem('ec_access_token'); localStorage.removeItem('ec_user'); updateUserUI(); showToast('已退出登录','success'); }
+    return;
+  }
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: GOOGLE_CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+    callback: async (response) => { if (response.access_token) { accessToken = response.access_token; localStorage.setItem('ec_access_token', accessToken); await fetchUserInfo(); if (settings.autoSync) await syncFromCloud(); } },
+  });
+  client.requestAccessToken();
+}
+
+async function fetchUserInfo() {
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { 'Authorization': `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error('Token expired');
+    googleUser = await res.json();
+    localStorage.setItem('ec_user', JSON.stringify(googleUser));
+    updateUserUI(); showToast('登录成功！','success');
+  } catch(e) { accessToken=null; localStorage.removeItem('ec_access_token'); localStorage.removeItem('ec_user'); updateUserUI(); }
+}
+
+function updateUserUI() {
+  const avatar=document.getElementById('userAvatar'), name=document.getElementById('userName'), email=document.getElementById('userEmail');
+  const dot=document.getElementById('syncDot'), text=document.getElementById('syncStatusText');
+  if (googleUser) {
+    avatar.innerHTML = googleUser.picture ? `<img src="${googleUser.picture}" alt="">` : '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>';
+    name.textContent = googleUser.name||'用户'; email.textContent = googleUser.email||''; dot.classList.add('synced'); text.textContent = '已连接 Google';
+  } else {
+    avatar.innerHTML = '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/></svg>';
+    name.textContent = '未登录'; email.textContent = '点击登录 Google 同步'; dot.classList.remove('synced'); text.textContent = '本地存储';
+  }
+}
+
+// ======================================================================
+// GOOGLE DRIVE SYNC
+// ======================================================================
+async function findDriveFile() {
+  const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}' and trashed=false&fields=files(id,name)`, { headers: { 'Authorization': `Bearer ${accessToken}` } });
+  if (!res.ok) throw new Error('Failed to search files');
+  const data = await res.json();
+  return data.files?.length > 0 ? data.files[0].id : null;
+}
+
+async function syncToCloud() {
+  if (!accessToken) { showToast('请先登录 Google','error'); return false; }
+  const freshCards = await dbGetAll('cards');
+  const freshEtyWords = await dbGetAll('etymologyWords');
+  if (freshCards.length === 0 && freshEtyWords.length === 0) { showToast('本地没有数据','error'); return false; }
+  const dot=document.getElementById('syncDot'), text=document.getElementById('syncStatusText');
+  dot.classList.remove('synced'); dot.classList.add('syncing'); text.textContent = '同步中...';
+  try {
+    const payload = JSON.stringify({ version:'2.0.0', syncDate:new Date().toISOString(), cards:freshCards, etymologyWords:freshEtyWords, settings:{...settings, apiKey:''} });
+    let fileId = await findDriveFile();
+    let res;
+    if (fileId) {
+      res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, { method:'PATCH', headers:{ 'Authorization':`Bearer ${accessToken}`, 'Content-Type':'application/json' }, body:payload });
+    } else {
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify({ name:DRIVE_FILE_NAME, mimeType:'application/json' })], { type:'application/json' }));
+      form.append('file', new Blob([payload], { type:'application/json' }));
+      res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method:'POST', headers:{ 'Authorization':`Bearer ${accessToken}` }, body:form });
     }
+    if (!res.ok) throw new Error('Upload failed');
+    cards = freshCards; etymologyWords = freshEtyWords;
+    dot.classList.remove('syncing'); dot.classList.add('synced'); text.textContent = '已同步';
+    showToast(`已同步 ${freshCards.length} 条收藏 + ${freshEtyWords.length} 个词汇`, 'success');
+    return true;
+  } catch(e) { dot.classList.remove('syncing'); text.textContent = '同步失败'; showToast('同步失败: '+e.message,'error'); return false; }
+}
 
-    async function loadData() {
-      cards = await new Promise((resolve, reject) => {
-        const req = db.transaction(['cards'], 'readonly').objectStore('cards').getAll();
-        req.onsuccess = () => { console.log('DB loaded cards:', req.result?.length); resolve(req.result || []); };
-        req.onerror = () => reject(req.error);
-      });
-      cards.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-      
-      const saved = await new Promise((resolve, reject) => {
-        const req = db.transaction(['settings'], 'readonly').objectStore('settings').get('main');
-        req.onsuccess = () => resolve(req.result);
-        req.onerror = () => reject(req.error);
-      });
-      if (saved) settings = { ...settings, ...saved.value };
-      
-      document.getElementById('apiProvider').value = settings.apiProvider;
-      document.getElementById('apiModel').value = settings.apiModel;
-      document.getElementById('apiKey').value = settings.apiKey;
-      document.getElementById('autoSyncToggle').checked = settings.autoSync;
-      updateModelOptions();
+async function syncFromCloud() {
+  if (!accessToken) { showToast('请先登录 Google','error'); return; }
+  try {
+    showToast('正在从云端获取...','');
+    const fileId = await findDriveFile();
+    if (!fileId) { showToast('云端没有备份','error'); return; }
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, { headers:{ 'Authorization':`Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error('下载失败');
+    const data = await res.json();
+    // Merge cards
+    if (data.cards?.length) {
+      const map = new Map(cards.map(c=>[c.id,c]));
+      data.cards.forEach(c => { const ex=map.get(c.id); if(!ex||new Date(c.createdAt)>new Date(ex.createdAt)) map.set(c.id,c); });
+      for (const card of map.values()) await saveCardToDB(card);
+      cards = Array.from(map.values()).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
     }
-
-    async function saveCardToDB(card) {
-      await db.transaction(['cards'], 'readwrite').objectStore('cards').put(card);
-      const idx = cards.findIndex(c => c.id === card.id);
-      if (idx >= 0) cards[idx] = card; else cards.unshift(card);
+    // Merge etymology words
+    if (data.etymologyWords?.length) {
+      for (const w of data.etymologyWords) await saveEtyWord(w);
     }
+    renderCards(); updateStats();
+    showToast(`已恢复 ${cards.length} 条收藏`, 'success');
+  } catch(e) { showToast('恢复失败: '+e.message,'error'); }
+}
 
-    async function deleteCardFromDB(cardId) {
-      await db.transaction(['cards'], 'readwrite').objectStore('cards').delete(cardId);
-      cards = cards.filter(c => c.id !== cardId);
-    }
+async function manualSync() {
+  if (!accessToken) { showToast('请先登录 Google','error'); return; }
+  closeSidebar();
+  const localCards = await dbGetAll('cards');
+  if (localCards.length > 0) await syncToCloud(); else { showToast('本地无数据，尝试恢复...',''); await syncFromCloud(); }
+}
 
-    async function saveSettingsToDB() {
-      await db.transaction(['settings'], 'readwrite').objectStore('settings').put({ key: 'main', value: settings });
-    }
+function toggleAutoSync() { settings.autoSync = document.getElementById('autoSyncToggle').checked; saveSettingsToDB(); showToast(settings.autoSync?'已开启自动同步':'已关闭自动同步','success'); }
 
-    // ==================== Sidebar ====================
-    function openSidebar() { document.getElementById('sidebar').classList.add('active'); document.getElementById('sidebarOverlay').classList.add('active'); }
-    function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); document.getElementById('sidebarOverlay').classList.remove('active'); }
+// ======================================================================
+// SPEECH
+// ======================================================================
+function speakWord(word) {
+  if (!word) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(word); u.lang='en-US'; u.rate=0.8;
+  const v = window.speechSynthesis.getVoices().find(v=>v.lang.startsWith('en'));
+  if (v) u.voice = v;
+  window.speechSynthesis.speak(u);
+}
 
-    // ==================== Google Auth ====================
-    function handleGoogleAuth() {
-      if (googleUser) {
-        if (confirm('确定要退出登录吗？')) {
-          googleUser = null; accessToken = null;
-          localStorage.removeItem('ec_access_token');
-          localStorage.removeItem('ec_user');
-          updateUserUI();
-          showToast('已退出登录', 'success');
-        }
-        return;
-      }
-      
-      const client = google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID,
-        scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-        callback: async (response) => {
-          if (response.access_token) {
-            accessToken = response.access_token;
-            localStorage.setItem('ec_access_token', accessToken);
-            await fetchUserInfo();
-            // Auto sync on login
-            if (settings.autoSync) await syncFromCloud();
-          }
-        },
-      });
-      client.requestAccessToken();
-    }
+// ======================================================================
+// TAB SWITCHING
+// ======================================================================
+function switchTab(tab) {
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.tab===tab));
+  document.getElementById('tabCollection').classList.toggle('active', tab==='collection');
+  document.getElementById('tabEtymology').classList.toggle('active', tab==='etymology');
+  document.getElementById('tabReview').classList.toggle('active', tab==='review');
+  document.getElementById('tabSettings').classList.toggle('active', tab==='settings');
+  // Show header & quick input only for collection
+  document.getElementById('mainHeader').classList.toggle('hide', tab!=='collection');
+  document.getElementById('quickInputWrapper').classList.toggle('hide', tab!=='collection');
+  if (tab==='review') initReview();
+  if (tab==='settings') updateStats();
+  if (tab==='etymology') renderEtyView();
+}
 
-    async function fetchUserInfo() {
-      try {
-        const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        if (!res.ok) throw new Error('Token expired');
-        googleUser = await res.json();
-        localStorage.setItem('ec_user', JSON.stringify(googleUser));
-        updateUserUI();
-        showToast('登录成功！', 'success');
-      } catch (e) {
-        accessToken = null;
-        localStorage.removeItem('ec_access_token');
-        localStorage.removeItem('ec_user');
-        updateUserUI();
-      }
-    }
+// ======================================================================
+// COLLECTION (TAB 1)
+// ======================================================================
+function renderCards() {
+  const grid = document.getElementById('cardGrid');
+  const empty = document.getElementById('emptyState');
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  const filtered = cards.filter(c =>
+    c.content.toLowerCase().includes(query) || c.translation?.toLowerCase().includes(query) || c.keywords?.some(k=>k.word.toLowerCase().includes(query))
+  );
+  if (filtered.length===0) { grid.innerHTML=''; empty.classList.remove('hide'); return; }
+  empty.classList.add('hide');
+  grid.innerHTML = filtered.map(card => `
+    <div class="card" onclick="openDetailModal('${card.id}')">
+      <div class="card-content">${esc(card.content)}</div>
+      ${card.keywords?.length ? `<div class="card-keywords">${card.keywords.slice(0,3).map(k=>`<span class="keyword-tag">${esc(k.word)}</span>`).join('')}</div>` : ''}
+    </div>`).join('');
+}
 
-    function updateUserUI() {
-      const avatar = document.getElementById('userAvatar');
-      const name = document.getElementById('userName');
-      const email = document.getElementById('userEmail');
-      const syncDot = document.getElementById('syncDot');
-      const syncText = document.getElementById('syncStatusText');
-      
-      if (googleUser) {
-        avatar.innerHTML = googleUser.picture ? `<img src="${googleUser.picture}" alt="">` : '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>';
-        name.textContent = googleUser.name || '用户';
-        email.textContent = googleUser.email || '点击退出登录';
-        syncDot.classList.add('synced');
-        syncText.textContent = '已连接 Google';
-      } else {
-        avatar.innerHTML = '<svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>';
-        name.textContent = '未登录';
-        email.textContent = '点击登录 Google 同步';
-        syncDot.classList.remove('synced');
-        syncText.textContent = '本地存储';
-      }
-    }
+function openDetailModal(cardId) {
+  const card = cards.find(c=>c.id===cardId);
+  if (!card) return;
+  const tc = card.type==='word'?'type-word':card.type==='sentence'?'type-sentence':'type-paragraph';
+  const tl = card.type==='word'?'词':card.type==='sentence'?'句':'段';
+  const date = new Date(card.createdAt).toLocaleDateString('zh-CN');
+  let kwHtml = '';
+  if (card.keywords?.length) {
+    kwHtml = `<div class="keywords-section"><div class="keywords-title"><div class="keywords-title-bar"></div><span class="keywords-title-text">重点词汇</span></div>
+      <div class="keywords-list">${card.keywords.map((k,i)=>`<button class="keyword-btn ${i===0?'active':''}" onclick="showKeywordEtymology('${cardId}',${i})">${esc(k.word)}</button>`).join('')}</div></div>
+      <div class="etymology-box" id="etymologyBox">${renderKwEtymology(card.keywords[0])}</div>`;
+  }
+  document.getElementById('detailBody').innerHTML = `
+    <div class="detail-header"><div class="detail-meta"><span class="type-dot ${tc}"></span><span class="detail-date">${tl} · ${date}</span></div>
+      <button class="modal-close" onclick="closeDetailModal()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+    <p class="detail-content">${esc(card.content)}</p>
+    <p class="detail-translation">${esc(card.translation||'')}</p>
+    ${kwHtml}
+    <div class="add-modal-actions">
+      <button class="btn btn-secondary" onclick="deleteCard('${cardId}')">删除</button>
+      <button class="btn btn-primary" onclick="exportSingleAnki('${cardId}')">导出 Anki</button>
+    </div>`;
+  document.getElementById('detailModal').classList.add('active');
+}
 
-    // ==================== Google Drive Sync ====================
-    async function findDriveFile() {
-      const url = `https://www.googleapis.com/drive/v3/files?q=name='${DRIVE_FILE_NAME}' and trashed=false&fields=files(id,name)`;
-      console.log('Searching for file:', DRIVE_FILE_NAME);
-      const res = await fetch(url, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-      if (!res.ok) {
-        const err = await res.text();
-        console.error('Search failed:', err);
-        throw new Error('Failed to search files');
-      }
-      const data = await res.json();
-      console.log('Search result:', data);
-      return data.files && data.files.length > 0 ? data.files[0].id : null;
-    }
+function renderKwEtymology(kw) {
+  if (!kw) return '';
+  return `<div class="etymology-header"><div class="etymology-word">${esc(kw.word)}</div>
+    <button class="speak-btn" onclick="speakWord('${esc(kw.word)}')">🔊</button></div>
+    ${kw.phonetic?`<div class="etymology-phonetic">${esc(kw.phonetic)}</div>`:''}
+    <div class="etymology-item"><span class="etymology-label">构词 · </span><span class="etymology-value">${esc(kw.roots||'-')}</span></div>
+    <div class="etymology-item"><span class="etymology-label">来源 · </span><span class="etymology-value">${esc(kw.origin||'-')}</span></div>
+    <div class="etymology-item"><span class="etymology-label">释义 · </span><span class="etymology-value">${esc(kw.meaning||'-')}</span></div>`;
+}
 
-    async function syncToCloud() {
-      if (!accessToken) { showToast('请先登录 Google', 'error'); return false; }
-      
-      // Reload cards from IndexedDB first
-      const freshCards = await new Promise((resolve, reject) => {
-        const req = db.transaction(['cards'], 'readonly').objectStore('cards').getAll();
-        req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => reject(req.error);
-      });
-      
-      if (freshCards.length === 0) { showToast('本地没有数据可同步', 'error'); return false; }
-      
-      const syncDot = document.getElementById('syncDot');
-      const syncText = document.getElementById('syncStatusText');
-      syncDot.classList.remove('synced'); syncDot.classList.add('syncing');
-      syncText.textContent = '同步中...';
-      
-      try {
-        const data = JSON.stringify({
-          version: '1.2.0',
-          syncDate: new Date().toISOString(),
-          cards: freshCards,
-          settings: { ...settings, apiKey: '' }
-        });
-        
-        console.log('Syncing cards:', freshCards.length);
-        
-        let fileId = await findDriveFile();
-        console.log('Found file ID:', fileId);
-        
-        let res;
-        if (fileId) {
-          // Update existing file
-          res = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media`, {
-            method: 'PATCH',
-            headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-            body: data
-          });
-        } else {
-          // Create new file in root (not appDataFolder)
-          const metadata = { name: DRIVE_FILE_NAME, mimeType: 'application/json' };
-          const form = new FormData();
-          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-          form.append('file', new Blob([data], { type: 'application/json' }));
-          res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-            method: 'POST',
-            headers: { 'Authorization': `Bearer ${accessToken}` },
-            body: form
-          });
-        }
-        
-        if (!res.ok) {
-          const errData = await res.json();
-          console.error('Upload failed:', errData);
-          throw new Error(errData.error?.message || 'Upload failed');
-        }
-        
-        const result = await res.json();
-        console.log('Upload success:', result);
-        
-        // Update memory
-        cards = freshCards;
-        
-        syncDot.classList.remove('syncing'); syncDot.classList.add('synced');
-        syncText.textContent = '已同步';
-        showToast(`已同步 ${freshCards.length} 条到云端`, 'success');
-        return true;
-      } catch (e) {
-        console.error('Sync error:', e);
-        syncDot.classList.remove('syncing');
-        syncText.textContent = '同步失败';
-        showToast('同步失败: ' + e.message, 'error');
-        return false;
-      }
-    }
+function showKeywordEtymology(cardId, idx) {
+  const card = cards.find(c=>c.id===cardId);
+  if (!card?.keywords) return;
+  document.querySelectorAll('.keyword-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  document.getElementById('etymologyBox').innerHTML = renderKwEtymology(card.keywords[idx]);
+}
 
-    async function syncFromCloud() {
-      if (!accessToken) { showToast('请先登录 Google', 'error'); return; }
-      
-      try {
-        showToast('正在从云端获取...', '');
-        const fileId = await findDriveFile();
-        console.log('Found cloud file:', fileId);
-        
-        if (!fileId) { showToast('云端没有备份文件', 'error'); return; }
-        
-        const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
-          headers: { 'Authorization': `Bearer ${accessToken}` }
-        });
-        
-        if (!res.ok) {
-          const errData = await res.text();
-          console.error('Download failed:', errData);
-          throw new Error('下载失败');
-        }
-        
-        const data = await res.json();
-        console.log('Downloaded data:', data);
-        
-        if (!data.cards || data.cards.length === 0) {
-          showToast('云端备份为空', 'error');
-          return;
-        }
-        
-        // Merge: keep newer version of each card
-        const cardMap = new Map(cards.map(c => [c.id, c]));
-        data.cards.forEach(c => {
-          const existing = cardMap.get(c.id);
-          if (!existing || new Date(c.createdAt) > new Date(existing.createdAt)) {
-            cardMap.set(c.id, c);
-          }
-        });
-        
-        // Save all to DB
-        for (const card of cardMap.values()) await saveCardToDB(card);
-        
-        cards = Array.from(cardMap.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        renderCards();
-        updateStats();
-        showToast(`已恢复 ${cards.length} 条收藏`, 'success');
-      } catch (e) {
-        console.error('Restore error:', e);
-        showToast('恢复失败: ' + e.message, 'error');
-      }
-    }
+function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
+function openAddModal() { document.getElementById('addModal').classList.add('active'); document.getElementById('addInput').focus(); }
+function closeAddModal() { document.getElementById('addModal').classList.remove('active'); document.getElementById('addInput').value=''; }
 
-    async function manualSync() {
-      if (!accessToken) { showToast('请先登录 Google', 'error'); return; }
-      closeSidebar();
-      
-      // Always try to upload local data first
-      const localCards = await new Promise((resolve, reject) => {
-        const req = db.transaction(['cards'], 'readonly').objectStore('cards').getAll();
-        req.onsuccess = () => resolve(req.result || []);
-        req.onerror = () => reject(req.error);
-      });
-      
-      console.log('Local cards for sync:', localCards.length);
-      
-      if (localCards.length > 0) {
-        await syncToCloud();
-      } else {
-        showToast('本地无数据，尝试从云端恢复...', '');
-        await syncFromCloud();
-      }
-    }
+async function saveCard() {
+  const content = document.getElementById('addInput').value.trim();
+  if (!content) return;
+  if (!settings.apiKey) { showToast('请先在设置中填写 API Key','error'); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  document.getElementById('saveBtnText').innerHTML = '<div class="spinner"></div>';
+  try {
+    const analysis = await callAI(buildCollectionPrompt(content));
+    const wc = content.split(/\s+/).length;
+    const type = wc<=3?'word':content.split(/[.!?]/).filter(s=>s.trim()).length<=1?'sentence':'paragraph';
+    const card = { id:'card_'+Date.now(), content, type, translation:analysis.translation, keywords:analysis.keywords, createdAt:new Date().toISOString() };
+    await saveCardToDB(card);
+    if (!settings.firstUseDate) { settings.firstUseDate = new Date().toISOString(); await saveSettingsToDB(); }
+    renderCards(); updateStats(); closeAddModal(); showToast('保存成功！','success');
+    if (settings.autoSync && accessToken) syncToCloud();
+  } catch(e) { showToast('保存失败: '+e.message,'error'); }
+  finally { btn.disabled=false; document.getElementById('saveBtnText').textContent='保存'; }
+}
 
-    function toggleAutoSync() {
-      settings.autoSync = document.getElementById('autoSyncToggle').checked;
-      saveSettingsToDB();
-      showToast(settings.autoSync ? '已开启自动同步' : '已关闭自动同步', 'success');
-    }
+async function deleteCard(cardId) {
+  if (!confirm('确定删除？')) return;
+  await deleteCardFromDB(cardId); renderCards(); updateStats(); closeDetailModal(); showToast('已删除','success');
+  if (settings.autoSync && accessToken) syncToCloud();
+}
 
-    // ==================== Speech ====================
-    function speakWord(word) {
-      if (!word) return;
-      window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = 'en-US';
-      utterance.rate = 0.8;
-      const voices = window.speechSynthesis.getVoices();
-      const voice = voices.find(v => v.lang.startsWith('en'));
-      if (voice) utterance.voice = voice;
-      window.speechSynthesis.speak(utterance);
-    }
+function handleQuickInput(e) {
+  if (e.key==='Enter') {
+    const c = document.getElementById('quickInput').value.trim();
+    if (c) { document.getElementById('addInput').value=c; document.getElementById('quickInput').value=''; openAddModal(); saveCard(); }
+  }
+}
+function handleSearch() { renderCards(); }
 
-    // ==================== UI ====================
-    function renderCards() {
-      const grid = document.getElementById('cardGrid');
-      const emptyState = document.getElementById('emptyState');
-      const query = document.getElementById('searchInput').value.toLowerCase();
-      
-      console.log('Rendering cards, total:', cards.length, 'search:', query);
-      
-      const filtered = cards.filter(c => 
-        c.content.toLowerCase().includes(query) ||
-        c.translation?.toLowerCase().includes(query) ||
-        c.keywords?.some(k => k.word.toLowerCase().includes(query))
-      );
-      
-      console.log('Filtered cards:', filtered.length);
-      
-      if (filtered.length === 0) { grid.innerHTML = ''; emptyState.classList.remove('hide'); return; }
-      emptyState.classList.add('hide');
-      
-      grid.innerHTML = filtered.map(card => `
-        <div class="card" onclick="openDetailModal('${card.id}')">
-          <div class="card-content">${escapeHtml(card.content)}</div>
-          ${card.keywords?.length > 0 ? `<div class="card-keywords">${card.keywords.slice(0, 3).map(k => `<span class="keyword-tag">${escapeHtml(k.word)}</span>`).join('')}</div>` : ''}
+// ======================================================================
+// ETYMOLOGY TAB (TAB 2)
+// ======================================================================
+function switchEtyView(view) {
+  currentEtyView = view;
+  document.querySelectorAll('.ety-sub-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+  document.getElementById('etySearchView').classList.toggle('hide',view!=='search');
+  document.getElementById('etyExploreView').classList.toggle('hide',view!=='explore');
+  document.getElementById('etyCourseView').classList.toggle('hide',view!=='course');
+  renderEtyView();
+}
+
+function renderEtyView() {
+  if (currentEtyView==='search') renderEtySearchView();
+  else if (currentEtyView==='explore') renderEtyExploreView();
+  else if (currentEtyView==='course') renderEtyCourseView();
+}
+
+// --- Search View ---
+function renderEtySearchView() {
+  const el = document.getElementById('etySearchView');
+  if (etyAnalysis) { renderEtyResult(el); return; }
+  // Show daily article
+  const article = DAILY_ARTICLES[new Date().getDay()];
+  el.innerHTML = `
+    <div class="daily-article">
+      <div class="article-badge">📅 今日词源 · ${article.theme}</div>
+      <h3 class="article-title">${article.title}</h3>
+      <p class="article-content">${article.content}</p>
+      <div class="article-roots">${article.roots.map(r=>`<span class="article-root-tag">${r}</span>`).join('')}</div>
+      <div class="article-examples">${article.examples.map(ex=>`<button class="article-word-btn" onclick="etySearchWord('${ex.word}')"><span class="article-word-text">${ex.word}</span><span class="article-word-meaning">${ex.meaning}</span></button>`).join('')}</div>
+    </div>`;
+}
+
+function renderEtyResult(el) {
+  const a = etyAnalysis;
+  const isSaved = etymologyWords.some(w=>w.word===a.word);
+  el.innerHTML = `
+    <div class="ety-result">
+      <div class="ety-result-header">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+          <span class="ety-result-word">${esc(a.word)}</span>
+          <button class="speak-btn" onclick="speakWord('${esc(a.word)}')">🔊</button>
         </div>
-      `).join('');
-    }
-
-    function openDetailModal(cardId) {
-      const card = cards.find(c => c.id === cardId);
-      if (!card) return;
-      
-      const typeClass = card.type === 'word' ? 'type-word' : card.type === 'sentence' ? 'type-sentence' : 'type-paragraph';
-      const typeLabel = card.type === 'word' ? '词' : card.type === 'sentence' ? '句' : '段';
-      const date = new Date(card.createdAt).toLocaleDateString('zh-CN');
-      
-      let keywordsHtml = '';
-      if (card.keywords?.length > 0) {
-        keywordsHtml = `
-          <div class="keywords-section">
-            <div class="keywords-title"><div class="keywords-title-bar"></div><span class="keywords-title-text">重点词汇</span></div>
-            <div class="keywords-list">${card.keywords.map((k, i) => `<button class="keyword-btn ${i === 0 ? 'active' : ''}" onclick="showEtymology('${cardId}', ${i})">${escapeHtml(k.word)}</button>`).join('')}</div>
-          </div>
-          <div class="etymology-box" id="etymologyBox">${renderEtymology(card.keywords[0])}</div>
-        `;
-      }
-      
-      document.getElementById('detailBody').innerHTML = `
-        <div class="detail-header">
-          <div class="detail-meta"><span class="type-dot ${typeClass}"></span><span class="detail-date">${typeLabel} · ${date}</span></div>
-          <button class="modal-close" onclick="closeDetailModal()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+        <p class="ety-result-phonetic">${esc(a.phonetic||'')}</p>
+        <p class="ety-result-meaning">${esc(a.meaning||'')}</p>
+        <div class="ety-result-actions">
+          <button class="btn btn-primary btn-small" onclick="saveEtyWordFromAnalysis()" ${isSaved?'disabled':''}>${isSaved?'✓ 已收藏':'+ 收藏'}</button>
+          <button class="btn btn-secondary btn-small" onclick="etyAnalysis=null;renderEtySearchView()">← 返回</button>
         </div>
-        <p class="detail-content">${escapeHtml(card.content)}</p>
-        <p class="detail-translation">${escapeHtml(card.translation || '')}</p>
-        ${keywordsHtml}
-        <div class="add-modal-actions">
-          <button class="btn btn-secondary" onclick="deleteCard('${cardId}')">删除</button>
-          <button class="btn btn-primary" onclick="exportSingleAnki('${cardId}')">导出 Anki</button>
+      </div>
+      ${a.roots?.length?`<div class="ety-card"><div class="ety-card-title"><span>🧬</span> 词根拆解</div>
+        ${a.roots.map(r=>`<div class="ety-root-item"><span class="ety-root-part">${esc(r.part)}</span><button class="speak-btn" style="width:28px;height:28px;font-size:12px" onclick="speakWord('${esc(r.part.replace(/[-]/g,''))}')">🔊</button><span class="ety-root-origin">${esc(r.origin)}</span><span class="ety-root-meaning">→ ${esc(r.meaning)}</span></div>`).join('')}</div>`:''}
+      ${a.etymology_story?`<div class="ety-card"><div class="ety-card-title"><span>📖</span> 词源故事</div><p class="ety-story">${esc(a.etymology_story)}</p>${a.memory_tip?`<div class="ety-memory-tip">💡 ${esc(a.memory_tip)}</div>`:''}</div>`:''}
+      ${a.examples?.length?`<div class="ety-card"><div class="ety-card-title"><span>📝</span> 例句</div>
+        ${a.examples.map(ex=>`<div class="ety-example"><div class="ety-example-en"><button class="speak-btn" style="width:24px;height:24px;font-size:11px;flex-shrink:0" onclick="speakWord(\`${esc(ex.sentence)}\`)">🔊</button>${esc(ex.sentence)}</div><div class="ety-example-cn">${esc(ex.translation)}</div></div>`).join('')}</div>`:''}
+      ${a.related_words?.length?`<div class="ety-related"><span style="font-size:13px;color:var(--text-muted)">相关词汇：</span>${a.related_words.map(w=>`<button class="ety-related-tag" onclick="etySearchWord('${esc(w)}')">${esc(w)}</button>`).join('')}</div>`:''}
+    </div>`;
+}
+
+async function etySearch() {
+  const word = document.getElementById('etySearchInput').value.trim();
+  if (!word) return;
+  etySearchWord(word);
+}
+
+async function etySearchWord(word) {
+  if (!settings.apiKey) { showToast('请先在设置中填写 API Key','error'); return; }
+  document.getElementById('etySearchInput').value = word;
+  switchEtyView('search');
+  etyAnalysis = null;
+  const el = document.getElementById('etySearchView');
+  el.innerHTML = '<div style="text-align:center;padding:40px"><div class="spinner spinner-dark" style="width:28px;height:28px;border-width:3px"></div><p style="margin-top:12px;color:var(--text-muted);font-size:14px">正在分析 ' + esc(word) + ' ...</p></div>';
+  const btn = document.getElementById('etySearchBtn');
+  btn.disabled = true;
+  try {
+    const result = await callAI(buildEtymologyPrompt(word));
+    etyAnalysis = result;
+    renderEtyResult(el);
+  } catch(e) {
+    el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">😥</div><p class="empty-state-desc">分析失败: ${esc(e.message)}</p></div>`;
+  }
+  btn.disabled = false;
+}
+
+async function saveEtyWordFromAnalysis() {
+  if (!etyAnalysis) return;
+  await saveEtyWord({ ...etyAnalysis, savedAt:Date.now() });
+  showToast('已收藏到词库','success');
+  renderEtySearchView();
+}
+
+// --- Explore View ---
+function renderEtyExploreView() {
+  const el = document.getElementById('etyExploreView');
+  el.innerHTML = `
+    <h3 style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:16px">按领域探索专业词汇</h3>
+    <div class="cat-grid">${EXPLORE_CATEGORIES.map(c=>`
+      <div class="cat-card" onclick="showCategoryWords('${c.id}')">
+        <div class="cat-icon">${c.icon}</div>
+        <div class="cat-name">${c.name}</div>
+        <div class="cat-count">${c.keywords.length} 词汇</div>
+      </div>`).join('')}
+    </div>
+    <div id="categoryWordList"></div>`;
+}
+
+function showCategoryWords(catId) {
+  const cat = EXPLORE_CATEGORIES.find(c=>c.id===catId);
+  if (!cat) return;
+  document.getElementById('categoryWordList').innerHTML = `
+    <h3 style="font-size:16px;font-weight:600;color:var(--text-primary);margin:16px 0 12px">${cat.icon} ${cat.name}</h3>
+    <div class="word-list">${cat.keywords.map(w=>`
+      <div class="word-list-item"><span style="flex:1;cursor:pointer" onclick="etySearchWord('${w}')">${w}</span><button class="speak-btn" style="width:28px;height:28px;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();speakWord('${w}')">🔊</button><span style="cursor:pointer;color:var(--text-muted)" onclick="etySearchWord('${w}')">→</span></div>`).join('')}
+    </div>`;
+}
+
+// --- Course View ---
+function renderEtyCourseView() {
+  const el = document.getElementById('etyCourseView');
+  if (currentCourseUnit) { renderCourseUnit(el); return; }
+  el.innerHTML = `
+    <h3 style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:16px">系统课程 · 目标掌握10000词</h3>
+    <div class="level-tabs">${Object.keys(COURSE_DATA).map(l=>`<button class="level-tab ${currentCourseLevel===l?'active':''}" onclick="currentCourseLevel='${l}';renderEtyCourseView()">${COURSE_DATA[l].title.split('：')[0]}</button>`).join('')}</div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:16px">${COURSE_DATA[currentCourseLevel].description}</p>
+    <div class="unit-grid">${COURSE_DATA[currentCourseLevel].units.map((u,i)=>`
+      <div class="unit-card">
+        <div class="unit-header"><span class="unit-number">Unit ${i+1}</span></div>
+        <div class="unit-title">${u.title}</div>
+        <div class="unit-subtitle">${u.subtitle}</div>
+        <div class="unit-stats"><span>${u.rootCount} 词根</span><span>${u.wordCount}+ 单词</span></div>
+        <div class="unit-actions">
+          <button class="btn btn-primary btn-small" onclick="currentCourseUnit=COURSE_DATA['${currentCourseLevel}'].units[${i}];renderEtyCourseView()">学习</button>
         </div>
-      `;
-      document.getElementById('detailModal').classList.add('active');
-    }
+      </div>`).join('')}</div>`;
+}
 
-    function renderEtymology(kw) {
-      if (!kw) return '';
-      return `
-        <div class="etymology-header">
-          <div class="etymology-word">${escapeHtml(kw.word)}</div>
-          <button class="speak-btn" onclick="speakWord('${escapeHtml(kw.word)}')" title="听发音">
-            <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"></path></svg>
-          </button>
-        </div>
-        ${kw.phonetic ? `<div class="etymology-phonetic">${escapeHtml(kw.phonetic)}</div>` : ''}
-        <div class="etymology-item"><span class="etymology-label">构词 · </span><span class="etymology-value">${escapeHtml(kw.roots || '-')}</span></div>
-        <div class="etymology-item"><span class="etymology-label">来源 · </span><span class="etymology-value">${escapeHtml(kw.origin || '-')}</span></div>
-        <div class="etymology-item"><span class="etymology-label">释义 · </span><span class="etymology-value">${escapeHtml(kw.meaning || '-')}</span></div>
-      `;
-    }
+function renderCourseUnit(el) {
+  const u = currentCourseUnit;
+  el.innerHTML = `
+    <button class="btn btn-secondary btn-small" onclick="currentCourseUnit=null;renderEtyCourseView()" style="margin-bottom:16px">← 返回课程</button>
+    <h3 style="font-size:20px;font-weight:600;color:var(--text-primary);margin-bottom:16px">${u.title}</h3>
+    <div class="ety-card"><div class="ety-card-title">📌 核心词根</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">${u.roots.map(r=>`<span class="article-root-tag" style="cursor:pointer" onclick="speakWord('${r.split('(')[0].replace(/[-\s]/g,'')}')">${r} 🔊</span>`).join('')}</div></div>
+    <div class="ety-card"><div class="ety-card-title">📝 例词列表</div>
+      <div class="word-list">${u.words.map(w=>`<div class="word-list-item"><span style="flex:1;cursor:pointer" onclick="etySearchWord('${w}')">${w}</span><button class="speak-btn" style="width:28px;height:28px;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();speakWord('${w}')">🔊</button><span style="cursor:pointer;color:var(--text-muted)" onclick="etySearchWord('${w}')">→</span></div>`).join('')}</div></div>`;
+}
 
-    function showEtymology(cardId, idx) {
-      const card = cards.find(c => c.id === cardId);
-      if (!card?.keywords) return;
-      document.querySelectorAll('.keyword-btn').forEach((btn, i) => btn.classList.toggle('active', i === idx));
-      document.getElementById('etymologyBox').innerHTML = renderEtymology(card.keywords[idx]);
-    }
+// ======================================================================
+// REVIEW TAB (TAB 3) - Merged from both sources
+// ======================================================================
+function initReview() {
+  const wordMap = new Map();
+  // From collection cards
+  cards.forEach(card => card.keywords?.forEach(kw => {
+    const key = kw.word.toLowerCase();
+    if (!wordMap.has(key)) wordMap.set(key, { word:kw.word, phonetic:kw.phonetic, meaning:kw.meaning, roots:kw.roots, origin:kw.origin, example:card.content, source:'collection' });
+  }));
+  // From etymology saved words
+  etymologyWords.forEach(ew => {
+    const key = ew.word.toLowerCase();
+    if (!wordMap.has(key)) wordMap.set(key, { word:ew.word, phonetic:ew.phonetic, meaning:ew.meaning, roots:ew.roots?.map(r=>r.part+' → '+r.meaning).join(', '), origin:ew.etymology_story||'', example:ew.examples?.[0]?.sentence||'', source:'etymology' });
+  });
+  const allWords = Array.from(wordMap.values());
+  if (allWords.length===0) { document.getElementById('reviewContent').classList.add('hide'); document.getElementById('reviewEmpty').classList.remove('hide'); return; }
+  document.getElementById('reviewContent').classList.remove('hide'); document.getElementById('reviewEmpty').classList.add('hide');
+  reviewState.words = allWords.sort(()=>Math.random()-0.5).slice(0,20);
+  reviewState.currentIndex = 0; reviewState.results = [];
+  showCurrentWord();
+}
 
-    function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
-    function openAddModal() { document.getElementById('addModal').classList.add('active'); document.getElementById('addInput').focus(); }
-    function closeAddModal() { document.getElementById('addModal').classList.remove('active'); document.getElementById('addInput').value = ''; }
+function showCurrentWord() {
+  const w = reviewState.words[reviewState.currentIndex];
+  if (!w) return;
+  document.getElementById('reviewProgress').textContent = `${reviewState.currentIndex+1} / ${reviewState.words.length}`;
+  document.getElementById('flashcardWord').textContent = w.word;
+  document.getElementById('flashcardPhonetic').textContent = w.phonetic||'';
+  document.getElementById('flashcardBack').innerHTML = `
+    <div class="flashcard-back-word">${esc(w.word)}</div>
+    <div class="flashcard-back-meaning">${esc(w.meaning||'')}</div>
+    <div class="flashcard-back-detail"><span>构词:</span> ${esc(w.roots||'-')}<br><span>来源:</span> ${esc(w.origin||'-')}<br><span>例句:</span> ${esc(w.example||'')}</div>`;
+  document.getElementById('flashcard').classList.remove('flipped');
+}
+function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
+function markCard(known) {
+  reviewState.results.push({ word:reviewState.words[reviewState.currentIndex]?.word, known });
+  reviewState.currentIndex++;
+  if (reviewState.currentIndex >= reviewState.words.length) {
+    const kc = reviewState.results.filter(r=>r.known).length;
+    showToast(`完成！认识 ${kc}/${reviewState.words.length} 个`, 'success');
+    initReview();
+  } else showCurrentWord();
+}
 
-    // ==================== Card Ops ====================
-    async function saveCard() {
-      const content = document.getElementById('addInput').value.trim();
-      if (!content) return;
-      if (!settings.apiKey) { showToast('请先设置 API Key', 'error'); return; }
-      
-      const saveBtn = document.getElementById('saveBtn');
-      saveBtn.disabled = true;
-      document.getElementById('saveBtnText').innerHTML = '<div class="spinner"></div>';
-      
-      try {
-        const analysis = await analyzeWithAI(content);
-        const wordCount = content.split(/\s+/).length;
-        let type = wordCount <= 3 ? 'word' : content.split(/[.!?]/).filter(s => s.trim()).length <= 1 ? 'sentence' : 'paragraph';
-        
-        const card = {
-          id: 'card_' + Date.now(), content, type,
-          translation: analysis.translation, keywords: analysis.keywords,
-          createdAt: new Date().toISOString()
-        };
-        
-        await saveCardToDB(card);
-        if (!settings.firstUseDate) { settings.firstUseDate = new Date().toISOString(); await saveSettingsToDB(); }
-        
-        renderCards();
-        updateStats();
-        closeAddModal();
-        showToast('保存成功！', 'success');
-        
-        // Auto sync
-        if (settings.autoSync && accessToken) syncToCloud();
-        
-      } catch (e) {
-        console.error('Save error:', e);
-        showToast('保存失败: ' + e.message, 'error');
-      } finally {
-        saveBtn.disabled = false;
-        document.getElementById('saveBtnText').textContent = '保存';
-      }
-    }
+// ======================================================================
+// SETTINGS (TAB 4)
+// ======================================================================
+function onProviderChange() {
+  settings.apiProvider = document.getElementById('apiProvider').value;
+  updateModelOptions();
+  saveSettings();
+}
 
-    async function deleteCard(cardId) {
-      if (!confirm('确定删除？')) return;
-      await deleteCardFromDB(cardId);
-      renderCards();
-      updateStats();
-      closeDetailModal();
-      showToast('已删除', 'success');
-      if (settings.autoSync && accessToken) syncToCloud();
-    }
+function saveSettings() {
+  settings.apiProvider = document.getElementById('apiProvider').value;
+  settings.apiModel = document.getElementById('apiModel').value;
+  settings.apiKey = document.getElementById('apiKey').value;
+  saveSettingsToDB();
+}
 
-    function handleQuickInput(e) {
-      if (e.key === 'Enter') {
-        const content = document.getElementById('quickInput').value.trim();
-        if (content) {
-          document.getElementById('addInput').value = content;
-          document.getElementById('quickInput').value = '';
-          openAddModal();
-          saveCard();
-        }
-      }
-    }
+function updateModelOptions() {
+  const models = {
+    gemini: [{ v:'gemini-2.5-flash', l:'Gemini 2.5 Flash' }, { v:'gemini-2.0-flash', l:'Gemini 2.0 Flash' }],
+    openrouter: [{ v:'anthropic/claude-sonnet-4', l:'Claude Sonnet 4' }, { v:'anthropic/claude-haiku-4.5', l:'Claude Haiku 4.5（便宜）' }],
+    deepseek: [{ v:'deepseek-chat', l:'DeepSeek Chat' }]
+  };
+  const sel = document.getElementById('apiModel');
+  const opts = models[settings.apiProvider]||[];
+  sel.innerHTML = opts.map(m=>`<option value="${m.v}">${m.l}</option>`).join('');
+  // Try to restore saved model
+  if (opts.some(m=>m.v===settings.apiModel)) sel.value = settings.apiModel;
+  else if (opts.length) { settings.apiModel = opts[0].v; sel.value = settings.apiModel; }
+}
 
-    function handleSearch() { renderCards(); }
+function updateStats() {
+  document.getElementById('statTotal').textContent = cards.length;
+  const words = new Set();
+  cards.forEach(c=>c.keywords?.forEach(k=>words.add(k.word.toLowerCase())));
+  etymologyWords.forEach(w=>words.add(w.word.toLowerCase()));
+  document.getElementById('statWords').textContent = words.size;
+  if (settings.firstUseDate) document.getElementById('statDays').textContent = Math.ceil((new Date()-new Date(settings.firstUseDate))/86400000);
+}
 
-    // ==================== AI ====================
-    async function analyzeWithAI(content) {
-      const prompt = `分析以下英文内容，返回JSON格式（不要markdown代码块）：
+// ======================================================================
+// AI API
+// ======================================================================
+function buildCollectionPrompt(content) {
+  return `分析以下英文内容，返回JSON格式（不要markdown代码块）：
 
 内容："${content}"
 
@@ -1011,232 +1138,130 @@
    - meaning: 中文释义
 
 返回格式：{"translation":"...","keywords":[{"word":"...","phonetic":"...","roots":"...","origin":"...","meaning":"..."}]}`;
+}
 
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: settings.apiProvider, model: settings.apiModel, apiKey: settings.apiKey, prompt })
-      });
-      if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'API failed'); }
-      return await res.json();
-    }
+function buildEtymologyPrompt(word) {
+  return `作为词源学专家，请分析单词 "${word}" 的词根词源。请用以下JSON格式返回（不要markdown代码块，直接返回JSON）：
+{
+  "word": "单词",
+  "phonetic": "音标",
+  "meaning": "核心含义（简洁中文）",
+  "roots": [
+    { "part": "词根/词缀部分", "origin": "来源语言", "originalWord": "原始词", "meaning": "该部分含义" }
+  ],
+  "etymology_story": "用生动有趣的方式讲解这个词的来源故事，150字以内",
+  "memory_tip": "一句话记忆技巧",
+  "examples": [
+    { "sentence": "英文例句", "translation": "中文翻译" },
+    { "sentence": "英文例句2", "translation": "中文翻译2" }
+  ],
+  "related_words": ["相关词1", "相关词2", "相关词3"]
+}`;
+}
 
-    // ==================== Review ====================
-    function initReview() {
-      const wordMap = new Map();
-      cards.forEach(card => card.keywords?.forEach(kw => {
-        const key = kw.word.toLowerCase();
-        if (!wordMap.has(key)) wordMap.set(key, { ...kw, example: card.content });
-      }));
-      
-      const allWords = Array.from(wordMap.values());
-      if (allWords.length === 0) {
-        document.getElementById('reviewContent').classList.add('hide');
-        document.getElementById('reviewEmpty').classList.remove('hide');
-        return;
-      }
-      
-      document.getElementById('reviewContent').classList.remove('hide');
-      document.getElementById('reviewEmpty').classList.add('hide');
-      
-      reviewState.words = allWords.sort(() => Math.random() - 0.5).slice(0, 20);
-      reviewState.currentIndex = 0;
-      reviewState.results = [];
-      showCurrentWord();
-    }
+async function callAI(prompt) {
+  const res = await fetch('/api/analyze', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ provider:settings.apiProvider, model:settings.apiModel, apiKey:settings.apiKey, prompt })
+  });
+  if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'API failed'); }
+  return await res.json();
+}
 
-    function showCurrentWord() {
-      const word = reviewState.words[reviewState.currentIndex];
-      if (!word) return;
-      
-      document.getElementById('reviewProgress').textContent = `${reviewState.currentIndex + 1} / ${reviewState.words.length}`;
-      document.getElementById('flashcardWord').textContent = word.word;
-      document.getElementById('flashcardPhonetic').textContent = word.phonetic || '';
-      document.getElementById('flashcardBack').innerHTML = `
-        <div class="flashcard-back-word">${escapeHtml(word.word)}</div>
-        <div class="flashcard-back-phonetic">${escapeHtml(word.phonetic || '')}</div>
-        <div class="flashcard-back-meaning">${escapeHtml(word.meaning || '')}</div>
-        <div class="flashcard-back-detail"><span>构词:</span> ${escapeHtml(word.roots || '-')}<br><span>来源:</span> ${escapeHtml(word.origin || '-')}<br><span>例句:</span> ${escapeHtml(word.example || '')}</div>
-      `;
-      document.getElementById('flashcard').classList.remove('flipped');
-    }
+// ======================================================================
+// EXPORT / IMPORT
+// ======================================================================
+function exportJSON() {
+  downloadFile(JSON.stringify({ version:'2.0.0', exportDate:new Date().toISOString(), cards, etymologyWords, settings:{...settings,apiKey:''} }, null, 2), 'english-collector-backup.json', 'application/json');
+  showToast('备份已导出','success');
+}
 
-    function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
+function importJSON(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.cards?.length) for (const c of data.cards) await saveCardToDB(c);
+      if (data.etymologyWords?.length) for (const w of data.etymologyWords) await saveEtyWord(w);
+      cards = await dbGetAll('cards'); cards.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+      etymologyWords = await dbGetAll('etymologyWords');
+      renderCards(); updateStats();
+      showToast(`已导入 ${data.cards?.length||0} 条收藏 + ${data.etymologyWords?.length||0} 个词汇`,'success');
+    } catch(err) { showToast('导入失败: '+err.message,'error'); }
+  };
+  reader.readAsText(file); event.target.value='';
+}
 
-    function markCard(known) {
-      reviewState.results.push({ word: reviewState.words[reviewState.currentIndex]?.word, known });
-      reviewState.currentIndex++;
-      if (reviewState.currentIndex >= reviewState.words.length) {
-        const knownCount = reviewState.results.filter(r => r.known).length;
-        showToast(`完成！认识 ${knownCount}/${reviewState.words.length} 个`, 'success');
-        initReview();
-      } else showCurrentWord();
-    }
+function exportAnki() {
+  const exported = new Set(); let csv = '';
+  cards.forEach(c=>c.keywords?.forEach(k=>{
+    if (!exported.has(k.word.toLowerCase())) { exported.add(k.word.toLowerCase()); csv += `${escCSV(k.word)}\t${escCSV(`${k.phonetic||''}\n${k.meaning}\n词根: ${k.roots||'-'}\n来源: ${k.origin||'-'}\n例句: ${c.content}`)}\n`; }
+  }));
+  etymologyWords.forEach(w=>{
+    if (!exported.has(w.word.toLowerCase())) { exported.add(w.word.toLowerCase()); csv += `${escCSV(w.word)}\t${escCSV(`${w.phonetic||''}\n${w.meaning}\n${w.memory_tip||''}`)}\n`; }
+  });
+  if (!csv) { showToast('没有内容','error'); return; }
+  downloadFile(csv, `anki-words-${Date.now()}.txt`, 'text/plain');
+  showToast('已导出','success');
+}
 
-    // ==================== Settings ====================
-    function saveSettings() {
-      settings.apiProvider = document.getElementById('apiProvider').value;
-      settings.apiModel = document.getElementById('apiModel').value;
-      settings.apiKey = document.getElementById('apiKey').value;
-      updateModelOptions();
-      saveSettingsToDB();
-    }
+function exportSingleAnki(cardId) {
+  const card = cards.find(c=>c.id===cardId); if (!card) return;
+  let csv = '';
+  card.keywords?.forEach(k=>{ csv += `${escCSV(k.word)}\t${escCSV(`${k.phonetic||''}\n${k.meaning}\n词根: ${k.roots||'-'}\n来源: ${k.origin||'-'}\n例句: ${card.content}`)}\n`; });
+  downloadFile(csv, `anki-${Date.now()}.txt`, 'text/plain');
+  showToast('已导出','success');
+}
 
-    function updateModelOptions() {
-      const models = {
-        gemini: [{ v: 'gemini-2.0-flash', l: 'Gemini 2.0 Flash' }, { v: 'gemini-1.5-flash', l: 'Gemini 1.5 Flash' }],
-        deepseek: [{ v: 'deepseek-chat', l: 'DeepSeek Chat' }]
-      };
-      const sel = document.getElementById('apiModel');
-      sel.innerHTML = (models[settings.apiProvider] || []).map(m => `<option value="${m.v}">${m.l}</option>`).join('');
-      if (settings.apiModel) sel.value = settings.apiModel;
-    }
+// ======================================================================
+// URL IMPORT (from Chrome extension)
+// ======================================================================
+async function checkUrlImport() {
+  const params = new URLSearchParams(window.location.search);
+  const importData = params.get('import');
+  if (importData) {
+    try {
+      const card = JSON.parse(decodeURIComponent(atob(importData)));
+      await saveCardToDB(card);
+      if (!settings.firstUseDate) { settings.firstUseDate=new Date().toISOString(); await saveSettingsToDB(); }
+      window.history.replaceState({}, '', location.pathname);
+      renderCards(); updateStats(); showToast('已导入！','success');
+      if (settings.autoSync && accessToken) syncToCloud();
+    } catch(e) { console.error('Import error:', e); }
+  }
+}
 
-    function updateStats() {
-      document.getElementById('statTotal').textContent = cards.length;
-      const words = new Set();
-      cards.forEach(c => c.keywords?.forEach(k => words.add(k.word.toLowerCase())));
-      document.getElementById('statWords').textContent = words.size;
-      if (settings.firstUseDate) {
-        document.getElementById('statDays').textContent = Math.ceil((new Date() - new Date(settings.firstUseDate)) / 86400000);
-      }
-    }
+// ======================================================================
+// UTILS
+// ======================================================================
+function showToast(msg, type='') {
+  const t = document.getElementById('toast'); t.textContent=msg; t.className='toast '+type; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3000);
+}
+function esc(text) { if (!text) return ''; const d=document.createElement('div'); d.textContent=text; return d.innerHTML; }
+function escCSV(text) { return (text||'').replace(/"/g,'""').replace(/\n/g,'<br>'); }
+function downloadFile(content, filename, type) {
+  const a = document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=filename; a.click();
+}
 
-    // ==================== Export ====================
-    function exportJSON() {
-      downloadFile(JSON.stringify({ version: '1.2.0', exportDate: new Date().toISOString(), cards, settings: { ...settings, apiKey: '' } }, null, 2), 'english-collector-backup.json', 'application/json');
-      showToast('备份已导出', 'success');
-    }
-
-    function importJSON(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const data = JSON.parse(e.target.result);
-          if (!data.cards?.length) throw new Error('无效文件');
-          for (const card of data.cards) await saveCardToDB(card);
-          cards = Array.from(new Map([...cards, ...data.cards].map(c => [c.id, c])).values());
-          cards.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-          renderCards();
-          updateStats();
-          showToast(`已导入 ${data.cards.length} 条`, 'success');
-        } catch (err) { showToast('导入失败: ' + err.message, 'error'); }
-      };
-      reader.readAsText(file);
-      event.target.value = '';
-    }
-
-    function exportAnki(type) {
-      if (!cards.length) { showToast('没有内容', 'error'); return; }
-      const exported = new Set();
-      let csv = '';
-      cards.forEach(c => c.keywords?.forEach(k => {
-        if (!exported.has(k.word.toLowerCase())) {
-          exported.add(k.word.toLowerCase());
-          csv += `${escapeCSV(k.word)}\t${escapeCSV(`${k.phonetic||''}\n${k.meaning}\n词根: ${k.roots||'-'}\n来源: ${k.origin||'-'}\n例句: ${c.content}`)}\n`;
-        }
-      }));
-      downloadFile(csv, `anki-words-${Date.now()}.txt`, 'text/plain');
-      showToast('已导出', 'success');
-    }
-
-    function exportSingleAnki(cardId) {
-      const card = cards.find(c => c.id === cardId);
-      if (!card) return;
-      let csv = '';
-      card.keywords?.forEach(k => {
-        csv += `${escapeCSV(k.word)}\t${escapeCSV(`${k.phonetic||''}\n${k.meaning}\n词根: ${k.roots||'-'}\n来源: ${k.origin||'-'}\n例句: ${card.content}`)}\n`;
-      });
-      downloadFile(csv, `anki-${Date.now()}.txt`, 'text/plain');
-      showToast('已导出', 'success');
-    }
-
-    // ==================== Tabs ====================
-    function switchTab(tab) {
-      document.querySelectorAll('.nav-item').forEach(i => i.classList.toggle('active', i.dataset.tab === tab));
-      document.getElementById('everythingTab').classList.toggle('hide', tab !== 'everything');
-      document.getElementById('reviewTab').classList.toggle('active', tab === 'review');
-      document.getElementById('settingsTab').classList.toggle('active', tab === 'settings');
-      document.getElementById('quickInputWrapper').classList.toggle('hide', tab !== 'everything');
-      if (tab === 'review') initReview();
-      if (tab === 'settings') updateStats();
-    }
-
-    // ==================== URL Import ====================
-    async function checkUrlImport() {
-      const params = new URLSearchParams(window.location.search);
-      const importData = params.get('import');
-      if (importData) {
-        try {
-          const card = JSON.parse(decodeURIComponent(atob(importData)));
-          await saveCardToDB(card);
-          if (!settings.firstUseDate) { settings.firstUseDate = new Date().toISOString(); await saveSettingsToDB(); }
-          window.history.replaceState({}, '', location.pathname);
-          renderCards();
-          updateStats();
-          showToast('已导入！', 'success');
-          if (settings.autoSync && accessToken) syncToCloud();
-        } catch (e) { console.error('Import error:', e); }
-      }
-    }
-
-    // ==================== Utils ====================
-    function showToast(msg, type = '') {
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.className = 'toast ' + type;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3000);
-    }
-
-    function escapeHtml(text) { if (!text) return ''; const d = document.createElement('div'); d.textContent = text; return d.innerHTML; }
-    function escapeCSV(text) { return (text || '').replace(/"/g, '""').replace(/\n/g, '<br>'); }
-    function downloadFile(content, filename, type) {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(new Blob([content], { type }));
-      a.download = filename;
-      a.click();
-    }
-
-    // ==================== Init ====================
-    async function init() {
-      try {
-        window.speechSynthesis.getVoices();
-        await initDB();
-        await loadData();
-        
-        console.log('Loaded cards from DB:', cards.length);
-        
-        // Restore Google session
-        const savedToken = localStorage.getItem('ec_access_token');
-        const savedUser = localStorage.getItem('ec_user');
-        if (savedToken && savedUser) {
-          accessToken = savedToken;
-          googleUser = JSON.parse(savedUser);
-          updateUserUI();
-          // Verify token is still valid
-          fetchUserInfo();
-        }
-        
-        await checkUrlImport();
-        renderCards();
-        updateStats();
-        
-        console.log('Page initialized, displaying', cards.length, 'cards');
-        
-        // Auto sync on load
-        if (settings.autoSync && accessToken && cards.length > 0) {
-          setTimeout(() => syncToCloud(), 2000);
-        }
-      } catch (e) {
-        console.error('Init error:', e);
-        showToast('初始化失败', 'error');
-      }
-    }
-
-    init();
-  </script>
+// ======================================================================
+// INIT
+// ======================================================================
+async function init() {
+  try {
+    window.speechSynthesis.getVoices();
+    await initDB(); await loadData();
+    // Restore Google session
+    const savedToken = localStorage.getItem('ec_access_token');
+    const savedUser = localStorage.getItem('ec_user');
+    if (savedToken && savedUser) { accessToken=savedToken; googleUser=JSON.parse(savedUser); updateUserUI(); fetchUserInfo(); }
+    await checkUrlImport();
+    renderCards(); updateStats();
+    if (settings.autoSync && accessToken && cards.length > 0) setTimeout(()=>syncToCloud(), 2000);
+  } catch(e) { console.error('Init error:', e); showToast('初始化失败','error'); }
+}
+init();
+</script>
 </body>
 </html>
