@@ -264,6 +264,19 @@
     .flashcard-back-meaning { font-size: 15px; color: var(--text-primary); margin-bottom: 10px; font-weight: 500; }
     .flashcard-back-detail { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
     .flashcard-back-detail span { color: var(--text-muted); }
+    .review-stats { display: flex; justify-content: space-around; padding: 14px 16px; margin: 0 16px 16px; background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .review-stat-item { text-align: center; }
+    .review-stat-num { font-family: 'Playfair Display', serif; font-size: 24px; font-weight: 600; color: var(--text-primary); }
+    .review-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+    .review-history-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: white; border-radius: 10px; margin-bottom: 8px; }
+    .review-history-word { font-size: 15px; font-weight: 500; color: var(--text-primary); flex: 1; }
+    .review-level-badge { font-size: 11px; padding: 3px 8px; border-radius: 10px; font-weight: 500; }
+    .review-level-0 { background: #f3f4f6; color: #6b7280; }
+    .review-level-1 { background: #fee2e2; color: #dc2626; }
+    .review-level-2 { background: #fef3c7; color: #d97706; }
+    .review-level-3 { background: #dbeafe; color: #2563eb; }
+    .review-level-4 { background: #d1fae5; color: #059669; }
+    .review-level-5 { background: #dcfce7; color: #16a34a; }
     .review-actions { display: flex; gap: 16px; justify-content: center; }
     .review-btn { padding: 12px 28px; border: none; border-radius: 10px; font-size: 14px; font-weight: 500; cursor: pointer; }
     .review-btn.know { background: var(--success); color: white; }
@@ -388,6 +401,14 @@
 
   <!-- ==================== Tab 3: Review ==================== -->
   <div class="tab-panel" id="tabReview">
+    <!-- Review Stats -->
+    <div class="review-stats" id="reviewStats">
+      <div class="review-stat-item"><div class="review-stat-num" id="reviewDueCount" style="color:var(--accent)">0</div><div class="review-stat-label">待复习</div></div>
+      <div class="review-stat-item"><div class="review-stat-num" id="reviewNewCount" style="color:#3b82f6">0</div><div class="review-stat-label">新词</div></div>
+      <div class="review-stat-item"><div class="review-stat-num" id="reviewMasteredCount" style="color:var(--success)">0</div><div class="review-stat-label">已掌握</div></div>
+      <div class="review-stat-item"><div class="review-stat-num" id="reviewTotalCount">0</div><div class="review-stat-label">总词汇</div></div>
+    </div>
+    <!-- Review Session -->
     <div class="review-container" id="reviewContent">
       <p class="review-progress" id="reviewProgress">1 / 20</p>
       <p class="review-hint">点击卡片翻转，点击 🔊 听发音</p>
@@ -406,12 +427,31 @@
         <button class="review-btn know" onclick="markCard(true)">认识</button>
       </div>
     </div>
+    <!-- Session Summary -->
+    <div id="reviewSummary" class="hide" style="padding:30px 20px;text-align:center;max-width:400px;margin:0 auto">
+      <div style="font-size:48px;margin-bottom:12px" id="summaryEmoji">🎉</div>
+      <h3 style="font-size:20px;font-weight:600;color:var(--text-primary);margin-bottom:8px" id="summaryTitle">复习完成！</h3>
+      <p style="font-size:14px;color:var(--text-secondary);margin-bottom:20px" id="summaryText"></p>
+      <div style="display:flex;gap:12px;justify-content:center">
+        <button class="btn btn-secondary" onclick="showReviewHistory()" style="flex:none;padding:10px 20px">查看记录</button>
+        <button class="btn btn-primary" onclick="initReview()" style="flex:none;padding:10px 20px">继续复习</button>
+      </div>
+    </div>
+    <!-- Empty State -->
     <div id="reviewEmpty" class="hide">
       <div class="empty-state">
         <div class="empty-state-icon">🎴</div>
         <h2 class="empty-state-title">没有可复习的单词</h2>
         <p class="empty-state-desc">先去收藏一些内容或学习词根吧</p>
       </div>
+    </div>
+    <!-- Review History Modal -->
+    <div id="reviewHistoryPanel" class="hide" style="padding:0 16px 80px;max-width:500px;margin:0 auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <h3 style="font-size:16px;font-weight:600;color:var(--text-primary);margin:0">复习记录</h3>
+        <button class="btn btn-secondary" onclick="closeReviewHistory()" style="padding:6px 14px;font-size:12px">返回</button>
+      </div>
+      <div id="reviewHistoryList"></div>
     </div>
   </div>
 
@@ -575,6 +615,8 @@ let cards = [];
 let etymologyWords = []; // saved from etymology analysis
 let settings = { apiProvider:'gemini', apiModel:'gemini-2.5-flash', apiKey:'', firstUseDate:null, autoSync:false };
 let reviewState = { words:[], currentIndex:0, results:[] };
+let reviewRecords = {}; // wordKey -> { wordKey, word, level, nextReview, reviewCount, correctCount, wrongCount, lastReview }
+const REVIEW_INTERVALS = [0, 1, 3, 7, 15, 30]; // days per level (0=new, 1-5=spaced)
 let googleUser = null, accessToken = null;
 let etyAnalysis = null, etyLoading = false;
 let currentEtyView = 'search';
@@ -588,7 +630,7 @@ let db;
 
 async function initDB() {
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 2);
+    const req = indexedDB.open(DB_NAME, 3);
     req.onerror = () => reject(req.error);
     req.onsuccess = () => { db = req.result; resolve(db); };
     req.onupgradeneeded = (e) => {
@@ -596,6 +638,7 @@ async function initDB() {
       if (!d.objectStoreNames.contains('cards')) d.createObjectStore('cards', { keyPath: 'id' });
       if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' });
       if (!d.objectStoreNames.contains('etymologyWords')) d.createObjectStore('etymologyWords', { keyPath: 'word' });
+      if (!d.objectStoreNames.contains('reviewRecords')) d.createObjectStore('reviewRecords', { keyPath: 'wordKey' });
     };
   });
 }
@@ -617,6 +660,10 @@ async function loadData() {
   cards = await dbGetAll('cards');
   cards.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
   etymologyWords = await dbGetAll('etymologyWords');
+  // Load review records into memory map
+  const recs = await dbGetAll('reviewRecords');
+  reviewRecords = {};
+  recs.forEach(r => { reviewRecords[r.wordKey] = r; });
   const saved = await dbGet('settings', 'main');
   if (saved) settings = { ...settings, ...saved.value };
   document.getElementById('apiProvider').value = settings.apiProvider;
@@ -702,11 +749,12 @@ async function syncToCloud() {
   if (!accessToken) { showToast('请先登录 Google','error'); return false; }
   const freshCards = await dbGetAll('cards');
   const freshEtyWords = await dbGetAll('etymologyWords');
+  const freshReviewRecs = await dbGetAll('reviewRecords');
   if (freshCards.length === 0 && freshEtyWords.length === 0) { showToast('本地没有数据','error'); return false; }
   const dot=document.getElementById('syncDot'), text=document.getElementById('syncStatusText');
   dot.classList.remove('synced'); dot.classList.add('syncing'); text.textContent = '同步中...';
   try {
-    const payload = JSON.stringify({ version:'2.0.0', syncDate:new Date().toISOString(), cards:freshCards, etymologyWords:freshEtyWords, settings:{...settings, apiKey:''} });
+    const payload = JSON.stringify({ version:'2.1.0', syncDate:new Date().toISOString(), cards:freshCards, etymologyWords:freshEtyWords, reviewRecords:freshReviewRecs, settings:{...settings, apiKey:''} });
     let fileId = await findDriveFile();
     let res;
     if (fileId) {
@@ -744,6 +792,16 @@ async function syncFromCloud() {
     // Merge etymology words
     if (data.etymologyWords?.length) {
       for (const w of data.etymologyWords) await saveEtyWord(w);
+    }
+    // Merge review records
+    if (data.reviewRecords?.length) {
+      for (const r of data.reviewRecords) {
+        const existing = reviewRecords[r.wordKey];
+        if (!existing || r.reviewCount > existing.reviewCount) {
+          reviewRecords[r.wordKey] = r;
+          await dbPut('reviewRecords', r);
+        }
+      }
     }
     renderCards(); updateStats();
     showToast(`已恢复 ${cards.length} 条收藏`, 'success');
@@ -1036,32 +1094,101 @@ function renderCourseUnit(el) {
 }
 
 // ======================================================================
-// REVIEW TAB (TAB 3) - Merged from both sources
+// REVIEW TAB (TAB 3) - Spaced Repetition System
 // ======================================================================
-function initReview() {
+// Intervals: Level 0=new, 1=1day, 2=3days, 3=7days, 4=15days, 5=30days(mastered)
+
+function getAllReviewableWords() {
   const wordMap = new Map();
-  // From collection cards
   cards.forEach(card => card.keywords?.forEach(kw => {
     const key = kw.word.toLowerCase();
     if (!wordMap.has(key)) wordMap.set(key, { word:kw.word, phonetic:kw.phonetic, meaning:kw.meaning, roots:kw.roots, origin:kw.origin, example:card.content, source:'collection' });
   }));
-  // From etymology saved words
   etymologyWords.forEach(ew => {
     const key = ew.word.toLowerCase();
     if (!wordMap.has(key)) wordMap.set(key, { word:ew.word, phonetic:ew.phonetic, meaning:ew.meaning, roots:ew.roots?.map(r=>r.part+' → '+r.meaning).join(', '), origin:ew.etymology_story||'', example:ew.examples?.[0]?.sentence||'', source:'etymology' });
   });
-  const allWords = Array.from(wordMap.values());
-  if (allWords.length===0) { document.getElementById('reviewContent').classList.add('hide'); document.getElementById('reviewEmpty').classList.remove('hide'); return; }
-  document.getElementById('reviewContent').classList.remove('hide'); document.getElementById('reviewEmpty').classList.add('hide');
-  reviewState.words = allWords.sort(()=>Math.random()-0.5).slice(0,20);
-  reviewState.currentIndex = 0; reviewState.results = [];
+  return wordMap;
+}
+
+function updateReviewStats() {
+  const wordMap = getAllReviewableWords();
+  const now = Date.now();
+  let dueCount = 0, newCount = 0, masteredCount = 0;
+  wordMap.forEach((_, key) => {
+    const rec = reviewRecords[key];
+    if (!rec) { newCount++; }
+    else if (rec.level >= 5) { masteredCount++; }
+    else if (rec.nextReview <= now) { dueCount++; }
+  });
+  document.getElementById('reviewDueCount').textContent = dueCount;
+  document.getElementById('reviewNewCount').textContent = newCount;
+  document.getElementById('reviewMasteredCount').textContent = masteredCount;
+  document.getElementById('reviewTotalCount').textContent = wordMap.size;
+}
+
+function initReview() {
+  document.getElementById('reviewSummary').classList.add('hide');
+  document.getElementById('reviewHistoryPanel').classList.add('hide');
+  const wordMap = getAllReviewableWords();
+  const now = Date.now();
+  
+  // Categorize words
+  const dueWords = [], newWords = [], allWords = [];
+  wordMap.forEach((data, key) => {
+    const rec = reviewRecords[key];
+    const item = { ...data, wordKey: key };
+    allWords.push(item);
+    if (!rec) { newWords.push(item); }
+    else if (rec.level < 5 && rec.nextReview <= now) { dueWords.push(item); }
+  });
+  
+  // Priority: due words first, then some new words, max 20
+  let sessionWords = [];
+  // Shuffle due words and take all
+  dueWords.sort(() => Math.random() - 0.5);
+  sessionWords.push(...dueWords);
+  // Fill remaining slots with new words
+  const remaining = Math.max(0, 20 - sessionWords.length);
+  newWords.sort(() => Math.random() - 0.5);
+  sessionWords.push(...newWords.slice(0, remaining));
+  // Cap at 20
+  sessionWords = sessionWords.slice(0, 20);
+  
+  if (sessionWords.length === 0 && allWords.length > 0) {
+    // No due words, show review-complete message
+    document.getElementById('reviewContent').classList.add('hide');
+    document.getElementById('reviewEmpty').classList.add('hide');
+    document.getElementById('reviewSummary').classList.remove('hide');
+    document.getElementById('summaryEmoji').textContent = '✅';
+    document.getElementById('summaryTitle').textContent = '今日复习已完成';
+    document.getElementById('summaryText').textContent = `所有待复习的词汇都已复习完毕。新词 ${newWords.length > 0 ? '也没有了' : '会在收藏后自动加入'}。`;
+    updateReviewStats();
+    return;
+  }
+  
+  if (sessionWords.length === 0) {
+    document.getElementById('reviewContent').classList.add('hide');
+    document.getElementById('reviewEmpty').classList.remove('hide');
+    updateReviewStats();
+    return;
+  }
+  
+  document.getElementById('reviewContent').classList.remove('hide');
+  document.getElementById('reviewEmpty').classList.add('hide');
+  reviewState.words = sessionWords;
+  reviewState.currentIndex = 0;
+  reviewState.results = [];
   showCurrentWord();
+  updateReviewStats();
 }
 
 function showCurrentWord() {
   const w = reviewState.words[reviewState.currentIndex];
   if (!w) return;
-  document.getElementById('reviewProgress').textContent = `${reviewState.currentIndex+1} / ${reviewState.words.length}`;
+  const rec = reviewRecords[w.wordKey];
+  const levelLabel = rec ? `Lv.${rec.level}` : '新词';
+  document.getElementById('reviewProgress').textContent = `${reviewState.currentIndex+1} / ${reviewState.words.length}　${levelLabel}`;
   document.getElementById('flashcardWord').textContent = w.word;
   document.getElementById('flashcardPhonetic').textContent = w.phonetic||'';
   document.getElementById('flashcardBack').innerHTML = `
@@ -1070,15 +1197,86 @@ function showCurrentWord() {
     <div class="flashcard-back-detail"><span>构词:</span> ${esc(w.roots||'-')}<br><span>来源:</span> ${esc(w.origin||'-')}<br><span>例句:</span> ${esc(w.example||'')}</div>`;
   document.getElementById('flashcard').classList.remove('flipped');
 }
+
 function flipCard() { document.getElementById('flashcard').classList.toggle('flipped'); }
-function markCard(known) {
-  reviewState.results.push({ word:reviewState.words[reviewState.currentIndex]?.word, known });
+
+async function markCard(known) {
+  const w = reviewState.words[reviewState.currentIndex];
+  if (!w) return;
+  
+  // Update review record
+  const now = Date.now();
+  let rec = reviewRecords[w.wordKey] || { wordKey: w.wordKey, word: w.word, level: 0, nextReview: now, reviewCount: 0, correctCount: 0, wrongCount: 0, lastReview: 0 };
+  
+  rec.reviewCount++;
+  rec.lastReview = now;
+  
+  if (known) {
+    rec.correctCount++;
+    rec.level = Math.min(5, rec.level + 1);
+  } else {
+    rec.wrongCount++;
+    rec.level = Math.max(1, Math.min(rec.level, 1)); // Reset to level 1 on wrong
+  }
+  
+  // Calculate next review time based on new level
+  const intervalDays = REVIEW_INTERVALS[rec.level] || 1;
+  rec.nextReview = now + intervalDays * 86400000;
+  
+  // Save to IndexedDB and memory
+  reviewRecords[w.wordKey] = rec;
+  await dbPut('reviewRecords', rec);
+  
+  // Track result
+  reviewState.results.push({ word: w.word, known, newLevel: rec.level });
   reviewState.currentIndex++;
+  
   if (reviewState.currentIndex >= reviewState.words.length) {
-    const kc = reviewState.results.filter(r=>r.known).length;
-    showToast(`完成！认识 ${kc}/${reviewState.words.length} 个`, 'success');
-    initReview();
-  } else showCurrentWord();
+    // Session complete - show summary
+    const correctCount = reviewState.results.filter(r => r.known).length;
+    const total = reviewState.results.length;
+    
+    document.getElementById('reviewContent').classList.add('hide');
+    document.getElementById('reviewSummary').classList.remove('hide');
+    
+    const ratio = correctCount / total;
+    document.getElementById('summaryEmoji').textContent = ratio >= 0.8 ? '🎉' : ratio >= 0.5 ? '👍' : '💪';
+    document.getElementById('summaryTitle').textContent = ratio >= 0.8 ? '太棒了！' : ratio >= 0.5 ? '继续加油！' : '再练练就好了！';
+    document.getElementById('summaryText').textContent = `本次复习 ${total} 词，认识 ${correctCount} 个，正确率 ${Math.round(ratio*100)}%`;
+    
+    updateReviewStats();
+  } else {
+    showCurrentWord();
+  }
+}
+
+function showReviewHistory() {
+  document.getElementById('reviewSummary').classList.add('hide');
+  document.getElementById('reviewContent').classList.add('hide');
+  document.getElementById('reviewStats').style.display = 'none';
+  document.getElementById('reviewHistoryPanel').classList.remove('hide');
+  
+  const levelNames = ['新词', '初学 (1天)', '熟悉 (3天)', '理解 (7天)', '巩固 (15天)', '已掌握 ✓'];
+  const entries = Object.values(reviewRecords).sort((a,b) => b.lastReview - a.lastReview);
+  
+  if (entries.length === 0) {
+    document.getElementById('reviewHistoryList').innerHTML = '<p style="text-align:center;color:var(--text-muted);padding:40px 0">还没有复习记录</p>';
+    return;
+  }
+  
+  document.getElementById('reviewHistoryList').innerHTML = entries.map(r => `
+    <div class="review-history-item">
+      <span class="review-history-word">${esc(r.word)}</span>
+      <button class="speak-btn" style="width:28px;height:28px;font-size:12px" onclick="speakWord('${esc(r.word)}')">🔊</button>
+      <span class="review-level-badge review-level-${r.level}">${levelNames[r.level]||'Lv.'+r.level}</span>
+      <span style="font-size:11px;color:var(--text-muted)">${r.correctCount}✓ ${r.wrongCount}✗</span>
+    </div>`).join('');
+}
+
+function closeReviewHistory() {
+  document.getElementById('reviewHistoryPanel').classList.add('hide');
+  document.getElementById('reviewStats').style.display = '';
+  initReview();
 }
 
 // ======================================================================
@@ -1172,7 +1370,8 @@ async function callAI(prompt) {
 // EXPORT / IMPORT
 // ======================================================================
 function exportJSON() {
-  downloadFile(JSON.stringify({ version:'2.0.0', exportDate:new Date().toISOString(), cards, etymologyWords, settings:{...settings,apiKey:''} }, null, 2), 'english-collector-backup.json', 'application/json');
+  const allReviewRecs = Object.values(reviewRecords);
+  downloadFile(JSON.stringify({ version:'2.1.0', exportDate:new Date().toISOString(), cards, etymologyWords, reviewRecords:allReviewRecs, settings:{...settings,apiKey:''} }, null, 2), 'english-collector-backup.json', 'application/json');
   showToast('备份已导出','success');
 }
 
