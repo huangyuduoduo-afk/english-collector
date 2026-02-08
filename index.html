@@ -286,7 +286,7 @@
     .review-hint { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
 
     /* ==================== Settings ==================== */
-    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 24px; }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
     .stat-card { background: white; border-radius: 12px; padding: 14px 10px; text-align: center; }
     .stat-value { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--text-primary); }
     .stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
@@ -461,6 +461,7 @@
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">收藏</div></div>
       <div class="stat-card"><div class="stat-value" id="statWords">0</div><div class="stat-label">词汇</div></div>
+      <div class="stat-card"><div class="stat-value" id="statEtyCount">0</div><div class="stat-label">词源</div></div>
       <div class="stat-card"><div class="stat-value" id="statDays">0</div><div class="stat-label">天数</div></div>
     </div>
     <div class="settings-section">
@@ -988,9 +989,26 @@ function renderEtyView() {
 function renderEtySearchView() {
   const el = document.getElementById('etySearchView');
   if (etyAnalysis) { renderEtyResult(el); return; }
-  // Show daily article
+  
+  // Search history
+  const history = JSON.parse(localStorage.getItem('ety_search_history') || '[]');
+  const historyHtml = history.length > 0 ? `
+    <div style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:12px;color:var(--text-muted)">最近搜索</span>
+        <span style="font-size:11px;color:var(--accent);background:var(--accent-light);padding:2px 8px;border-radius:10px">已缓存 ${etymologyWords.length} 词</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px">
+        ${history.slice(0, 10).map(w => {
+          const isCached = etymologyWords.some(ew => ew.word.toLowerCase() === w.toLowerCase());
+          return `<button onclick="etySearchWord('${esc(w)}')" style="padding:6px 12px;font-size:12px;background:${isCached ? 'var(--accent-light)' : 'white'};color:${isCached ? 'var(--accent)' : 'var(--text-secondary)'};border:1px solid ${isCached ? 'rgba(232,97,44,0.2)' : 'var(--border)'};border-radius:16px;cursor:pointer">${esc(w)} ${isCached ? '✓' : ''}</button>`;
+        }).join('')}
+      </div>
+    </div>` : '';
+  
+  // Daily article
   const article = DAILY_ARTICLES[new Date().getDay()];
-  el.innerHTML = `
+  el.innerHTML = historyHtml + `
     <div class="daily-article">
       <div class="article-badge">📅 今日词源 · ${article.theme}</div>
       <h3 class="article-title">${article.title}</h3>
@@ -1002,19 +1020,20 @@ function renderEtySearchView() {
 
 function renderEtyResult(el) {
   const a = etyAnalysis;
-  const isSaved = etymologyWords.some(w=>w.word===a.word);
+  const isCached = etymologyWords.some(w=>w.word===a.word);
   el.innerHTML = `
     <div class="ety-result">
       <div class="ety-result-header">
         <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
           <span class="ety-result-word">${esc(a.word)}</span>
           <button class="speak-btn" onclick="speakWord('${esc(a.word)}')">🔊</button>
+          ${isCached ? '<span style="font-size:11px;padding:3px 8px;background:rgba(76,175,80,0.1);color:var(--success);border-radius:10px">✓ 已缓存</span>' : ''}
         </div>
         <p class="ety-result-phonetic">${esc(a.phonetic||'')}</p>
         <p class="ety-result-meaning">${esc(a.meaning||'')}</p>
         <div class="ety-result-actions">
-          <button class="btn btn-primary btn-small" onclick="saveEtyWordFromAnalysis()" ${isSaved?'disabled':''}>${isSaved?'✓ 已收藏':'+ 收藏'}</button>
           <button class="btn btn-secondary btn-small" onclick="etyAnalysis=null;renderEtySearchView()">← 返回</button>
+          <button class="btn btn-secondary btn-small" onclick="removeEtyCache('${esc(a.word)}')">清除缓存</button>
         </div>
       </div>
       ${a.roots?.length?`<div class="ety-card"><div class="ety-card-title"><span>🧬</span> 词根拆解</div>
@@ -1024,6 +1043,13 @@ function renderEtyResult(el) {
         ${a.examples.map(ex=>`<div class="ety-example"><div class="ety-example-en"><button class="speak-btn" style="width:24px;height:24px;font-size:11px;flex-shrink:0" onclick="speakWord(\`${esc(ex.sentence)}\`)">🔊</button>${esc(ex.sentence)}</div><div class="ety-example-cn">${esc(ex.translation)}</div></div>`).join('')}</div>`:''}
       ${a.related_words?.length?`<div class="ety-related"><span style="font-size:13px;color:var(--text-muted)">相关词汇：</span>${a.related_words.map(w=>`<button class="ety-related-tag" onclick="etySearchWord('${esc(w)}')">${esc(w)}</button>`).join('')}</div>`:''}
     </div>`;
+}
+
+async function removeEtyCache(word) {
+  await deleteEtyWord(word);
+  etyAnalysis = null;
+  renderEtySearchView();
+  showToast('已清除缓存','success');
 }
 
 async function etySearch() {
@@ -1036,6 +1062,18 @@ async function etySearchWord(word) {
   if (!settings.apiKey) { showToast('请先在设置中填写 API Key','error'); return; }
   document.getElementById('etySearchInput').value = word;
   switchEtyView('search');
+
+  // 1. Check cache first
+  const cached = etymologyWords.find(w => w.word.toLowerCase() === word.toLowerCase());
+  if (cached) {
+    etyAnalysis = cached;
+    renderEtyResult(document.getElementById('etySearchView'));
+    showToast('从缓存加载 ✓','success');
+    updateEtySearchHistory(word);
+    return;
+  }
+
+  // 2. Call API
   etyAnalysis = null;
   const el = document.getElementById('etySearchView');
   el.innerHTML = '<div style="text-align:center;padding:40px"><div class="spinner spinner-dark" style="width:28px;height:28px;border-width:3px"></div><p style="margin-top:12px;color:var(--text-muted);font-size:14px">正在分析 ' + esc(word) + ' ...</p></div>';
@@ -1044,17 +1082,29 @@ async function etySearchWord(word) {
   try {
     const result = await callAI(buildEtymologyPrompt(word));
     etyAnalysis = result;
+    // 3. Auto-save to cache
+    await saveEtyWord({ ...result, savedAt: Date.now() });
+    updateEtySearchHistory(word);
     renderEtyResult(el);
+    showToast('已自动缓存','success');
   } catch(e) {
     el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">😥</div><p class="empty-state-desc">分析失败: ${esc(e.message)}</p></div>`;
   }
   btn.disabled = false;
 }
 
+function updateEtySearchHistory(word) {
+  let history = JSON.parse(localStorage.getItem('ety_search_history') || '[]');
+  history = [word, ...history.filter(w => w.toLowerCase() !== word.toLowerCase())].slice(0, 15);
+  localStorage.setItem('ety_search_history', JSON.stringify(history));
+}
+
 async function saveEtyWordFromAnalysis() {
   if (!etyAnalysis) return;
-  await saveEtyWord({ ...etyAnalysis, savedAt:Date.now() });
-  showToast('已收藏到词库','success');
+  if (!etymologyWords.some(w => w.word === etyAnalysis.word)) {
+    await saveEtyWord({ ...etyAnalysis, savedAt:Date.now() });
+    showToast('已收藏到词库','success');
+  }
   renderEtySearchView();
 }
 
@@ -1063,12 +1113,15 @@ function renderEtyExploreView() {
   const el = document.getElementById('etyExploreView');
   el.innerHTML = `
     <h3 style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:16px">按领域探索专业词汇</h3>
-    <div class="cat-grid">${EXPLORE_CATEGORIES.map(c=>`
-      <div class="cat-card" onclick="showCategoryWords('${c.id}')">
+    <div class="cat-grid">${EXPLORE_CATEGORIES.map(c=>{
+      const cached = c.keywords.filter(w => etymologyWords.some(ew => ew.word.toLowerCase() === w.toLowerCase())).length;
+      return `<div class="cat-card" onclick="showCategoryWords('${c.id}')">
         <div class="cat-icon">${c.icon}</div>
         <div class="cat-name">${c.name}</div>
-        <div class="cat-count">${c.keywords.length} 词汇</div>
-      </div>`).join('')}
+        <div class="cat-count">${cached}/${c.keywords.length} 已学</div>
+        ${cached>0?`<div style="width:100%;height:3px;background:var(--warm-gray);border-radius:2px;margin-top:4px"><div style="width:${Math.round(cached/c.keywords.length*100)}%;height:100%;background:var(--accent);border-radius:2px"></div></div>`:''}
+      </div>`;
+    }).join('')}
     </div>
     <div id="categoryWordList"></div>`;
 }
@@ -1076,10 +1129,14 @@ function renderEtyExploreView() {
 function showCategoryWords(catId) {
   const cat = EXPLORE_CATEGORIES.find(c=>c.id===catId);
   if (!cat) return;
+  const cachedCount = cat.keywords.filter(w => etymologyWords.some(ew => ew.word.toLowerCase() === w.toLowerCase())).length;
   document.getElementById('categoryWordList').innerHTML = `
-    <h3 style="font-size:16px;font-weight:600;color:var(--text-primary);margin:16px 0 12px">${cat.icon} ${cat.name}</h3>
-    <div class="word-list">${cat.keywords.map(w=>`
-      <div class="word-list-item"><span style="flex:1;cursor:pointer" onclick="etySearchWord('${w}')">${w}</span><button class="speak-btn" style="width:28px;height:28px;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();speakWord('${w}')">🔊</button><span style="cursor:pointer;color:var(--text-muted)" onclick="etySearchWord('${w}')">→</span></div>`).join('')}
+    <h3 style="font-size:16px;font-weight:600;color:var(--text-primary);margin:16px 0 8px">${cat.icon} ${cat.name}</h3>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">已学习 ${cachedCount}/${cat.keywords.length} 词</p>
+    <div class="word-list">${cat.keywords.map(w=>{
+      const isCached = etymologyWords.some(ew => ew.word.toLowerCase() === w.toLowerCase());
+      return `<div class="word-list-item" style="${isCached?'background:rgba(76,175,80,0.05)':''}"><span style="flex:1;cursor:pointer" onclick="etySearchWord('${w}')">${w} ${isCached?'<span style=font-size:10px;color:var(--success)>✓</span>':''}</span><button class="speak-btn" style="width:28px;height:28px;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();speakWord('${w}')">🔊</button><span style="cursor:pointer;color:var(--text-muted)" onclick="etySearchWord('${w}')">→</span></div>`;
+    }).join('')}
     </div>`;
 }
 
@@ -1105,13 +1162,19 @@ function renderEtyCourseView() {
 
 function renderCourseUnit(el) {
   const u = currentCourseUnit;
+  const cachedCount = u.words.filter(w => etymologyWords.some(ew => ew.word.toLowerCase() === w.toLowerCase())).length;
   el.innerHTML = `
     <button class="btn btn-secondary btn-small" onclick="currentCourseUnit=null;renderEtyCourseView()" style="margin-bottom:16px">← 返回课程</button>
-    <h3 style="font-size:20px;font-weight:600;color:var(--text-primary);margin-bottom:16px">${u.title}</h3>
+    <h3 style="font-size:20px;font-weight:600;color:var(--text-primary);margin-bottom:4px">${u.title}</h3>
+    <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">已学习 ${cachedCount}/${u.words.length} 词</p>
     <div class="ety-card"><div class="ety-card-title">📌 核心词根</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">${u.roots.map(r=>`<span class="article-root-tag" style="cursor:pointer" onclick="speakWord('${r.split('(')[0].replace(/[-\s]/g,'')}')">${r} 🔊</span>`).join('')}</div></div>
     <div class="ety-card"><div class="ety-card-title">📝 例词列表</div>
-      <div class="word-list">${u.words.map(w=>`<div class="word-list-item"><span style="flex:1;cursor:pointer" onclick="etySearchWord('${w}')">${w}</span><button class="speak-btn" style="width:28px;height:28px;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();speakWord('${w}')">🔊</button><span style="cursor:pointer;color:var(--text-muted)" onclick="etySearchWord('${w}')">→</span></div>`).join('')}</div></div>`;
+      <div class="word-list">${u.words.map(w=>{
+        const isCached = etymologyWords.some(ew => ew.word.toLowerCase() === w.toLowerCase());
+        return `<div class="word-list-item" style="${isCached?'background:rgba(76,175,80,0.05)':''}"><span style="flex:1;cursor:pointer" onclick="etySearchWord('${w}')">${w} ${isCached?'<span style=font-size:10px;color:var(--success)>✓</span>':''}</span><button class="speak-btn" style="width:28px;height:28px;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();speakWord('${w}')">🔊</button><span style="cursor:pointer;color:var(--text-muted)" onclick="etySearchWord('${w}')">→</span></div>`;
+      }).join('')}</div></div>`;
+}
 }
 
 // ======================================================================
@@ -1336,6 +1399,7 @@ function updateStats() {
   cards.forEach(c=>c.keywords?.forEach(k=>words.add(k.word.toLowerCase())));
   etymologyWords.forEach(w=>words.add(w.word.toLowerCase()));
   document.getElementById('statWords').textContent = words.size;
+  document.getElementById('statEtyCount').textContent = etymologyWords.length;
   if (settings.firstUseDate) document.getElementById('statDays').textContent = Math.ceil((new Date()-new Date(settings.firstUseDate))/86400000);
 }
 
