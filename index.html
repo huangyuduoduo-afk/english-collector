@@ -288,6 +288,26 @@
     /* ==================== Settings ==================== */
     .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
     .stat-card { background: white; border-radius: 12px; padding: 14px 10px; text-align: center; }
+    .stat-card.clickable { cursor:pointer; transition:all 0.2s; }
+    .stat-card.clickable:hover { background:var(--card-yellow); transform:translateY(-2px); box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+    .stat-card.clickable:active { transform:translateY(0); }
+    
+    /* List modal */
+    .list-modal { position:fixed; inset:0; background:rgba(0,0,0,0.15); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:60; display:none; align-items:flex-end; justify-content:center; }
+    .list-modal.active { display:flex; }
+    @media (min-width:640px) { .list-modal { align-items:center; } }
+    .list-modal-content { background:var(--cream); border-radius:20px 20px 0 0; width:100%; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+    @media (min-width:640px) { .list-modal-content { max-width:500px; border-radius:20px; max-height:75vh; } }
+    .list-modal-header { display:flex; align-items:center; justify-content:space-between; padding:18px 20px 14px; border-bottom:1px solid rgba(0,0,0,0.06); flex-shrink:0; }
+    .list-modal-title { font-family:'Playfair Display',serif; font-size:18px; color:var(--text-primary); }
+    .list-modal-count { font-size:12px; color:var(--text-muted); }
+    .list-modal-close { width:32px; height:32px; display:flex; align-items:center; justify-content:center; background:var(--warm-gray); border:none; border-radius:50%; cursor:pointer; }
+    .list-modal-body { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:12px 16px; }
+    .list-item { display:flex; align-items:center; gap:10px; padding:12px; background:white; border-radius:10px; margin-bottom:8px; cursor:pointer; transition:all 0.15s; }
+    .list-item:hover { background:var(--card-yellow); }
+    .list-item-word { font-size:15px; font-weight:500; color:var(--text-primary); flex:1; }
+    .list-item-sub { font-size:12px; color:var(--text-muted); max-width:60%; text-align:right; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .list-item-speak { padding:4px 8px; background:var(--accent-light); border:none; border-radius:6px; cursor:pointer; font-size:12px; flex-shrink:0; }
     .stat-value { font-family: 'Playfair Display', serif; font-size: 26px; color: var(--text-primary); }
     .stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
     .settings-section { margin-bottom: 24px; }
@@ -447,9 +467,9 @@
     <!-- Review Stats -->
     <div class="review-stats" id="reviewStats">
       <div class="review-stat-item"><div class="review-stat-num" id="reviewDueCount" style="color:var(--accent)">0</div><div class="review-stat-label">待复习</div></div>
-      <div class="review-stat-item"><div class="review-stat-num" id="reviewNewCount" style="color:#3b82f6">0</div><div class="review-stat-label">新词</div></div>
+      <div class="review-stat-item" style="cursor:pointer" onclick="showStatList('newWords')"><div class="review-stat-num" id="reviewNewCount" style="color:#3b82f6">0</div><div class="review-stat-label">新词</div></div>
       <div class="review-stat-item"><div class="review-stat-num" id="reviewMasteredCount" style="color:var(--success)">0</div><div class="review-stat-label">已掌握</div></div>
-      <div class="review-stat-item"><div class="review-stat-num" id="reviewTotalCount">0</div><div class="review-stat-label">总词汇</div></div>
+      <div class="review-stat-item" style="cursor:pointer" onclick="showStatList('allWords')"><div class="review-stat-num" id="reviewTotalCount">0</div><div class="review-stat-label">总词汇</div></div>
     </div>
     <!-- Review Session -->
     <div class="review-container" id="reviewContent">
@@ -501,9 +521,9 @@
   <!-- ==================== Tab 4: Settings ==================== -->
   <div class="tab-panel" id="tabSettings">
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">收藏</div></div>
-      <div class="stat-card"><div class="stat-value" id="statWords">0</div><div class="stat-label">词汇</div></div>
-      <div class="stat-card"><div class="stat-value" id="statEtyCount">0</div><div class="stat-label">词源</div></div>
+      <div class="stat-card clickable" onclick="showStatList('collections')"><div class="stat-value" id="statTotal">0</div><div class="stat-label">收藏</div></div>
+      <div class="stat-card clickable" onclick="showStatList('words')"><div class="stat-value" id="statWords">0</div><div class="stat-label">词汇</div></div>
+      <div class="stat-card clickable" onclick="showStatList('etymology')"><div class="stat-value" id="statEtyCount">0</div><div class="stat-label">词源</div></div>
       <div class="stat-card"><div class="stat-value" id="statDays">0</div><div class="stat-label">天数</div></div>
     </div>
     <div class="settings-section">
@@ -604,6 +624,22 @@
   <div class="modal-overlay" id="detailModal" onclick="closeDetailModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
       <div class="modal-body" id="detailBody"></div>
+    </div>
+  </div>
+
+  <!-- List Modal -->
+  <div class="list-modal" id="listModal" onclick="closeListModal()">
+    <div class="list-modal-content" onclick="event.stopPropagation()">
+      <div class="list-modal-header">
+        <div>
+          <div class="list-modal-title" id="listModalTitle">列表</div>
+          <div class="list-modal-count" id="listModalCount"></div>
+        </div>
+        <button class="list-modal-close" onclick="closeListModal()">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="list-modal-body" id="listModalBody"></div>
     </div>
   </div>
 
@@ -1655,6 +1691,98 @@ function updateStats() {
   document.getElementById('statWords').textContent = words.size;
   document.getElementById('statEtyCount').textContent = etymologyWords.length;
   if (settings.firstUseDate) document.getElementById('statDays').textContent = Math.ceil((new Date()-new Date(settings.firstUseDate))/86400000);
+}
+
+function closeListModal() { document.getElementById('listModal').classList.remove('active'); }
+
+function showStatList(type) {
+  const modal = document.getElementById('listModal');
+  const title = document.getElementById('listModalTitle');
+  const count = document.getElementById('listModalCount');
+  const body = document.getElementById('listModalBody');
+  let items = [];
+  
+  if (type === 'collections') {
+    title.textContent = '📌 所有收藏';
+    items = cards.map(c => ({
+      main: c.content.length > 50 ? c.content.slice(0, 50) + '...' : c.content,
+      sub: getRelativeDate(c.createdAt),
+      action: () => { closeListModal(); openDetailModal(c.id); }
+    }));
+  } else if (type === 'words') {
+    title.textContent = '📝 所有词汇';
+    const wordMap = new Map();
+    cards.forEach(c => c.keywords?.forEach(k => {
+      const key = k.word.toLowerCase();
+      if (!wordMap.has(key)) wordMap.set(key, { word: k.word, meaning: k.meaning || '', phonetic: k.phonetic || '' });
+    }));
+    etymologyWords.forEach(w => {
+      const key = w.word.toLowerCase();
+      if (!wordMap.has(key)) wordMap.set(key, { word: w.word, meaning: w.meaning || '', phonetic: w.phonetic || '' });
+    });
+    items = Array.from(wordMap.values()).sort((a,b) => a.word.localeCompare(b.word)).map(w => ({
+      main: w.word,
+      sub: w.meaning,
+      speak: w.word,
+      action: () => { closeListModal(); switchTab('etymology'); setTimeout(() => etySearchWord(w.word), 200); }
+    }));
+  } else if (type === 'etymology') {
+    title.textContent = '🧬 词源缓存';
+    items = etymologyWords.sort((a,b) => a.word.localeCompare(b.word)).map(w => ({
+      main: w.word,
+      sub: w.meaning || '',
+      speak: w.word,
+      action: () => { closeListModal(); switchTab('etymology'); setTimeout(() => etySearchWord(w.word), 200); }
+    }));
+  } else if (type === 'newWords') {
+    title.textContent = '🆕 新词';
+    const wordMap = new Map();
+    cards.forEach(c => c.keywords?.forEach(k => {
+      const key = k.word.toLowerCase();
+      if (!wordMap.has(key) && !reviewRecords[key]) wordMap.set(key, { word: k.word, meaning: k.meaning || '' });
+    }));
+    items = Array.from(wordMap.values()).sort((a,b) => a.word.localeCompare(b.word)).map(w => ({
+      main: w.word,
+      sub: w.meaning,
+      speak: w.word
+    }));
+  } else if (type === 'allWords') {
+    title.textContent = '📚 总词汇';
+    const wordMap = new Map();
+    cards.forEach(c => c.keywords?.forEach(k => {
+      const key = k.word.toLowerCase();
+      if (!wordMap.has(key)) {
+        const rec = reviewRecords[key];
+        const levelNames = ['新词', '初学', '熟悉', '理解', '巩固', '已掌握'];
+        const level = rec ? levelNames[rec.level] || '新词' : '新词';
+        wordMap.set(key, { word: k.word, meaning: k.meaning || '', level });
+      }
+    }));
+    items = Array.from(wordMap.values()).sort((a,b) => a.word.localeCompare(b.word)).map(w => ({
+      main: w.word,
+      sub: w.level + (w.meaning ? ' · ' + w.meaning : ''),
+      speak: w.word
+    }));
+  }
+  
+  count.textContent = items.length + ' 项';
+  
+  if (items.length === 0) {
+    body.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted)">暂无数据</div>';
+  } else {
+    body.innerHTML = items.map((item, i) => `
+      <div class="list-item" ${item.action ? `onclick="statListActions[${i}]()"` : ''}>
+        ${item.speak ? `<button class="list-item-speak" onclick="event.stopPropagation();speakWord('${esc(item.speak)}')">🔊</button>` : ''}
+        <span class="list-item-word">${esc(item.main)}</span>
+        <span class="list-item-sub">${esc(item.sub)}</span>
+      </div>
+    `).join('');
+  }
+  
+  // Store action callbacks
+  window.statListActions = items.map(item => item.action || (() => {}));
+  
+  modal.classList.add('active');
 }
 
 // ======================================================================
