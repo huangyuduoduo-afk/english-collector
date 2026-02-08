@@ -1413,22 +1413,25 @@ function renderEtyExploreView() {
         ${cached>0?`<div style="width:100%;height:3px;background:var(--warm-gray);border-radius:2px;margin-top:4px"><div style="width:${Math.round(cached/c.keywords.length*100)}%;height:100%;background:var(--accent);border-radius:2px"></div></div>`:''}
       </div>`;
     }).join('')}
-    </div>
-    <div id="categoryWordList"></div>`;
+    </div>`;
 }
 
 function showCategoryWords(catId) {
   const cat = EXPLORE_CATEGORIES.find(c=>c.id===catId);
   if (!cat) return;
+  const el = document.getElementById('etyExploreView');
   const cachedCount = cat.keywords.filter(w => etymologyWords.some(ew => ew.word.toLowerCase() === w.toLowerCase())).length;
-  document.getElementById('categoryWordList').innerHTML = `
-    <h3 style="font-size:16px;font-weight:600;color:var(--text-primary);margin:16px 0 8px">${cat.icon} ${cat.name}</h3>
+  el.innerHTML = `
+    <button class="btn btn-secondary btn-small" onclick="renderEtyExploreView()" style="margin-bottom:16px">← 返回分类</button>
+    <h3 style="font-size:18px;font-weight:600;color:var(--text-primary);margin-bottom:4px">${cat.icon} ${cat.name}</h3>
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">已学习 ${cachedCount}/${cat.keywords.length} 词</p>
     <div class="word-list">${cat.keywords.map(w=>{
       const isCached = etymologyWords.some(ew => ew.word.toLowerCase() === w.toLowerCase());
       return `<div class="word-list-item" style="${isCached?'background:rgba(76,175,80,0.05)':''}"><span style="flex:1;cursor:pointer" onclick="etySearchWord('${w}')">${w} ${isCached?'<span style=font-size:10px;color:var(--success)>✓</span>':''}</span><button class="speak-btn" style="width:28px;height:28px;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();speakWord('${w}')">🔊</button><span style="cursor:pointer;color:var(--text-muted)" onclick="etySearchWord('${w}')">→</span></div>`;
     }).join('')}
     </div>`;
+  // Scroll to top so user sees the content
+  el.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 // --- Course View ---
@@ -1934,7 +1937,19 @@ async function init() {
     // Restore Google session
     const savedToken = localStorage.getItem('ec_access_token');
     const savedUser = localStorage.getItem('ec_user');
-    if (savedToken && savedUser) { accessToken=savedToken; googleUser=JSON.parse(savedUser); updateUserUI(); fetchUserInfo(); }
+    if (savedToken && savedUser) {
+      accessToken=savedToken; googleUser=JSON.parse(savedUser); updateUserUI();
+      // Validate token - await to ensure we know login state before proceeding
+      try {
+        await fetchUserInfo();
+      } catch(e) {
+        console.log('Cached token invalid, cleared');
+      }
+      // If token was cleared by fetchUserInfo, show re-login hint
+      if (!accessToken) {
+        showToast('登录已过期，请重新登录', 'error');
+      }
+    }
     await checkUrlImport();
     renderCards(); updateStats();
     if (settings.autoSync && accessToken && cards.length > 0) setTimeout(()=>syncToCloud(), 2000);
