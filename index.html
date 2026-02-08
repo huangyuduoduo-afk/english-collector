@@ -1175,7 +1175,6 @@ function renderCourseUnit(el) {
         return `<div class="word-list-item" style="${isCached?'background:rgba(76,175,80,0.05)':''}"><span style="flex:1;cursor:pointer" onclick="etySearchWord('${w}')">${w} ${isCached?'<span style=font-size:10px;color:var(--success)>✓</span>':''}</span><button class="speak-btn" style="width:28px;height:28px;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();speakWord('${w}')">🔊</button><span style="cursor:pointer;color:var(--text-muted)" onclick="etySearchWord('${w}')">→</span></div>`;
       }).join('')}</div></div>`;
 }
-}
 
 // ======================================================================
 // REVIEW TAB (TAB 3) - Spaced Repetition System
