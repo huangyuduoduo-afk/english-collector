@@ -312,12 +312,51 @@
     .toast.error { background: var(--error); }
     .toast.success { background: var(--success); }
     .hide { display: none !important; }
+    
+    /* Welcome animation */
+    .welcome-overlay { position:fixed; inset:0; z-index:9999; background:var(--cream); display:flex; flex-direction:column; align-items:center; justify-content:center; transition: opacity 0.8s ease; }
+    .welcome-overlay.fade-out { opacity:0; pointer-events:none; }
+    .welcome-circle { width:120px; height:120px; border-radius:50%; background: linear-gradient(135deg, #E8612C 0%, #F4845F 50%, #FFB088 100%); animation: breathe 3s ease-in-out infinite; box-shadow: 0 0 60px rgba(232,97,44,0.3); display:flex; align-items:center; justify-content:center; }
+    .welcome-circle-inner { width:40px; height:40px; border-radius:50%; background: rgba(255,255,255,0.3); animation: breathe-inner 3s ease-in-out infinite; }
+    .welcome-eyes { position:absolute; display:flex; gap:18px; margin-top:-14px; }
+    .welcome-eye { width:8px; height:10px; background:white; border-radius:50%; animation: blink 3s ease-in-out infinite; }
+    .welcome-mouth { position:absolute; margin-top:14px; width:20px; height:10px; border-bottom:3px solid white; border-radius:0 0 20px 20px; }
+    .welcome-text { margin-top:32px; font-family:'Playfair Display',serif; font-size:28px; color:var(--text-primary); opacity:0; animation: fadeUp 1s ease 0.5s forwards; }
+    .welcome-sub { margin-top:8px; font-size:14px; color:var(--text-muted); opacity:0; animation: fadeUp 1s ease 1s forwards; }
+    @keyframes breathe { 0%,100% { transform:scale(1); } 50% { transform:scale(1.15); } }
+    @keyframes breathe-inner { 0%,100% { transform:scale(1); opacity:0.3; } 50% { transform:scale(1.3); opacity:0.5; } }
+    @keyframes blink { 0%,42%,50%,100% { transform:scaleY(1); } 45% { transform:scaleY(0.1); } }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    
+    /* Date group headers */
+    .date-group-header { padding:8px 4px 6px; margin-top:8px; display:flex; align-items:center; gap:8px; }
+    .date-group-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); }
+    .date-group-label { font-size:12px; font-weight:500; color:var(--text-muted); letter-spacing:0.3px; }
+    .date-group-count { font-size:11px; color:var(--text-muted); opacity:0.6; }
+    
+    /* Article favorite */
+    .article-fav-btn { padding:6px 14px; font-size:13px; background:white; border:1px solid rgba(0,0,0,0.08); border-radius:8px; cursor:pointer; transition:all 0.2s; display:flex; align-items:center; gap:4px; }
+    .article-fav-btn.faved { background:var(--accent-light); border-color:rgba(232,97,44,0.2); color:var(--accent); }
+    .article-fav-btn:hover { background:var(--accent-light); }
+    .fav-articles-toggle { padding:8px 14px; font-size:12px; color:var(--accent); background:var(--accent-light); border:1px solid rgba(232,97,44,0.15); border-radius:8px; cursor:pointer; margin-bottom:12px; }
+    .fav-article-card { padding:14px; background:white; border:1px solid rgba(0,0,0,0.06); border-radius:10px; margin-bottom:8px; cursor:pointer; transition:all 0.2s; }
+    .fav-article-card:hover { background:var(--card-yellow); }
   </style>
 </head>
 <body>
   <div class="ambient-glow"></div>
   <div class="ambient-glow-2"></div>
   <div id="toast" class="toast"></div>
+
+  <!-- Welcome Animation -->
+  <div class="welcome-overlay" id="welcomeOverlay">
+    <div class="welcome-circle" style="position:relative">
+      <div class="welcome-eyes"><div class="welcome-eye"></div><div class="welcome-eye"></div></div>
+      <div class="welcome-mouth"></div>
+    </div>
+    <div class="welcome-text">Hello, World ✦</div>
+    <div class="welcome-sub" id="welcomeSub">Ready to explore words today?</div>
+  </div>
 
   <!-- ==================== Sidebar ==================== -->
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
@@ -365,6 +404,9 @@
       <div class="search-box">
         <input type="text" id="searchInput" placeholder="搜索收藏内容..." oninput="handleSearch()">
       </div>
+      <button class="menu-btn" id="viewToggleBtn" onclick="toggleTimelineView()" title="切换视图">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5"/></svg>
+      </button>
       <button class="add-btn" onclick="openAddModal()">
         <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
       </button>
@@ -682,6 +724,55 @@ let googleUser = null, accessToken = null;
 let etyAnalysis = null, etyLoading = false;
 let currentEtyView = 'search';
 let currentCourseLevel = 'level1', currentCourseUnit = null;
+let favArticles = JSON.parse(localStorage.getItem('ec_fav_articles') || '[]');
+
+const WELCOME_GREETINGS = [
+  { text: 'Hello, World ✦', sub: 'Ready to explore words today?' },
+  { text: 'Welcome back ✦', sub: 'Every word has a story' },
+  { text: 'Hey there ✦', sub: 'Let\'s discover something new' },
+  { text: 'Good to see you ✦', sub: 'Your vocabulary journey continues' },
+  { text: 'Hi, explorer ✦', sub: 'Words are waiting for you' },
+];
+
+function showWelcome() {
+  const overlay = document.getElementById('welcomeOverlay');
+  if (!overlay) return;
+  const g = WELCOME_GREETINGS[Math.floor(Math.random() * WELCOME_GREETINGS.length)];
+  overlay.querySelector('.welcome-text').textContent = g.text;
+  document.getElementById('welcomeSub').textContent = g.sub;
+  setTimeout(() => {
+    overlay.classList.add('fade-out');
+    setTimeout(() => overlay.remove(), 800);
+  }, 2800);
+}
+
+function toggleFavArticle(day) {
+  const idx = favArticles.indexOf(day);
+  if (idx >= 0) favArticles.splice(idx, 1);
+  else favArticles.push(day);
+  localStorage.setItem('ec_fav_articles', JSON.stringify(favArticles));
+}
+
+function showFavArticle(day) {
+  const article = DAILY_ARTICLES.find(a => a.day === day);
+  if (!article) return;
+  const isFaved = favArticles.includes(day);
+  const el = document.getElementById('etySearchView');
+  el.innerHTML = `
+    <button onclick="renderEtySearchView()" style="padding:8px 14px;font-size:13px;color:var(--text-secondary);background:var(--warm-gray);border:none;border-radius:8px;cursor:pointer;margin-bottom:12px">← 返回</button>
+    <div class="daily-article">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="article-badge">📅 ${article.theme}</div>
+        <button class="article-fav-btn ${isFaved ? 'faved' : ''}" onclick="toggleFavArticle(${day});showFavArticle(${day})">
+          ${isFaved ? '❤️ 已收藏' : '🤍 收藏'}
+        </button>
+      </div>
+      <h3 class="article-title">${article.title}</h3>
+      <p class="article-content">${article.content}</p>
+      <div class="article-roots">${article.roots.map(r=>`<span class="article-root-tag">${r}</span>`).join('')}</div>
+      <div class="article-examples">${article.examples.map(ex=>`<button class="article-word-btn" onclick="etySearchWord('${ex.word}')"><span class="article-word-text">${ex.word}</span><span class="article-word-meaning">${ex.meaning}</span></button>`).join('')}</div>
+    </div>`;
+}
 
 // ======================================================================
 // IndexedDB
@@ -930,6 +1021,39 @@ function switchTab(tab) {
 // ======================================================================
 // COLLECTION (TAB 1)
 // ======================================================================
+function getRelativeDate(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const cardDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.floor((today - cardDay) / 86400000);
+  if (diffDays === 0) return '今天';
+  if (diffDays === 1) return '昨天';
+  if (diffDays < 7) return `${diffDays}天前`;
+  if (diffDays < 30) return `${Math.floor(diffDays/7)}周前`;
+  return d.toLocaleDateString('zh-CN', { month:'short', day:'numeric' });
+}
+
+function getDateGroup(dateStr) {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const cardDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const diffDays = Math.floor((today - cardDay) / 86400000);
+  if (diffDays === 0) return '📌 今天';
+  if (diffDays === 1) return '📌 昨天';
+  if (diffDays < 7) return '📎 本周';
+  if (diffDays < 30) return '📎 本月';
+  return '📦 更早';
+}
+
+let timelineView = false;
+
+function toggleTimelineView() {
+  timelineView = !timelineView;
+  renderCards();
+}
+
 function renderCards() {
   const grid = document.getElementById('cardGrid');
   const empty = document.getElementById('emptyState');
@@ -939,11 +1063,45 @@ function renderCards() {
   );
   if (filtered.length===0) { grid.innerHTML=''; empty.classList.remove('hide'); return; }
   empty.classList.add('hide');
-  grid.innerHTML = filtered.map(card => `
-    <div class="card" onclick="openDetailModal('${card.id}')">
-      <div class="card-content">${esc(card.content)}</div>
-      ${card.keywords?.length ? `<div class="card-keywords">${card.keywords.slice(0,3).map(k=>`<span class="keyword-tag">${esc(k.word)}</span>`).join('')}</div>` : ''}
-    </div>`).join('');
+  
+  if (timelineView) {
+    // Timeline view with date groups
+    grid.style.columnCount = '1';
+    grid.style.maxWidth = '600px';
+    let lastGroup = '';
+    grid.innerHTML = filtered.map(card => {
+      const group = getDateGroup(card.createdAt);
+      const rel = getRelativeDate(card.createdAt);
+      let header = '';
+      if (group !== lastGroup) {
+        lastGroup = group;
+        const count = filtered.filter(c => getDateGroup(c.createdAt) === group).length;
+        header = `<div class="date-group-header"><div class="date-group-dot"></div><span class="date-group-label">${group}</span><span class="date-group-count">${count}条</span></div>`;
+      }
+      return header + `
+        <div class="card" onclick="openDetailModal('${card.id}')" style="margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+            <div class="card-content" style="-webkit-line-clamp:3;flex:1">${esc(card.content)}</div>
+            <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;padding-top:2px">${rel}</span>
+          </div>
+          ${card.keywords?.length ? `<div class="card-keywords">${card.keywords.slice(0,3).map(k=>`<span class="keyword-tag">${esc(k.word)}</span>`).join('')}</div>` : ''}
+        </div>`;
+    }).join('');
+  } else {
+    // Masonry view with date labels
+    grid.style.columnCount = '';
+    grid.style.maxWidth = '';
+    grid.innerHTML = filtered.map(card => {
+      const rel = getRelativeDate(card.createdAt);
+      return `<div class="card" onclick="openDetailModal('${card.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span style="font-size:10px;color:var(--text-muted)">${rel}</span>
+        </div>
+        <div class="card-content">${esc(card.content)}</div>
+        ${card.keywords?.length ? `<div class="card-keywords">${card.keywords.slice(0,3).map(k=>`<span class="keyword-tag">${esc(k.word)}</span>`).join('')}</div>` : ''}
+      </div>`;
+    }).join('');
+  }
 }
 
 function openDetailModal(cardId) {
@@ -1079,9 +1237,35 @@ function renderEtySearchView() {
   // Daily article
   const todayDate = new Date().getDate(); // 1-31
   const article = DAILY_ARTICLES.find(a => a.day === todayDate) || DAILY_ARTICLES[todayDate % DAILY_ARTICLES.length];
-  el.innerHTML = historyHtml + `
+  const isFaved = favArticles.includes(article.day);
+  
+  // Favorites section
+  const favsHtml = favArticles.length > 0 ? `
+    <div style="margin-bottom:16px">
+      <button class="fav-articles-toggle" onclick="document.getElementById('favList').classList.toggle('hide')">
+        ❤️ 收藏的文章 (${favArticles.length})
+      </button>
+      <div id="favList" class="hide">
+        ${favArticles.map(day => {
+          const a = DAILY_ARTICLES.find(x => x.day === day);
+          return a ? `<div class="fav-article-card" onclick="showFavArticle(${day})">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:13px;font-weight:500;color:var(--text-primary)">${a.title}</span>
+              <span style="font-size:11px;color:var(--text-muted)">${a.theme}</span>
+            </div>
+          </div>` : '';
+        }).join('')}
+      </div>
+    </div>` : '';
+  
+  el.innerHTML = historyHtml + favsHtml + `
     <div class="daily-article">
-      <div class="article-badge">📅 今日词源 · ${article.theme}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div class="article-badge">📅 今日词源 · ${article.theme}</div>
+        <button class="article-fav-btn ${isFaved ? 'faved' : ''}" onclick="toggleFavArticle(${article.day});renderEtySearchView()">
+          ${isFaved ? '❤️ 已收藏' : '🤍 收藏'}
+        </button>
+      </div>
       <h3 class="article-title">${article.title}</h3>
       <p class="article-content">${article.content}</p>
       <div class="article-roots">${article.roots.map(r=>`<span class="article-root-tag">${r}</span>`).join('')}</div>
@@ -1603,6 +1787,7 @@ function downloadFile(content, filename, type) {
 // INIT
 // ======================================================================
 async function init() {
+  showWelcome();
   try {
     window.speechSynthesis.getVoices();
     try {
