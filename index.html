@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#E8612C">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="EnCollector">
@@ -631,10 +632,19 @@ let db;
 async function initDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, 3);
-    req.onerror = () => reject(req.error);
-    req.onsuccess = () => { db = req.result; resolve(db); };
+    req.onerror = (e) => { console.error('DB open error:', e); reject(req.error); };
+    req.onsuccess = () => { db = req.result; console.log('DB opened, version:', db.version); resolve(db); };
+    req.onblocked = () => {
+      console.warn('DB upgrade blocked - trying without upgrade');
+      showToast('数据库升级中，请关闭其他标签页后刷新', 'error');
+      // Try opening without version upgrade as fallback
+      const fallback = indexedDB.open(DB_NAME);
+      fallback.onsuccess = () => { db = fallback.result; console.log('DB fallback opened, version:', db.version); resolve(db); };
+      fallback.onerror = () => reject(fallback.error);
+    };
     req.onupgradeneeded = (e) => {
       const d = e.target.result;
+      console.log('DB upgrading from v' + e.oldVersion + ' to v' + e.newVersion);
       if (!d.objectStoreNames.contains('cards')) d.createObjectStore('cards', { keyPath: 'id' });
       if (!d.objectStoreNames.contains('settings')) d.createObjectStore('settings', { keyPath: 'key' });
       if (!d.objectStoreNames.contains('etymologyWords')) d.createObjectStore('etymologyWords', { keyPath: 'word' });
@@ -643,33 +653,44 @@ async function initDB() {
   });
 }
 
+function ensureDB() { if (!db) throw new Error('数据库未就绪，请刷新页面'); }
+
 async function dbGetAll(store) {
+  ensureDB();
   return new Promise((r, e) => { const q = db.transaction([store],'readonly').objectStore(store).getAll(); q.onsuccess = () => r(q.result||[]); q.onerror = () => e(q.error); });
 }
 async function dbGet(store, key) {
+  ensureDB();
   return new Promise((r, e) => { const q = db.transaction([store],'readonly').objectStore(store).get(key); q.onsuccess = () => r(q.result); q.onerror = () => e(q.error); });
 }
 async function dbPut(store, data) {
+  ensureDB();
   return new Promise((r, e) => { const q = db.transaction([store],'readwrite').objectStore(store).put(data); q.onsuccess = () => r(); q.onerror = () => e(q.error); });
 }
 async function dbDelete(store, key) {
+  ensureDB();
   return new Promise((r, e) => { const q = db.transaction([store],'readwrite').objectStore(store).delete(key); q.onsuccess = () => r(); q.onerror = () => e(q.error); });
 }
 
 async function loadData() {
-  cards = await dbGetAll('cards');
+  const hasStore = (name) => db.objectStoreNames.contains(name);
+  
+  cards = hasStore('cards') ? await dbGetAll('cards') : [];
   cards.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-  etymologyWords = await dbGetAll('etymologyWords');
+  etymologyWords = hasStore('etymologyWords') ? await dbGetAll('etymologyWords') : [];
   // Load review records into memory map
-  const recs = await dbGetAll('reviewRecords');
   reviewRecords = {};
-  recs.forEach(r => { reviewRecords[r.wordKey] = r; });
-  const saved = await dbGet('settings', 'main');
+  if (hasStore('reviewRecords')) {
+    const recs = await dbGetAll('reviewRecords');
+    recs.forEach(r => { reviewRecords[r.wordKey] = r; });
+  }
+  const saved = hasStore('settings') ? await dbGet('settings', 'main') : null;
   if (saved) settings = { ...settings, ...saved.value };
   document.getElementById('apiProvider').value = settings.apiProvider;
   document.getElementById('apiKey').value = settings.apiKey;
   document.getElementById('autoSyncToggle').checked = settings.autoSync;
   updateModelOptions();
+  console.log('Data loaded: cards='+cards.length+', etymWords='+etymologyWords.length+', reviews='+Object.keys(reviewRecords).length);
 }
 
 async function saveCardToDB(card) {
@@ -1450,7 +1471,19 @@ function downloadFile(content, filename, type) {
 async function init() {
   try {
     window.speechSynthesis.getVoices();
-    await initDB(); await loadData();
+    try {
+      await initDB();
+    } catch(dbErr) {
+      console.error('DB init failed, retrying...', dbErr);
+      // If blocked, try deleting and recreating
+      await new Promise(r => setTimeout(r, 1000));
+      try { await initDB(); } catch(e2) {
+        console.error('DB retry failed:', e2);
+        showToast('数据库初始化失败，请关闭其他标签页后刷新', 'error');
+        return;
+      }
+    }
+    await loadData();
     // Restore Google session
     const savedToken = localStorage.getItem('ec_access_token');
     const savedUser = localStorage.getItem('ec_user');
@@ -1458,7 +1491,7 @@ async function init() {
     await checkUrlImport();
     renderCards(); updateStats();
     if (settings.autoSync && accessToken && cards.length > 0) setTimeout(()=>syncToCloud(), 2000);
-  } catch(e) { console.error('Init error:', e); showToast('初始化失败','error'); }
+  } catch(e) { console.error('Init error:', e); showToast('初始化失败: '+e.message,'error'); }
 }
 init();
 </script>
