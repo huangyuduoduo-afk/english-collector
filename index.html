@@ -11,6 +11,7 @@
   <title>English Collector</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23E8612C'/%3E%3Cpath d='M16 6c0 0-2 4-2 8s1 6 2 10c1-4 2-6 2-10s-2-8-2-8z' fill='%23fff' opacity='.9'/%3E%3Cpath d='M16 14c-3-2-6-1-8 1 2 0 5 1 8 3z' fill='%23fff' opacity='.7'/%3E%3Cpath d='M16 14c3-2 6-1 8 1-2 0-5 1-8 3z' fill='%23fff' opacity='.7'/%3E%3Cpath d='M16 20c-2-1-5-1-7 1 2 0 4 1 7 2z' fill='%23fff' opacity='.5'/%3E%3Cpath d='M16 20c2-1 5-1 7 1-2 0-4 1-7 2z' fill='%23fff' opacity='.5'/%3E%3C/svg%3E">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
@@ -39,7 +40,8 @@
     .header-inner { display: flex; align-items: center; gap: 12px; max-width: 1200px; margin: 0 auto; }
     .menu-btn { padding: 8px; margin-left: -8px; background: none; border: none; cursor: pointer; color: var(--text-secondary); border-radius: 8px; }
     .menu-btn:hover { background: var(--warm-gray); }
-    .search-box { flex: 1; max-width: 400px; display: flex; align-items: center; padding: 10px 16px; background: white; border: 1px solid var(--border); border-radius: 10px; }
+    .search-box { flex: 1; max-width: 400px; display: flex; align-items: center; padding: 10px 16px; background: white; border: 1px solid rgba(160,120,60,0.08); border-radius: 10px; transition: border-color 0.2s, box-shadow 0.2s; }
+    .search-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,97,44,0.08); }
     .search-box input { flex: 1; border: none; background: transparent; font-size: 14px; color: var(--text-primary); outline: none; }
     .search-box input::placeholder { color: var(--text-muted); }
     .add-btn { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: var(--accent); border: none; border-radius: 10px; color: white; cursor: pointer; box-shadow: 0 2px 8px rgba(232,97,44,0.3); }
@@ -63,11 +65,11 @@
     @media (min-width: 500px) { .masonry { column-count: 2; } }
     @media (min-width: 800px) { .masonry { column-count: 3; column-gap: 16px; } }
     @media (min-width: 1100px) { .masonry { column-count: 4; } }
-    .card { background: var(--card-yellow); border-radius: 8px; transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.03); cursor: pointer; padding: 16px; break-inside: avoid; margin-bottom: 12px; }
-    .card:hover { background: var(--card-yellow-hover); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .card { background: var(--card-yellow); border-radius: 12px; transition: all 0.2s ease; box-shadow: 0 1px 4px rgba(180,140,80,0.06); border: 1px solid rgba(160,120,60,0.07); cursor: pointer; padding: 20px; break-inside: avoid; margin-bottom: 12px; }
+    .card:hover { background: var(--card-yellow-hover); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(180,140,80,0.1); }
     .card-content { font-size: 14px; line-height: 1.6; color: var(--text-primary); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
     .card-keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); }
-    .keyword-tag { font-size: 11px; padding: 3px 8px; background: rgba(232,97,44,0.1); color: var(--accent); border-radius: 4px; }
+    .keyword-tag { font-size: 11px; padding: 3px 8px; background: rgba(232,97,44,0.05); color: #c0724a; border-radius: 4px; }
 
     /* ==================== Quick Input ==================== */
     .quick-input-wrapper { position: fixed; bottom: 68px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 500px; z-index: 30; padding-bottom: env(safe-area-inset-bottom); }
@@ -171,8 +173,8 @@
 
     /* ==================== Etymology Tab ==================== */
     .ety-search-box { display: flex; gap: 10px; margin-bottom: 20px; }
-    .ety-search-input { flex: 1; padding: 14px 18px; font-size: 15px; background: white; border: 1px solid var(--border); border-radius: 12px; color: var(--text-primary); outline: none; font-family: inherit; }
-    .ety-search-input:focus { border-color: var(--accent); }
+    .ety-search-input { flex: 1; padding: 14px 18px; font-size: 15px; background: white; border: 1px solid rgba(160,120,60,0.1); border-radius: 12px; color: var(--text-primary); outline: none; font-family: inherit; transition: border-color 0.2s, box-shadow 0.2s; }
+    .ety-search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(232,97,44,0.08); }
     .ety-search-input::placeholder { color: var(--text-muted); }
     .ety-search-btn { padding: 14px 24px; font-size: 14px; font-weight: 600; color: white; background: var(--accent); border: none; border-radius: 12px; cursor: pointer; white-space: nowrap; }
     .ety-search-btn:hover { background: #D55525; }
@@ -185,16 +187,16 @@
 
     /* Result card */
     .ety-result { animation: fadeIn 0.3s ease; }
-    .ety-result-header { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 16px; }
+    .ety-result-header { background: white; border: 1px solid rgba(160,120,60,0.08); border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(180,140,80,0.06); }
     .ety-result-word { font-family: 'Playfair Display', serif; font-size: 32px; color: var(--text-primary); }
     .ety-result-phonetic { font-size: 15px; color: var(--text-muted); margin: 4px 0 8px; }
     .ety-result-meaning { font-size: 16px; color: var(--text-secondary); line-height: 1.6; }
     .ety-result-actions { display: flex; gap: 10px; margin-top: 12px; flex-wrap: wrap; }
 
-    .ety-card { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 14px; }
+    .ety-card { background: white; border: 1px solid rgba(160,120,60,0.08); border-radius: 14px; padding: 20px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(180,140,80,0.05); }
     .ety-card-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 14px; }
     .ety-root-item { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 10px 12px; background: var(--warm-gray); border-radius: 10px; margin-bottom: 8px; }
-    .ety-root-part { padding: 4px 10px; font-size: 13px; font-weight: 700; color: var(--accent); background: var(--accent-light); border-radius: 6px; font-family: monospace; }
+    .ety-root-part { padding: 4px 10px; font-size: 13px; font-weight: 700; color: #c0724a; background: rgba(232,97,44,0.06); border-radius: 6px; font-family: monospace; }
     .ety-root-origin { font-size: 11px; color: var(--text-muted); padding: 2px 6px; background: white; border-radius: 4px; }
     .ety-root-meaning { font-size: 13px; color: var(--text-secondary); }
     .ety-story { font-size: 14px; color: var(--text-secondary); line-height: 1.8; }
@@ -204,13 +206,13 @@
     .ety-example-en { font-size: 14px; color: var(--text-primary); line-height: 1.5; display: flex; align-items: flex-start; gap: 8px; }
     .ety-example-cn { font-size: 13px; color: var(--text-muted); padding-left: 30px; margin-top: 4px; }
     .ety-related { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
-    .ety-related-tag { padding: 6px 14px; font-size: 13px; color: var(--accent); background: var(--accent-light); border: 1px solid rgba(232,97,44,0.2); border-radius: 20px; cursor: pointer; transition: all 0.2s; }
+    .ety-related-tag { padding: 6px 14px; font-size: 13px; color: #c0724a; background: rgba(232,97,44,0.05); border: 1px solid rgba(232,97,44,0.12); border-radius: 20px; cursor: pointer; transition: all 0.2s; }
     .ety-related-tag:hover { background: var(--accent); color: white; }
 
     /* Categories grid */
     .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 24px; }
-    .cat-card { padding: 18px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: white; border-radius: 14px; border: 2px solid var(--border); cursor: pointer; transition: all 0.2s; text-align: center; }
-    .cat-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+    .cat-card { padding: 18px 14px; display: flex; flex-direction: column; align-items: center; gap: 8px; background: white; border-radius: 14px; border: 1px solid rgba(160,120,60,0.08); cursor: pointer; transition: all 0.2s; text-align: center; box-shadow: 0 1px 3px rgba(180,140,80,0.04); }
+    .cat-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(232,97,44,0.08); }
     .cat-icon { font-size: 32px; }
     .cat-name { font-size: 14px; font-weight: 600; color: var(--text-primary); }
     .cat-count { font-size: 11px; color: var(--text-muted); }
@@ -220,7 +222,7 @@
     .level-tab { padding: 10px 18px; font-size: 13px; font-weight: 500; background: white; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; color: var(--text-secondary); }
     .level-tab.active { background: var(--accent); color: white; border-color: var(--accent); }
     .unit-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-    .unit-card { background: white; border: 1px solid var(--border); border-radius: 14px; padding: 20px; }
+    .unit-card { background: white; border: 1px solid rgba(160,120,60,0.08); border-radius: 14px; padding: 20px; box-shadow: 0 1px 3px rgba(180,140,80,0.04); }
     .unit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
     .unit-number { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
     .unit-badge { padding: 3px 8px; font-size: 11px; font-weight: 600; color: var(--success); background: rgba(76,175,80,0.1); border-radius: 8px; }
@@ -238,12 +240,12 @@
     .word-list-item span:last-child { font-size: 13px; color: var(--text-muted); }
 
     /* Daily article */
-    .daily-article { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 24px; margin-bottom: 20px; }
+    .daily-article { background: white; border: 1px solid rgba(160,120,60,0.08); border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 4px rgba(180,140,80,0.06); }
     .article-badge { padding: 4px 10px; font-size: 12px; font-weight: 600; color: #B8860B; background: #FFF8DC; border-radius: 8px; display: inline-block; margin-bottom: 12px; }
     .article-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-primary); margin-bottom: 12px; }
     .article-content { font-size: 14px; color: var(--text-secondary); line-height: 1.8; white-space: pre-line; margin-bottom: 16px; }
     .article-roots { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-    .article-root-tag { padding: 5px 12px; font-size: 13px; color: var(--accent); background: var(--accent-light); border-radius: 8px; font-family: monospace; }
+    .article-root-tag { padding: 5px 12px; font-size: 13px; color: #c0724a; background: rgba(232,97,44,0.05); border-radius: 8px; font-family: monospace; }
     .article-examples { display: flex; gap: 10px; flex-wrap: wrap; }
     .article-word-btn { padding: 10px 16px; background: var(--warm-gray); border: none; border-radius: 10px; cursor: pointer; text-align: left; transition: all 0.2s; }
     .article-word-btn:hover { background: var(--accent-light); }
@@ -287,7 +289,7 @@
 
     /* ==================== Settings ==================== */
     .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
-    .stat-card { background: white; border-radius: 12px; padding: 14px 10px; text-align: center; }
+    .stat-card { background: white; border-radius: 12px; padding: 14px 10px; text-align: center; border: 1px solid rgba(160,120,60,0.06); box-shadow: 0 1px 3px rgba(180,140,80,0.04); }
     .stat-card.clickable { cursor:pointer; transition:all 0.2s; }
     .stat-card.clickable:hover { background:var(--card-yellow); transform:translateY(-2px); box-shadow:0 2px 8px rgba(0,0,0,0.06); }
     .stat-card.clickable:active { transform:translateY(0); }
@@ -312,7 +314,7 @@
     .stat-label { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
     .settings-section { margin-bottom: 24px; }
     .settings-title { font-size: 11px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; }
-    .settings-card { background: white; border-radius: 12px; overflow: hidden; }
+    .settings-card { background: white; border-radius: 12px; overflow: hidden; border: 1px solid rgba(160,120,60,0.06); box-shadow: 0 1px 3px rgba(180,140,80,0.04); }
     .settings-item { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,0.05); }
     .settings-item:last-child { border-bottom: none; }
     .settings-item-label { font-size: 14px; color: var(--text-primary); }
@@ -361,6 +363,28 @@
     .fav-articles-toggle { padding:8px 14px; font-size:12px; color:var(--accent); background:var(--accent-light); border:1px solid rgba(232,97,44,0.15); border-radius:8px; cursor:pointer; margin-bottom:12px; }
     .fav-article-card { padding:14px; background:white; border:1px solid rgba(0,0,0,0.06); border-radius:10px; margin-bottom:8px; cursor:pointer; transition:all 0.2s; }
     .fav-article-card:hover { background:var(--card-yellow); }
+
+    /* ==================== Inline Word Expansion ==================== */
+    .word-expand-wrapper { margin-bottom:6px; }
+    .word-expand-detail {
+      max-height:0; opacity:0; overflow:hidden;
+      transition: max-height 0.35s ease, opacity 0.25s ease, padding 0.3s ease;
+      background:white; border-radius:0 0 12px 12px; margin-top:-2px;
+      border:1px solid transparent; border-top:none; padding:0 16px;
+    }
+    .word-expand-detail.open {
+      max-height:500px; opacity:1; padding:16px;
+      border-color:rgba(232,97,44,0.12);
+    }
+    .word-list-item .expand-arrow {
+      transition:transform 0.25s ease; display:inline-block;
+      font-size:11px; color:var(--text-muted); flex-shrink:0; width:16px; text-align:center;
+    }
+    .word-list-item.expanded { border-radius:10px 10px 0 0; background:var(--accent-light) !important; }
+    .word-list-item.expanded .expand-arrow { transform:rotate(90deg); }
+    .inline-root-tag { font-size:12px; padding:4px 10px; background:rgba(232,97,44,0.06); color:var(--accent); border-radius:6px; font-family:monospace; display:inline-block; }
+    .inline-detail-link { font-size:12px; color:var(--accent); background:none; border:none; cursor:pointer; padding:4px 0; font-weight:500; }
+    .inline-detail-link:hover { text-decoration:underline; }
   </style>
 </head>
 <body>
@@ -909,10 +933,20 @@ function openSidebar() { document.getElementById('sidebar').classList.add('activ
 function closeSidebar() { document.getElementById('sidebar').classList.remove('active'); document.getElementById('sidebarOverlay').classList.remove('active'); }
 
 function handleGoogleAuth() {
-  if (googleUser) {
-    if (confirm('确定要退出登录吗？')) { googleUser=null; accessToken=null; localStorage.removeItem('ec_access_token'); localStorage.removeItem('ec_user'); updateUserUI(); showToast('已退出登录','success'); }
+  if (googleUser && accessToken) {
+    if (confirm('确定要退出登录吗？')) { clearGoogleSession(); showToast('已退出登录','success'); }
     return;
   }
+  triggerGoogleLogin();
+}
+
+function clearGoogleSession() {
+  googleUser=null; accessToken=null;
+  localStorage.removeItem('ec_access_token'); localStorage.removeItem('ec_user');
+  updateUserUI();
+}
+
+function triggerGoogleLogin() {
   const client = google.accounts.oauth2.initTokenClient({
     client_id: GOOGLE_CLIENT_ID,
     scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
@@ -921,14 +955,31 @@ function handleGoogleAuth() {
   client.requestAccessToken();
 }
 
+// Ensure valid token - auto re-login if expired
+async function ensureToken() {
+  if (!accessToken) return false;
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { 'Authorization': `Bearer ${accessToken}` } });
+    if (!res.ok) throw new Error('expired');
+    return true;
+  } catch(e) {
+    clearGoogleSession();
+    showToast('登录已过期，正在重新登录...','');
+    // Small delay then trigger login
+    await new Promise(r => setTimeout(r, 500));
+    triggerGoogleLogin();
+    return false;
+  }
+}
+
 async function fetchUserInfo() {
   try {
     const res = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { 'Authorization': `Bearer ${accessToken}` } });
     if (!res.ok) throw new Error('Token expired');
     googleUser = await res.json();
     localStorage.setItem('ec_user', JSON.stringify(googleUser));
-    updateUserUI(); showToast('登录成功！','success');
-  } catch(e) { accessToken=null; localStorage.removeItem('ec_access_token'); localStorage.removeItem('ec_user'); updateUserUI(); }
+    updateUserUI();
+  } catch(e) { clearGoogleSession(); throw e; }
 }
 
 function updateUserUI() {
@@ -955,6 +1006,7 @@ async function findDriveFile() {
 
 async function syncToCloud() {
   if (!accessToken) { showToast('请先登录 Google','error'); return false; }
+  if (!(await ensureToken())) return false;
   const freshCards = await dbGetAll('cards');
   const freshEtyWords = await dbGetAll('etymologyWords');
   const freshReviewRecs = await dbGetAll('reviewRecords');
@@ -983,6 +1035,7 @@ async function syncToCloud() {
 
 async function syncFromCloud() {
   if (!accessToken) { showToast('请先登录 Google','error'); return; }
+  if (!(await ensureToken())) return;
   try {
     showToast('正在从云端获取...','');
     const fileId = await findDriveFile();
@@ -1017,8 +1070,9 @@ async function syncFromCloud() {
 }
 
 async function manualSync() {
-  if (!accessToken) { showToast('请先登录 Google','error'); return; }
   closeSidebar();
+  const tokenOk = await ensureToken();
+  if (!tokenOk) return;
   const localCards = await dbGetAll('cards');
   if (localCards.length > 0) await syncToCloud(); else { showToast('本地无数据，尝试恢复...',''); await syncFromCloud(); }
 }
@@ -1425,12 +1479,7 @@ function showCategoryWords(catId) {
     <button class="btn btn-secondary btn-small" onclick="renderEtyExploreView()" style="margin-bottom:16px">← 返回分类</button>
     <h3 style="font-size:18px;font-weight:600;color:var(--text-primary);margin-bottom:4px">${cat.icon} ${cat.name}</h3>
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">已学习 ${cachedCount}/${cat.keywords.length} 词</p>
-    <div class="word-list">${cat.keywords.map(w=>{
-      const isCached = etymologyWords.some(ew => ew.word.toLowerCase() === w.toLowerCase());
-      return `<div class="word-list-item" style="${isCached?'background:rgba(76,175,80,0.05)':''}"><span style="flex:1;cursor:pointer" onclick="etySearchWord('${w}')">${w} ${isCached?'<span style=font-size:10px;color:var(--success)>✓</span>':''}</span><button class="speak-btn" style="width:28px;height:28px;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();speakWord('${w}')">🔊</button><span style="cursor:pointer;color:var(--text-muted)" onclick="etySearchWord('${w}')">→</span></div>`;
-    }).join('')}
-    </div>`;
-  // Scroll to top so user sees the content
+    <div class="word-list" id="exploreWordList">${cat.keywords.map(w => renderExpandableWordItem(w, 'explore')).join('')}</div>`;
   el.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
@@ -1464,10 +1513,115 @@ function renderCourseUnit(el) {
     <div class="ety-card"><div class="ety-card-title">📌 核心词根</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">${u.roots.map(r=>`<span class="article-root-tag" style="cursor:pointer" onclick="speakWord('${r.split('(')[0].replace(/[-\s]/g,'')}')">${r} 🔊</span>`).join('')}</div></div>
     <div class="ety-card"><div class="ety-card-title">📝 例词列表</div>
-      <div class="word-list">${u.words.map(w=>{
-        const isCached = etymologyWords.some(ew => ew.word.toLowerCase() === w.toLowerCase());
-        return `<div class="word-list-item" style="${isCached?'background:rgba(76,175,80,0.05)':''}"><span style="flex:1;cursor:pointer" onclick="etySearchWord('${w}')">${w} ${isCached?'<span style=font-size:10px;color:var(--success)>✓</span>':''}</span><button class="speak-btn" style="width:28px;height:28px;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();speakWord('${w}')">🔊</button><span style="cursor:pointer;color:var(--text-muted)" onclick="etySearchWord('${w}')">→</span></div>`;
-      }).join('')}</div></div>`;
+      <div class="word-list" id="courseWordList">${u.words.map(w => renderExpandableWordItem(w, 'course')).join('')}</div></div>`;
+}
+
+// --- Inline Word Expansion ---
+function renderExpandableWordItem(w, context) {
+  const isCached = etymologyWords.some(ew => ew.word.toLowerCase() === w.toLowerCase());
+  const itemId = `${context}-${w.replace(/[^a-zA-Z]/g,'')}`;
+  return `<div class="word-expand-wrapper" id="wrap-${itemId}">
+    <div class="word-list-item" style="${isCached?'background:rgba(76,175,80,0.04)':''}" onclick="toggleWordDetail('${escapeHtml(w)}','${itemId}')">
+      <span style="flex:1;font-size:14px;color:var(--text-primary)">${escapeHtml(w)} ${isCached?'<span style="font-size:10px;color:var(--success)">✓</span>':''}</span>
+      <button class="speak-btn" style="width:28px;height:28px;font-size:12px;flex-shrink:0" onclick="event.stopPropagation();speakWord('${escapeHtml(w)}')">🔊</button>
+      <span class="word-expand-arrow" id="arrow-${itemId}" style="font-size:12px;color:var(--text-muted);transition:transform 0.2s">▼</span>
+    </div>
+    <div class="word-expand-detail" id="detail-${itemId}"></div>
+  </div>`;
+}
+
+async function toggleWordDetail(word, itemId) {
+  const detailEl = document.getElementById('detail-' + itemId);
+  const arrowEl = document.getElementById('arrow-' + itemId);
+  if (!detailEl) return;
+
+  // Collapse if already open
+  if (detailEl.classList.contains('open')) {
+    detailEl.classList.remove('open');
+    if (arrowEl) arrowEl.style.transform = 'rotate(0deg)';
+    const itemEl = detailEl.previousElementSibling;
+    if (itemEl) itemEl.classList.remove('expanded');
+    return;
+  }
+
+  // Close any other open details in same list
+  const parent = detailEl.closest('.word-list');
+  if (parent) {
+    parent.querySelectorAll('.word-expand-detail.open').forEach(el => {
+      el.classList.remove('open');
+      const sibArrow = el.parentElement.querySelector('.word-expand-arrow');
+      if (sibArrow) sibArrow.style.transform = 'rotate(0deg)';
+      const sibItem = el.previousElementSibling;
+      if (sibItem) sibItem.classList.remove('expanded');
+    });
+  }
+
+  // Mark current as expanded
+  const currentItem = detailEl.previousElementSibling;
+  if (currentItem) currentItem.classList.add('expanded');
+
+  // Check cache first
+  const cached = etymologyWords.find(ew => ew.word.toLowerCase() === word.toLowerCase());
+  if (cached) {
+    detailEl.innerHTML = renderInlineDetail(cached);
+    detailEl.classList.add('open');
+    if (arrowEl) arrowEl.style.transform = 'rotate(180deg)';
+    return;
+  }
+
+  // Show loading, then fetch
+  if (!settings.apiKey) {
+    detailEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--error);font-size:13px">请先在设置中填写 API Key</div>';
+    detailEl.classList.add('open');
+    if (arrowEl) arrowEl.style.transform = 'rotate(180deg)';
+    return;
+  }
+  detailEl.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px"><div class="spinner spinner-dark" style="width:22px;height:22px;border-width:2px;margin:0 auto 8px"></div>AI 分析中...</div>';
+  detailEl.classList.add('open');
+  if (arrowEl) arrowEl.style.transform = 'rotate(180deg)';
+
+  try {
+    const analysis = await callAI(buildEtymologyPrompt(word));
+    if (analysis) {
+      // Save to cache
+      await saveEtyWord({ ...analysis, savedAt: Date.now() });
+      // Update the ✓ mark on this item
+      const wrapEl = document.getElementById('wrap-' + itemId);
+      if (wrapEl) {
+        const nameSpan = wrapEl.querySelector('.word-list-item span');
+        if (nameSpan && !nameSpan.innerHTML.includes('✓')) {
+          nameSpan.innerHTML = `${escapeHtml(word)} <span style="font-size:10px;color:var(--success)">✓</span>`;
+        }
+      }
+      detailEl.innerHTML = renderInlineDetail(analysis);
+    }
+  } catch(e) {
+    detailEl.innerHTML = `<div style="text-align:center;padding:16px;color:var(--error);font-size:13px">分析失败: ${escapeHtml(e.message)}<br><button class="btn btn-secondary btn-small" style="margin-top:8px" onclick="toggleWordDetail('${escapeHtml(word)}','${itemId}');toggleWordDetail('${escapeHtml(word)}','${itemId}')">重试</button></div>`;
+  }
+}
+
+function renderInlineDetail(data) {
+  const roots = data.roots?.map(r => {
+    if (typeof r === 'string') return `<span class="article-root-tag">${escapeHtml(r.split('→')[0])}</span>`;
+    return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0">
+      <span class="article-root-tag" style="font-weight:600">${escapeHtml(r.part)}</span>
+      <span style="font-size:11px;color:var(--text-muted)">${escapeHtml(r.origin||'')}</span>
+      <span style="font-size:12px;color:var(--text-secondary)">→ ${escapeHtml(r.meaning)}</span>
+    </div>`;
+  }).join('') || '';
+
+  return `<div>
+    <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="font-family:'Playfair Display',serif;font-size:20px;font-weight:600;color:var(--text-primary)">${escapeHtml(data.word)}</span>
+      <span style="font-size:13px;color:var(--text-muted)">${escapeHtml(data.phonetic||'')}</span>
+      <button class="speak-btn" style="width:26px;height:26px;font-size:11px" onclick="event.stopPropagation();speakWord('${escapeHtml(data.word)}')">🔊</button>
+    </div>
+    <p style="font-size:14px;color:var(--text-primary);margin-bottom:12px;line-height:1.5">${escapeHtml(data.meaning)}</p>
+    ${roots ? `<div style="margin-bottom:10px">${roots}</div>` : ''}
+    ${data.memory_tip ? `<div style="font-size:12px;color:#b8860b;background:rgba(184,134,11,0.06);padding:8px 12px;border-radius:8px;margin-bottom:10px">💡 ${escapeHtml(data.memory_tip)}</div>` : ''}
+    ${data.etymology_story ? `<p style="font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:10px">${escapeHtml(data.etymology_story).substring(0,120)}${data.etymology_story.length>120?'...':''}</p>` : ''}
+    <button class="btn btn-secondary btn-small" onclick="event.stopPropagation();etySearchWord('${escapeHtml(data.word)}')" style="font-size:11px">查看完整分析 →</button>
+  </div>`;
 }
 
 // ======================================================================
@@ -1909,6 +2063,7 @@ function showToast(msg, type='') {
   setTimeout(()=>t.classList.remove('show'), 3000);
 }
 function esc(text) { if (!text) return ''; const d=document.createElement('div'); d.textContent=text; return d.innerHTML; }
+const escapeHtml = esc;
 function escCSV(text) { return (text||'').replace(/"/g,'""').replace(/\n/g,'<br>'); }
 function downloadFile(content, filename, type) {
   const a = document.createElement('a'); a.href=URL.createObjectURL(new Blob([content],{type})); a.download=filename; a.click();
@@ -1939,15 +2094,15 @@ async function init() {
     const savedUser = localStorage.getItem('ec_user');
     if (savedToken && savedUser) {
       accessToken=savedToken; googleUser=JSON.parse(savedUser); updateUserUI();
-      // Validate token - await to ensure we know login state before proceeding
       try {
         await fetchUserInfo();
       } catch(e) {
-        console.log('Cached token invalid, cleared');
-      }
-      // If token was cleared by fetchUserInfo, show re-login hint
-      if (!accessToken) {
-        showToast('登录已过期，请重新登录', 'error');
+        console.log('Cached token invalid, auto re-login...');
+        // Token expired → auto trigger re-login after a short delay
+        setTimeout(() => {
+          showToast('登录已过期，正在重新登录...','');
+          triggerGoogleLogin();
+        }, 1500);
       }
     }
     await checkUrlImport();
