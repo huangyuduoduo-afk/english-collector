@@ -490,9 +490,9 @@
   <div class="tab-panel" id="tabReview">
     <!-- Review Stats -->
     <div class="review-stats" id="reviewStats">
-      <div class="review-stat-item"><div class="review-stat-num" id="reviewDueCount" style="color:var(--accent)">0</div><div class="review-stat-label">待复习</div></div>
+      <div class="review-stat-item" style="cursor:pointer" onclick="showStatList('dueWords')"><div class="review-stat-num" id="reviewDueCount" style="color:var(--accent)">0</div><div class="review-stat-label">待复习</div></div>
       <div class="review-stat-item" style="cursor:pointer" onclick="showStatList('newWords')"><div class="review-stat-num" id="reviewNewCount" style="color:#3b82f6">0</div><div class="review-stat-label">新词</div></div>
-      <div class="review-stat-item"><div class="review-stat-num" id="reviewMasteredCount" style="color:var(--success)">0</div><div class="review-stat-label">已掌握</div></div>
+      <div class="review-stat-item" style="cursor:pointer" onclick="showStatList('masteredWords')"><div class="review-stat-num" id="reviewMasteredCount" style="color:var(--success)">0</div><div class="review-stat-label">已掌握</div></div>
       <div class="review-stat-item" style="cursor:pointer" onclick="showStatList('allWords')"><div class="review-stat-num" id="reviewTotalCount">0</div><div class="review-stat-label">总词汇</div></div>
     </div>
     <!-- Review Session -->
@@ -784,6 +784,7 @@ let googleUser = null, accessToken = null;
 let etyAnalysis = null, etyLoading = false;
 let currentEtyView = 'search';
 let currentCourseLevel = 'level1', currentCourseUnit = null;
+let courseQuiz = null; // { questions:[], index:0, score:0, total:0 }
 let favArticles = JSON.parse(localStorage.getItem('ec_fav_articles') || '[]');
 
 const WELCOME_GREETINGS = [
@@ -1091,6 +1092,19 @@ function speakWord(word) {
   window.speechSynthesis.speak(u);
 }
 
+function playSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    osc.frequency.setValueAtTime(1000, ctx.currentTime + 0.1);
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.3);
+  } catch(e) {}
+}
+
 // ======================================================================
 // TAB SWITCHING
 // ======================================================================
@@ -1324,18 +1338,28 @@ function renderEtySearchView() {
       </div>
     </div>` : '';
   
-  // Daily article
+  // Daily article - today + past 7 days
   const todayDate = new Date().getDate(); // 1-31
-  const article = DAILY_ARTICLES.find(a => a.day === todayDate) || DAILY_ARTICLES[todayDate % DAILY_ARTICLES.length];
+  const getArticleForDate = (d) => DAILY_ARTICLES.find(a => a.day === d) || DAILY_ARTICLES[((d - 1) % DAILY_ARTICLES.length)];
+  const article = getArticleForDate(todayDate);
   const isFaved = favArticles.includes(article.day);
   
-  // Favorites section
+  // Past 7 days articles (excluding today)
+  const recentDays = [];
+  for (let i = 1; i <= 6; i++) {
+    let d = todayDate - i;
+    if (d < 1) d += 30; // wrap around
+    const a = getArticleForDate(d);
+    if (a && a.day !== article.day) recentDays.push(a);
+  }
+  
+  // Favorites section (always visible, not collapsed)
   const favsHtml = favArticles.length > 0 ? `
     <div style="margin-bottom:16px">
-      <button class="fav-articles-toggle" onclick="document.getElementById('favList').classList.toggle('hide')">
-        ❤️ 收藏的文章 (${favArticles.length})
-      </button>
-      <div id="favList" class="hide">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:12px;font-weight:500;color:var(--text-muted)">❤️ 收藏的文章 (${favArticles.length})</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
         ${favArticles.map(day => {
           const a = DAILY_ARTICLES.find(x => x.day === day);
           return a ? `<div class="fav-article-card" onclick="showFavArticle(${day})">
@@ -1344,6 +1368,27 @@ function renderEtySearchView() {
               <span style="font-size:11px;color:var(--text-muted)">${a.theme}</span>
             </div>
           </div>` : '';
+        }).join('')}
+      </div>
+    </div>` : '';
+  
+  // Recent articles section
+  const recentHtml = recentDays.length > 0 ? `
+    <div style="margin-top:16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:12px;font-weight:500;color:var(--text-muted)">📚 近期文章</span>
+        <span style="font-size:11px;color:var(--text-muted)">共30篇·按日期轮换</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${recentDays.map(a => {
+          const isFav = favArticles.includes(a.day);
+          return `<div class="fav-article-card" onclick="showFavArticle(${a.day})" style="display:flex;justify-content:space-between;align-items:center">
+            <div style="flex:1;min-width:0">
+              <span style="font-size:13px;font-weight:500;color:var(--text-primary);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.title}</span>
+              <span style="font-size:11px;color:var(--text-muted)">${a.theme}</span>
+            </div>
+            ${isFav ? '<span style="font-size:11px;color:#e74c3c;flex-shrink:0">❤️</span>' : ''}
+          </div>`;
         }).join('')}
       </div>
     </div>` : '';
@@ -1360,7 +1405,7 @@ function renderEtySearchView() {
       <p class="article-content">${article.content}</p>
       <div class="article-roots">${article.roots.map(r=>`<span class="article-root-tag">${r}</span>`).join('')}</div>
       <div class="article-examples">${article.examples.map(ex=>`<button class="article-word-btn" onclick="etySearchWord('${ex.word}')"><span class="article-word-text">${ex.word}</span><span class="article-word-meaning">${ex.meaning}</span></button>`).join('')}</div>
-    </div>`;
+    </div>` + recentHtml;
 }
 
 function renderEtyResult(el) {
@@ -1512,6 +1557,11 @@ function renderCourseUnit(el) {
     <p style="font-size:12px;color:var(--text-muted);margin-bottom:16px">已学习 ${cachedCount}/${u.words.length} 词</p>
     <div class="ety-card"><div class="ety-card-title">📌 核心词根</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px">${u.roots.map(r=>`<span class="article-root-tag" style="cursor:pointer" onclick="speakWord('${r.split('(')[0].replace(/[-\s]/g,'')}')">${r} 🔊</span>`).join('')}</div></div>
+    ${cachedCount >= 3 ? `<div style="margin-bottom:16px">
+      <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="startCourseQuiz()">📝 单元测验（${cachedCount} 词可测）</button>
+    </div>` : `<div style="margin-bottom:16px;padding:12px;background:var(--warm-gray);border-radius:10px;text-align:center">
+      <span style="font-size:13px;color:var(--text-muted)">学习 3 个以上单词后可开始测验</span>
+    </div>`}
     <div class="ety-card"><div class="ety-card-title">📝 例词列表</div>
       <div class="word-list" id="courseWordList">${u.words.map(w => renderExpandableWordItem(w, 'course')).join('')}</div></div>`;
 }
@@ -1603,12 +1653,27 @@ async function toggleWordDetail(word, itemId) {
 function renderInlineDetail(data) {
   const roots = data.roots?.map(r => {
     if (typeof r === 'string') return `<span class="article-root-tag">${escapeHtml(r.split('→')[0])}</span>`;
-    return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 0">
+    return `<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:5px 0">
       <span class="article-root-tag" style="font-weight:600">${escapeHtml(r.part)}</span>
       <span style="font-size:11px;color:var(--text-muted)">${escapeHtml(r.origin||'')}</span>
       <span style="font-size:12px;color:var(--text-secondary)">→ ${escapeHtml(r.meaning)}</span>
     </div>`;
   }).join('') || '';
+
+  const examplesHtml = data.examples?.length ? data.examples.map(ex => `
+    <div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;align-items:flex-start;gap:6px;font-size:13px;color:var(--text-primary);line-height:1.5">
+        <button class="speak-btn" style="width:22px;height:22px;font-size:10px;flex-shrink:0" onclick="event.stopPropagation();speakWord(\`${escapeHtml(ex.sentence)}\`)">🔊</button>
+        ${escapeHtml(ex.sentence)}
+      </div>
+      <div style="font-size:12px;color:var(--text-muted);padding-left:28px;margin-top:2px">${escapeHtml(ex.translation)}</div>
+    </div>`).join('') : '';
+
+  const relatedHtml = data.related_words?.length ? `
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px">
+      <span style="font-size:11px;color:var(--text-muted)">相关：</span>
+      ${data.related_words.map(w => `<button class="ety-related-tag" style="font-size:11px;padding:3px 8px" onclick="event.stopPropagation();inlineRelatedClick('${escapeHtml(w)}')">${escapeHtml(w)}</button>`).join('')}
+    </div>` : '';
 
   return `<div>
     <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap">
@@ -1619,9 +1684,157 @@ function renderInlineDetail(data) {
     <p style="font-size:14px;color:var(--text-primary);margin-bottom:12px;line-height:1.5">${escapeHtml(data.meaning)}</p>
     ${roots ? `<div style="margin-bottom:10px">${roots}</div>` : ''}
     ${data.memory_tip ? `<div style="font-size:12px;color:#b8860b;background:rgba(184,134,11,0.06);padding:8px 12px;border-radius:8px;margin-bottom:10px">💡 ${escapeHtml(data.memory_tip)}</div>` : ''}
-    ${data.etymology_story ? `<p style="font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:10px">${escapeHtml(data.etymology_story).substring(0,120)}${data.etymology_story.length>120?'...':''}</p>` : ''}
-    <button class="btn btn-secondary btn-small" onclick="event.stopPropagation();etySearchWord('${escapeHtml(data.word)}')" style="font-size:11px">查看完整分析 →</button>
+    ${data.etymology_story ? `<p style="font-size:12px;color:var(--text-secondary);line-height:1.6;margin-bottom:10px">${escapeHtml(data.etymology_story)}</p>` : ''}
+    ${examplesHtml ? `<div style="margin-bottom:8px"><div style="font-size:11px;font-weight:500;color:var(--text-muted);margin-bottom:4px">📝 例句</div>${examplesHtml}</div>` : ''}
+    ${relatedHtml}
   </div>`;
+}
+
+function setWordAndSearch(word) {
+  document.getElementById('etyInput').value = word;
+  switchEtyView('search');
+  etySearchWord(word);
+}
+
+// --- Course Quiz ---
+function startCourseQuiz() {
+  const u = currentCourseUnit;
+  if (!u) return;
+  // Get cached (learned) words for this unit
+  const cachedWords = u.words
+    .map(w => etymologyWords.find(ew => ew.word.toLowerCase() === w.toLowerCase()))
+    .filter(Boolean);
+  if (cachedWords.length < 3) { showToast('至少学习3个单词才能测验', 'error'); return; }
+  
+  // Build questions: word → pick correct meaning, 4 options
+  const allMeanings = cachedWords.map(w => w.meaning || w.word);
+  const shuffled = [...cachedWords].sort(() => Math.random() - 0.5).slice(0, Math.min(cachedWords.length, 10));
+  const questions = shuffled.map(w => {
+    const correct = w.meaning || w.word;
+    // Pick 3 wrong meanings from other words
+    const wrongs = allMeanings.filter(m => m !== correct).sort(() => Math.random() - 0.5).slice(0, 3);
+    // If not enough wrongs, pad with generic
+    while (wrongs.length < 3) wrongs.push(['记忆','思考','变化','运动','时间'][wrongs.length] || '未知');
+    const options = [correct, ...wrongs].sort(() => Math.random() - 0.5);
+    return { word: w.word, phonetic: w.phonetic || '', correctMeaning: correct, options, answered: false, correct: false };
+  });
+  
+  courseQuiz = { questions, index: 0, score: 0, total: questions.length, done: false };
+  renderCourseQuiz();
+}
+
+function renderCourseQuiz() {
+  const el = document.getElementById('etyContent');
+  if (!courseQuiz) return;
+  
+  if (courseQuiz.done) {
+    const pct = Math.round(courseQuiz.score / courseQuiz.total * 100);
+    const emoji = pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪';
+    el.innerHTML = `
+      <div style="text-align:center;padding:40px 16px">
+        <div style="font-size:64px;margin-bottom:16px">${emoji}</div>
+        <h3 style="font-size:22px;font-weight:600;color:var(--text-primary);margin-bottom:8px">测验完成！</h3>
+        <p style="font-size:18px;color:var(--accent);font-weight:600;margin-bottom:4px">${courseQuiz.score} / ${courseQuiz.total}</p>
+        <p style="font-size:14px;color:var(--text-muted);margin-bottom:24px">正确率 ${pct}%</p>
+        <div style="text-align:left;margin-bottom:24px">
+          ${courseQuiz.questions.map((q, i) => `
+            <div style="display:flex;align-items:center;gap:10px;padding:12px;border-bottom:1px solid rgba(0,0,0,0.05)">
+              <span style="font-size:16px">${q.correct ? '✅' : '❌'}</span>
+              <div style="flex:1">
+                <span style="font-size:14px;font-weight:500;color:var(--text-primary)">${escapeHtml(q.word)}</span>
+                ${!q.correct ? `<div style="font-size:12px;color:var(--success);margin-top:2px">正确: ${escapeHtml(q.correctMeaning)}</div>` : ''}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div style="display:flex;gap:12px;justify-content:center">
+          <button class="btn btn-secondary" onclick="courseQuiz=null;renderCourseUnit(document.getElementById('etyContent'))">返回单元</button>
+          <button class="btn btn-primary" onclick="startCourseQuiz()">再测一次</button>
+        </div>
+      </div>`;
+    return;
+  }
+  
+  const q = courseQuiz.questions[courseQuiz.index];
+  el.innerHTML = `
+    <div style="padding:8px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px">
+        <button class="btn btn-secondary btn-small" onclick="courseQuiz=null;renderCourseUnit(document.getElementById('etyContent'))">← 退出测验</button>
+        <span style="font-size:13px;color:var(--text-muted)">${courseQuiz.index + 1} / ${courseQuiz.total}</span>
+      </div>
+      <div style="background:var(--accent-light);border-radius:8px;height:6px;margin-bottom:24px;overflow:hidden">
+        <div style="background:var(--accent);height:100%;width:${(courseQuiz.index / courseQuiz.total) * 100}%;border-radius:8px;transition:width 0.3s"></div>
+      </div>
+      <div style="text-align:center;margin-bottom:32px">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">这个单词的意思是？</p>
+        <h2 style="font-size:28px;font-weight:600;color:var(--text-primary);margin-bottom:4px">${escapeHtml(q.word)}</h2>
+        ${q.phonetic ? `<p style="font-size:14px;color:var(--text-muted)">${escapeHtml(q.phonetic)}</p>` : ''}
+        <button class="speak-btn" style="margin-top:8px" onclick="speakWord('${escapeHtml(q.word)}')">🔊</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${q.options.map((opt, i) => `
+          <button onclick="answerCourseQuiz(${i})" style="padding:16px 18px;text-align:left;font-size:15px;color:var(--text-primary);background:white;border:1.5px solid rgba(0,0,0,0.08);border-radius:12px;cursor:pointer;transition:all 0.2s">
+            <span style="color:var(--text-muted);margin-right:8px">${['A','B','C','D'][i]}</span>${escapeHtml(opt)}
+          </button>
+        `).join('')}
+      </div>
+    </div>`;
+}
+
+function answerCourseQuiz(optIdx) {
+  if (!courseQuiz || courseQuiz.done) return;
+  const q = courseQuiz.questions[courseQuiz.index];
+  const selected = q.options[optIdx];
+  const isCorrect = selected === q.correctMeaning;
+  q.answered = true;
+  q.correct = isCorrect;
+  if (isCorrect) { courseQuiz.score++; playSound(); }
+  
+  // Show feedback briefly, then advance
+  const buttons = document.querySelectorAll('#etyContent button[onclick^="answerCourseQuiz"]');
+  buttons.forEach((btn, i) => {
+    btn.disabled = true;
+    if (q.options[i] === q.correctMeaning) {
+      btn.style.borderColor = 'var(--success)';
+      btn.style.background = 'rgba(76,175,80,0.08)';
+      btn.style.color = 'var(--success)';
+    } else if (i === optIdx && !isCorrect) {
+      btn.style.borderColor = 'var(--error)';
+      btn.style.background = 'rgba(229,57,53,0.08)';
+      btn.style.color = 'var(--error)';
+      btn.style.textDecoration = 'line-through';
+    }
+  });
+  
+  setTimeout(() => {
+    courseQuiz.index++;
+    if (courseQuiz.index >= courseQuiz.total) {
+      courseQuiz.done = true;
+    }
+    renderCourseQuiz();
+  }, isCorrect ? 600 : 1200);
+}
+
+function inlineRelatedClick(word) {
+  // Try to find and expand this word in the current word list
+  const lists = ['exploreWordList', 'courseWordList'];
+  for (const listId of lists) {
+    const list = document.getElementById(listId);
+    if (!list) continue;
+    const items = list.querySelectorAll('.word-expand-wrapper');
+    for (const item of items) {
+      const nameSpan = item.querySelector('.word-list-item span');
+      if (nameSpan && nameSpan.textContent.replace('✓','').trim().toLowerCase() === word.toLowerCase()) {
+        // Found it - expand it
+        const itemId = item.id.replace('wrap-','');
+        toggleWordDetail(word, itemId);
+        item.scrollIntoView({ behavior:'smooth', block:'center' });
+        return;
+      }
+    }
+  }
+  // Not in current list - go to search
+  setWordAndSearch(word);
 }
 
 // ======================================================================
@@ -1893,33 +2106,45 @@ function showStatList(type) {
     }));
   } else if (type === 'newWords') {
     title.textContent = '🆕 新词';
-    const wordMap = new Map();
-    cards.forEach(c => c.keywords?.forEach(k => {
-      const key = k.word.toLowerCase();
-      if (!wordMap.has(key) && !reviewRecords[key]) wordMap.set(key, { word: k.word, meaning: k.meaning || '' });
-    }));
-    items = Array.from(wordMap.values()).sort((a,b) => a.word.localeCompare(b.word)).map(w => ({
-      main: w.word,
-      sub: w.meaning,
-      speak: w.word
-    }));
+    const wordMap = getAllReviewableWords();
+    wordMap.forEach((data, key) => {
+      if (!reviewRecords[key]) items.push({ main: data.word, sub: data.meaning || '', speak: data.word });
+    });
+    items.sort((a,b) => a.main.localeCompare(b.main));
+  } else if (type === 'dueWords') {
+    title.textContent = '⏰ 待复习';
+    const wordMap = getAllReviewableWords();
+    const now = Date.now();
+    const levelNames = ['新词', '初学', '熟悉', '理解', '巩固', '已掌握'];
+    wordMap.forEach((data, key) => {
+      const rec = reviewRecords[key];
+      if (rec && rec.level < 5 && rec.nextReview <= now) {
+        items.push({ main: data.word, sub: levelNames[rec.level] + ' · ' + (data.meaning || ''), speak: data.word });
+      }
+    });
+    items.sort((a,b) => a.main.localeCompare(b.main));
+  } else if (type === 'masteredWords') {
+    title.textContent = '✅ 已掌握';
+    const wordMap = getAllReviewableWords();
+    const levelNames = ['新词', '初学', '熟悉', '理解', '巩固', '已掌握'];
+    wordMap.forEach((data, key) => {
+      const rec = reviewRecords[key];
+      if (rec && rec.level >= 5) {
+        items.push({ main: data.word, sub: '已掌握 · ' + (data.meaning || ''), speak: data.word });
+      }
+    });
+    items.sort((a,b) => a.main.localeCompare(b.main));
   } else if (type === 'allWords') {
     title.textContent = '📚 总词汇';
-    const wordMap = new Map();
-    cards.forEach(c => c.keywords?.forEach(k => {
-      const key = k.word.toLowerCase();
-      if (!wordMap.has(key)) {
-        const rec = reviewRecords[key];
-        const levelNames = ['新词', '初学', '熟悉', '理解', '巩固', '已掌握'];
-        const level = rec ? levelNames[rec.level] || '新词' : '新词';
-        wordMap.set(key, { word: k.word, meaning: k.meaning || '', level });
-      }
-    }));
-    items = Array.from(wordMap.values()).sort((a,b) => a.word.localeCompare(b.word)).map(w => ({
-      main: w.word,
-      sub: w.level + (w.meaning ? ' · ' + w.meaning : ''),
-      speak: w.word
-    }));
+    const wordMap = getAllReviewableWords();
+    const levelNames = ['新词', '初学', '熟悉', '理解', '巩固', '已掌握'];
+    wordMap.forEach((data, key) => {
+      const rec = reviewRecords[key];
+      const level = rec ? levelNames[rec.level] || '新词' : '新词';
+      const source = data.source === 'etymology' ? ' 🧬' : '';
+      items.push({ main: data.word, sub: level + ' · ' + (data.meaning || '') + source, speak: data.word });
+    });
+    items.sort((a,b) => a.main.localeCompare(b.main));
   }
   
   count.textContent = items.length + ' 项';
