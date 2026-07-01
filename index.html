@@ -65,9 +65,25 @@
     @media (min-width: 500px) { .masonry { column-count: 2; } }
     @media (min-width: 800px) { .masonry { column-count: 3; column-gap: 16px; } }
     @media (min-width: 1100px) { .masonry { column-count: 4; } }
+    /* Row-based grid: reads left→right in sorted order */
+    .masonry.grid-mode { column-count: unset !important; display: grid; grid-template-columns: 1fr; gap: 12px; align-items: start; }
+    @media (min-width: 500px) { .masonry.grid-mode { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 800px) { .masonry.grid-mode { grid-template-columns: repeat(3, 1fr); gap: 16px; } }
+    @media (min-width: 1100px) { .masonry.grid-mode { grid-template-columns: repeat(4, 1fr); } }
+    .masonry.grid-mode .card { margin-bottom: 0; }
+    .collection-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-chips { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; }
+    .filter-chip { padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid rgba(160,120,60,0.15); background: white; color: var(--text-secondary); transition: all 0.15s; white-space: nowrap; }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .sort-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid rgba(160,120,60,0.15); background: white; color: var(--text-secondary); transition: all 0.15s; white-space: nowrap; }
+    .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
+    #sortArrow { font-size: 14px; font-weight: 700; }
     .card { background: var(--card-yellow); border-radius: 12px; transition: all 0.2s ease; box-shadow: 0 1px 4px rgba(180,140,80,0.06); border: 1px solid rgba(160,120,60,0.07); cursor: pointer; padding: 20px; break-inside: avoid; margin-bottom: 12px; }
     .card:hover { background: var(--card-yellow-hover); transform: translateY(-2px); box-shadow: 0 6px 16px rgba(180,140,80,0.1); }
     .card-content { font-size: 14px; line-height: 1.6; color: var(--text-primary); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-translation { font-size: 13px; line-height: 1.5; color: var(--text-secondary); margin-top: 6px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-roots { font-size: 11px; line-height: 1.5; color: var(--accent); margin-top: 6px; opacity: 0.85; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .card-keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); }
     .keyword-tag { font-size: 11px; padding: 3px 8px; background: rgba(232,97,44,0.05); color: #c0724a; border-radius: 4px; }
 
@@ -459,6 +475,13 @@
 
   <!-- ==================== Tab 1: Collection ==================== -->
   <div class="tab-panel active" id="tabCollection">
+    <div class="collection-controls" id="collectionControls">
+      <div class="filter-chips" id="filterChips"></div>
+      <button class="sort-btn" id="sortBtn" onclick="toggleSortDir()" title="切换排序">
+        <span id="sortLabel">最新在前</span>
+        <span id="sortArrow">↓</span>
+      </button>
+    </div>
     <div class="masonry" id="cardGrid"></div>
     <div class="empty-state hide" id="emptyState">
       <div class="empty-state-icon">📝</div>
@@ -902,6 +925,19 @@ async function loadData() {
   document.getElementById('apiKey').value = settings.apiKey;
   document.getElementById('autoSyncToggle').checked = settings.autoSync;
   updateModelOptions();
+
+  // One-time migration: turn existing cached etymology words into collection cards
+  if (!settings.etyCardsMigrated && etymologyWords.length) {
+    for (const w of etymologyWords) {
+      if (!w || !w.word) continue;
+      await upsertEtyCard(w);
+    }
+    settings.etyCardsMigrated = true;
+    await saveSettingsToDB();
+    cards.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    console.log('Etymology words migrated into collection cards');
+  }
+
   console.log('Data loaded: cards='+cards.length+', etymWords='+etymologyWords.length+', reviews='+Object.keys(reviewRecords).length);
 }
 
@@ -918,6 +954,70 @@ async function saveEtyWord(wordData) {
   await dbPut('etymologyWords', wordData);
   const idx = etymologyWords.findIndex(w => w.word === wordData.word);
   if (idx >= 0) etymologyWords[idx] = wordData; else etymologyWords.push(wordData);
+  // Auto-create/update a matching collection card (词库 → 收藏)
+  await upsertEtyCard(wordData);
+}
+
+// --- Etymology word → collection card unification ---
+function etyCardId(word) {
+  return 'ety_' + word.toLowerCase().trim().replace(/\s+/g, '_');
+}
+function etyRootsToString(roots) {
+  if (!roots) return '';
+  if (typeof roots === 'string') return roots;
+  if (Array.isArray(roots)) {
+    return roots.map(r => {
+      if (typeof r === 'string') return r.split('→')[0].trim();
+      const part = r.part || '';
+      const m = r.meaning ? `(${r.meaning})` : '';
+      return (part + m).trim();
+    }).filter(Boolean).join(' + ');
+  }
+  return '';
+}
+function etyOriginToString(roots) {
+  if (!Array.isArray(roots)) return '';
+  const origins = [...new Set(roots.map(r => (r && typeof r === 'object') ? r.origin : '').filter(Boolean))];
+  return origins.join('、');
+}
+function etyWordToCard(w) {
+  return {
+    id: etyCardId(w.word),
+    content: w.word,
+    type: 'word',
+    translation: w.meaning || '',
+    keywords: [{
+      word: w.word,
+      phonetic: w.phonetic || '',
+      roots: etyRootsToString(w.roots),
+      origin: etyOriginToString(w.roots),
+      meaning: w.meaning || ''
+    }],
+    source: '词库',
+    createdAt: w.savedAt ? new Date(w.savedAt).toISOString() : new Date().toISOString(),
+    reviewCount: 0,
+    lastReviewed: null,
+    known: false
+  };
+}
+async function upsertEtyCard(wordData) {
+  if (!wordData || !wordData.word) return;
+  const id = etyCardId(wordData.word);
+  const existing = cards.find(c => c.id === id);
+  if (existing) {
+    // Update the existing 词库 card, preserving creation date + review state
+    const card = etyWordToCard(wordData);
+    card.createdAt = existing.createdAt;
+    card.reviewCount = existing.reviewCount || 0;
+    card.lastReviewed = existing.lastReviewed || null;
+    card.known = existing.known || false;
+    await saveCardToDB(card);
+    return;
+  }
+  // Avoid duplicates: if a word-card already represents this exact word, don't add a parallel 词库 card
+  const dup = cards.find(c => c.type === 'word' && (c.content||'').trim().toLowerCase() === wordData.word.trim().toLowerCase());
+  if (dup) return;
+  await saveCardToDB(etyWordToCard(wordData));
 }
 async function deleteEtyWord(word) {
   await dbDelete('etymologyWords', word);
@@ -1117,6 +1217,7 @@ function switchTab(tab) {
   // Show header & quick input only for collection
   document.getElementById('mainHeader').classList.toggle('hide', tab!=='collection');
   document.getElementById('quickInputWrapper').classList.toggle('hide', tab!=='collection');
+  if (tab==='collection') renderCards();
   if (tab==='review') initReview();
   if (tab==='settings') updateStats();
   if (tab==='etymology') renderEtyView();
@@ -1152,24 +1253,93 @@ function getDateGroup(dateStr) {
 }
 
 let timelineView = false;
+let sortDir = 'desc'; // 'desc' = newest first, 'asc' = oldest first
+let typeFilter = 'all'; // 'all' | 'word' | 'sentence' | 'paragraph' | 'lib'
 
 function toggleTimelineView() {
   timelineView = !timelineView;
   renderCards();
 }
 
+function toggleSortDir() {
+  sortDir = sortDir === 'desc' ? 'asc' : 'desc';
+  document.getElementById('sortLabel').textContent = sortDir === 'desc' ? '最新在前' : '最早在前';
+  document.getElementById('sortArrow').textContent = sortDir === 'desc' ? '↓' : '↑';
+  renderCards();
+}
+
+function setTypeFilter(f) {
+  typeFilter = f;
+  renderCards();
+}
+
+function renderFilterChips() {
+  const chips = [
+    { id:'all', label:'全部' },
+    { id:'word', label:'单词' },
+    { id:'sentence', label:'句子' },
+    { id:'paragraph', label:'段落' },
+    { id:'lib', label:'🧬 词库' },
+  ];
+  const counts = {
+    all: cards.length,
+    word: cards.filter(c=>c.type==='word').length,
+    sentence: cards.filter(c=>c.type==='sentence').length,
+    paragraph: cards.filter(c=>c.type==='paragraph').length,
+    lib: cards.filter(c=>c.source==='词库').length,
+  };
+  const el = document.getElementById('filterChips');
+  if (!el) return;
+  el.innerHTML = chips
+    .filter(c => c.id==='all' || counts[c.id] > 0)
+    .map(c => `<button class="filter-chip ${typeFilter===c.id?'active':''}" onclick="setTypeFilter('${c.id}')">${c.label} ${counts[c.id]}</button>`)
+    .join('');
+}
+
+function renderCardExtras(card) {
+  // Chinese meaning / translation (fall back to keyword meaning for word cards)
+  let cn = card.translation || '';
+  if (!cn && card.type === 'word') cn = card.keywords?.[0]?.meaning || '';
+  const trans = cn ? `<div class="card-translation">${esc(cn)}</div>` : '';
+  // Etymology roots line for single-word cards
+  let rootsLine = '';
+  const r = card.keywords?.[0]?.roots;
+  if (card.type === 'word' && r && r !== '-') {
+    rootsLine = `<div class="card-roots">🧬 ${esc(r)}</div>`;
+  }
+  // Keyword tags, minus any identical to the card content (removes redundancy)
+  const contentLc = (card.content||'').trim().toLowerCase();
+  const tags = (card.keywords||[]).filter(k => (k.word||'').trim().toLowerCase() !== contentLc);
+  const tagsHtml = tags.length ? `<div class="card-keywords">${tags.slice(0,4).map(k=>`<span class="keyword-tag">${esc(k.word)}</span>`).join('')}</div>` : '';
+  return trans + rootsLine + tagsHtml;
+}
+
 function renderCards() {
   const grid = document.getElementById('cardGrid');
   const empty = document.getElementById('emptyState');
   const query = document.getElementById('searchInput').value.toLowerCase();
-  const filtered = cards.filter(c =>
+  renderFilterChips();
+
+  let filtered = cards.filter(c =>
     c.content.toLowerCase().includes(query) || c.translation?.toLowerCase().includes(query) || c.keywords?.some(k=>k.word.toLowerCase().includes(query))
   );
-  if (filtered.length===0) { grid.innerHTML=''; empty.classList.remove('hide'); return; }
+  // Type / library filter
+  if (typeFilter === 'lib') filtered = filtered.filter(c => c.source === '词库');
+  else if (typeFilter !== 'all') filtered = filtered.filter(c => c.type === typeFilter);
+
+  // Sort by collection time
+  filtered = filtered.slice().sort((a,b) => {
+    const ta = new Date(a.createdAt).getTime();
+    const tb = new Date(b.createdAt).getTime();
+    return sortDir === 'desc' ? tb - ta : ta - tb;
+  });
+
+  if (filtered.length===0) { grid.innerHTML=''; grid.classList.remove('grid-mode'); empty.classList.remove('hide'); return; }
   empty.classList.add('hide');
   
   if (timelineView) {
     // Timeline view with date groups
+    grid.classList.remove('grid-mode');
     grid.style.columnCount = '1';
     grid.style.maxWidth = '600px';
     let lastGroup = '';
@@ -1182,27 +1352,34 @@ function renderCards() {
         const count = filtered.filter(c => getDateGroup(c.createdAt) === group).length;
         header = `<div class="date-group-header"><div class="date-group-dot"></div><span class="date-group-label">${group}</span><span class="date-group-count">${count}条</span></div>`;
       }
+      const libBadge = card.source==='词库' ? `<span style="font-size:9px;color:var(--accent);background:var(--accent-light);padding:1px 6px;border-radius:8px;white-space:nowrap">🧬 词库</span>` : '';
       return header + `
         <div class="card" onclick="openDetailModal('${card.id}')" style="margin-bottom:10px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
             <div class="card-content" style="-webkit-line-clamp:3;flex:1">${esc(card.content)}</div>
-            <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;padding-top:2px">${rel}</span>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+              <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;padding-top:2px">${rel}</span>
+              ${libBadge}
+            </div>
           </div>
-          ${card.keywords?.length ? `<div class="card-keywords">${card.keywords.slice(0,3).map(k=>`<span class="keyword-tag">${esc(k.word)}</span>`).join('')}</div>` : ''}
+          ${renderCardExtras(card)}
         </div>`;
     }).join('');
   } else {
-    // Masonry view with date labels
+    // Row-based grid — reads left→right in sorted order
+    grid.classList.add('grid-mode');
     grid.style.columnCount = '';
     grid.style.maxWidth = '';
     grid.innerHTML = filtered.map(card => {
       const rel = getRelativeDate(card.createdAt);
+      const libBadge = card.source==='词库' ? `<span style="font-size:9px;color:var(--accent);background:var(--accent-light);padding:1px 6px;border-radius:8px">🧬 词库</span>` : '';
       return `<div class="card" onclick="openDetailModal('${card.id}')">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
           <span style="font-size:10px;color:var(--text-muted)">${rel}</span>
+          ${libBadge}
         </div>
         <div class="card-content">${esc(card.content)}</div>
-        ${card.keywords?.length ? `<div class="card-keywords">${card.keywords.slice(0,3).map(k=>`<span class="keyword-tag">${esc(k.word)}</span>`).join('')}</div>` : ''}
+        ${renderCardExtras(card)}
       </div>`;
     }).join('');
   }
@@ -1218,7 +1395,7 @@ function openDetailModal(cardId) {
   if (card.keywords?.length) {
     kwHtml = `<div class="keywords-section"><div class="keywords-title"><div class="keywords-title-bar"></div><span class="keywords-title-text">重点词汇</span></div>
       <div class="keywords-list">${card.keywords.map((k,i)=>`<button class="keyword-btn ${i===0?'active':''}" onclick="showKeywordEtymology('${cardId}',${i})">${esc(k.word)}</button>`).join('')}</div></div>
-      <div class="etymology-box" id="etymologyBox">${renderKwEtymology(card.keywords[0])}</div>`;
+      <div class="etymology-box" id="etymologyBox">${renderKwEtymology(card.keywords[0], cardId, 0)}</div>`;
   }
   document.getElementById('detailBody').innerHTML = `
     <div class="detail-header"><div class="detail-meta"><span class="type-dot ${tc}"></span><span class="detail-date">${tl} · ${date}</span></div>
@@ -1233,15 +1410,57 @@ function openDetailModal(cardId) {
   document.getElementById('detailModal').classList.add('active');
 }
 
-function renderKwEtymology(kw) {
+function renderKwEtymology(kw, cardId, idx) {
   if (!kw) return '';
-  return `<div class="etymology-header"><div class="etymology-word">${esc(kw.word)}</div>
+  // Check for a cached deep analysis of this word
+  const deep = etymologyWords.find(w => w.word.toLowerCase() === kw.word.toLowerCase());
+  const basic = `<div class="etymology-header"><div class="etymology-word">${esc(kw.word)}</div>
     <button class="speak-btn" onclick="speakWord('${esc(kw.word)}')">🔊</button></div>
     ${kw.phonetic?`<div class="etymology-phonetic">${esc(kw.phonetic)}</div>`:''}
     <div class="etymology-item"><span class="etymology-label">构词 · </span><span class="etymology-value">${esc(kw.roots||'-')}</span></div>
     <div class="etymology-item"><span class="etymology-label">来源 · </span><span class="etymology-value">${esc(kw.origin||'-')}</span></div>
-    <div class="etymology-item"><span class="etymology-label">释义 · </span><span class="etymology-value">${esc(kw.meaning||'-')}</span></div>
-    <button onclick="jumpToEtymology('${esc(kw.word)}')" style="margin-top:12px;width:100%;padding:10px;background:var(--accent-light);color:var(--accent);border:1px solid rgba(232,97,44,0.2);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer">🧬 深入分析词根词源 →</button>`;
+    <div class="etymology-item"><span class="etymology-label">释义 · </span><span class="etymology-value">${esc(kw.meaning||'-')}</span></div>`;
+
+  if (deep && (deep.etymology_story || deep.examples?.length || Array.isArray(deep.roots))) {
+    // Show the retained deep analysis inline
+    return basic + `
+      <div style="margin-top:14px;padding-top:14px;border-top:1px dashed rgba(160,120,60,0.2)">
+        <div style="font-size:11px;color:var(--accent);font-weight:600;margin-bottom:8px">🧬 深度词源分析</div>
+        ${renderInlineDetail(deep)}
+      </div>`;
+  }
+  // No deep analysis yet — offer inline analyze (stays in modal, gets saved)
+  return basic + `
+    <button id="deepBtn-${idx}" onclick="deepAnalyzeInModal('${cardId}',${idx})" style="margin-top:12px;width:100%;padding:10px;background:var(--accent-light);color:var(--accent);border:1px solid rgba(232,97,44,0.2);border-radius:8px;font-size:13px;font-weight:500;cursor:pointer">🧬 深入分析词根词源</button>`;
+}
+
+async function deepAnalyzeInModal(cardId, idx) {
+  const card = cards.find(c=>c.id===cardId);
+  if (!card?.keywords?.[idx]) return;
+  const word = card.keywords[idx].word;
+  const box = document.getElementById('etymologyBox');
+
+  // If already cached, just re-render (retained)
+  const cached = etymologyWords.find(w => w.word.toLowerCase() === word.toLowerCase());
+  if (cached && (cached.etymology_story || cached.examples?.length)) {
+    box.innerHTML = renderKwEtymology(card.keywords[idx], cardId, idx);
+    return;
+  }
+  if (!settings.apiKey) { showToast('请先在设置中填写 API Key','error'); return; }
+
+  const btn = document.getElementById('deepBtn-' + idx);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px"></div>分析中...'; }
+  try {
+    const result = await callAI(buildEtymologyPrompt(word));
+    // Save to cache (also upserts a 词库 card via saveEtyWord)
+    await saveEtyWord({ ...result, savedAt: Date.now() });
+    // Re-render the etymology box with the retained deep detail
+    box.innerHTML = renderKwEtymology(card.keywords[idx], cardId, idx);
+    if (settings.autoSync && accessToken) syncToCloud();
+  } catch(e) {
+    if (btn) { btn.disabled = false; btn.textContent = '🧬 深入分析词根词源'; }
+    showToast('分析失败: ' + e.message, 'error');
+  }
 }
 
 function jumpToEtymology(word) {
@@ -1258,7 +1477,7 @@ function showKeywordEtymology(cardId, idx) {
   const card = cards.find(c=>c.id===cardId);
   if (!card?.keywords) return;
   document.querySelectorAll('.keyword-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
-  document.getElementById('etymologyBox').innerHTML = renderKwEtymology(card.keywords[idx]);
+  document.getElementById('etymologyBox').innerHTML = renderKwEtymology(card.keywords[idx], cardId, idx);
 }
 
 function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); }
