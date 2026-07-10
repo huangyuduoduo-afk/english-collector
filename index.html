@@ -595,6 +595,21 @@
       </div>
     </div>
     <div class="settings-section">
+      <div class="settings-title">发音设置</div>
+      <div class="settings-card">
+        <div class="settings-item">
+          <span class="settings-item-label">语音</span>
+          <select class="settings-select" id="voiceSelect" onchange="onVoiceChange()">
+            <option value="">自动选择</option>
+          </select>
+        </div>
+        <div class="settings-item" style="cursor:pointer" onclick="speakWord('etymology')">
+          <span class="settings-item-label">试听发音</span>
+          <span class="settings-item-value">🔊</span>
+        </div>
+      </div>
+    </div>
+    <div class="settings-section">
       <div class="settings-title">数据管理</div>
       <div class="settings-card">
         <div class="settings-item" style="cursor:pointer" onclick="exportJSON()">
@@ -799,7 +814,7 @@ const DAILY_ARTICLES = [
 // ======================================================================
 let cards = [];
 let etymologyWords = []; // saved from etymology analysis
-let settings = { apiProvider:'gemini', apiModel:'gemini-2.5-flash', apiKey:'', firstUseDate:null, autoSync:false };
+let settings = { apiProvider:'gemini', apiModel:'gemini-2.5-flash', apiKey:'', firstUseDate:null, autoSync:false, voiceURI:'' };
 let reviewState = { words:[], currentIndex:0, results:[] };
 let reviewRecords = {}; // wordKey -> { wordKey, word, level, nextReview, reviewCount, correctCount, wrongCount, lastReview }
 const REVIEW_INTERVALS = [0, 1, 3, 7, 15, 30]; // days per level (0=new, 1-5=spaced)
@@ -1183,13 +1198,104 @@ function toggleAutoSync() { settings.autoSync = document.getElementById('autoSyn
 // ======================================================================
 // SPEECH
 // ======================================================================
+// --- Speech: pick a good English voice, avoid macOS novelty voices ---
+// macOS ships joke voices (Albert, Bad News, Zarvox...) all tagged en-US.
+// Picking voices.find(en) can land on "Albert" = raspy old man. Score instead.
+const NOVELTY_VOICES = [
+  'albert','bad news','bahh','bells','boing','bubbles','cellos','deranged',
+  'good news','jester','organ','superstar','trinoids','whisper','wobble',
+  'zarvox','junior','ralph','fred','kathy','princess','bruce','agnes',
+  'grandma','grandpa','rocko','shelley','sandy','eddy','reed','flo'
+];
+// Preferred, in order. Higher index in this list = better.
+const PREFERRED_VOICES = [
+  'samantha','alex','ava','allison','susan','tom','nicky','aaron',
+  'google us english','google uk english female','google uk english male',
+  'microsoft aria','microsoft jenny','microsoft guy','microsoft zira',
+  'daniel','karen','moira','tessa','serena','oliver','libby'
+];
+
+let cachedVoice = null;
+
+function isNoveltyVoice(name) {
+  const n = (name || '').toLowerCase();
+  return NOVELTY_VOICES.some(bad => n === bad || n.startsWith(bad + ' ') || n.includes('(' + bad + ')'));
+}
+
+function scoreVoice(v) {
+  const name = (v.name || '').toLowerCase();
+  if (isNoveltyVoice(name)) return -1000;          // never
+  let score = 0;
+  const pi = PREFERRED_VOICES.findIndex(p => name.includes(p));
+  if (pi >= 0) score += 500 - pi;                   // strong bonus, ordered
+  if (/enhanced|premium|neural|natural|siri/.test(name)) score += 200;
+  if (/compact|eloquence|novelty/.test(name)) score -= 150;
+  if (v.lang === 'en-US') score += 60;
+  else if (v.lang === 'en-GB') score += 40;
+  else if ((v.lang || '').startsWith('en')) score += 20;
+  if (v.default) score += 15;
+  if (!v.localService) score += 10;                 // cloud voices usually nicer
+  return score;
+}
+
+function pickVoice() {
+  const voices = window.speechSynthesis.getVoices() || [];
+  if (!voices.length) return null;
+
+  // Honor a manual choice from settings, if it's still available
+  if (settings.voiceURI) {
+    const chosen = voices.find(v => v.voiceURI === settings.voiceURI);
+    if (chosen) return chosen;
+  }
+  const english = voices.filter(v => (v.lang || '').startsWith('en'));
+  const pool = english.length ? english : voices;
+  const usable = pool.filter(v => !isNoveltyVoice(v.name));
+  const best = (usable.length ? usable : pool)
+    .slice()
+    .sort((a, b) => scoreVoice(b) - scoreVoice(a))[0];
+  return best || null;
+}
+
 function speakWord(word) {
   if (!word) return;
+  if (!('speechSynthesis' in window)) return;
   window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(word); u.lang='en-US'; u.rate=0.8;
-  const v = window.speechSynthesis.getVoices().find(v=>v.lang.startsWith('en'));
-  if (v) u.voice = v;
+  const u = new SpeechSynthesisUtterance(word);
+  u.lang = 'en-US';
+  u.rate = 0.85;
+  u.pitch = 1.0;
+
+  const v = cachedVoice && !isNoveltyVoice(cachedVoice.name) ? cachedVoice : pickVoice();
+  if (v) { cachedVoice = v; u.voice = v; u.lang = v.lang || 'en-US'; }
   window.speechSynthesis.speak(u);
+}
+
+// Voice list loads async — refresh cache and settings dropdown when ready
+function initVoices() {
+  if (!('speechSynthesis' in window)) return;
+  const refresh = () => { cachedVoice = pickVoice(); renderVoiceOptions(); };
+  refresh();
+  window.speechSynthesis.onvoiceschanged = refresh;
+}
+
+function renderVoiceOptions() {
+  const sel = document.getElementById('voiceSelect');
+  if (!sel) return;
+  const voices = (window.speechSynthesis.getVoices() || [])
+    .filter(v => (v.lang || '').startsWith('en') && !isNoveltyVoice(v.name))
+    .sort((a, b) => scoreVoice(b) - scoreVoice(a));
+  if (!voices.length) { sel.innerHTML = '<option>加载中…</option>'; return; }
+  const auto = pickVoice();
+  sel.innerHTML = '<option value="">自动选择' + (auto ? '（' + esc(auto.name) + '）' : '') + '</option>' +
+    voices.map(v => `<option value="${esc(v.voiceURI)}">${esc(v.name)} · ${esc(v.lang)}</option>`).join('');
+  sel.value = settings.voiceURI || '';
+}
+
+function onVoiceChange() {
+  settings.voiceURI = document.getElementById('voiceSelect').value || '';
+  cachedVoice = pickVoice();
+  saveSettingsToDB();
+  speakWord('etymology');   // preview
 }
 
 function playSound() {
@@ -1219,7 +1325,7 @@ function switchTab(tab) {
   document.getElementById('quickInputWrapper').classList.toggle('hide', tab!=='collection');
   if (tab==='collection') renderCards();
   if (tab==='review') initReview();
-  if (tab==='settings') updateStats();
+  if (tab==='settings') { updateStats(); renderVoiceOptions(); }
   if (tab==='etymology') renderEtyView();
 }
 
@@ -2583,6 +2689,7 @@ async function init() {
       }
     }
     await loadData();
+    initVoices();   // needs settings.voiceURI, so run after loadData
     // Restore Google session
     const savedToken = localStorage.getItem('ec_access_token');
     const savedUser = localStorage.getItem('ec_user');
