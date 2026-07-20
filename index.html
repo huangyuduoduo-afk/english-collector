@@ -93,7 +93,11 @@
     .sort-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid rgba(160,120,60,0.15); background: white; color: var(--text-secondary); transition: all 0.15s; white-space: nowrap; }
     .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
     #sortArrow { font-size: 14px; font-weight: 700; }
-    .card { background: var(--card-yellow); border-radius: 16px; transition: transform 0.25s ease, box-shadow 0.25s ease; box-shadow: 0 1px 4px rgba(180,140,80,0.05); border: 1px solid rgba(0,0,0,0.04); cursor: pointer; padding: 22px; break-inside: avoid; margin-bottom: 12px; animation: cardIn 0.45s cubic-bezier(0.21,0.9,0.35,1) backwards; }
+    .card { background: var(--card-yellow); border-radius: 16px; transition: transform 0.25s ease, box-shadow 0.25s ease; box-shadow: 0 1px 4px rgba(180,140,80,0.05); border: 1px solid rgba(0,0,0,0.04); cursor: pointer; padding: 22px; break-inside: avoid; margin-bottom: 12px; animation: cardIn 0.45s cubic-bezier(0.21,0.9,0.35,1) backwards; position: relative; }
+    .card-del { position: absolute; top: 10px; right: 10px; width: 26px; height: 26px; border-radius: 50%; border: none; background: rgba(0,0,0,0.07); color: var(--text-muted); font-size: 14px; line-height: 1; cursor: pointer; opacity: 0; transition: opacity 0.15s, background 0.15s, color 0.15s; display: flex; align-items: center; justify-content: center; z-index: 2; }
+    .card:hover .card-del { opacity: 1; }
+    .card-del:hover { background: var(--error); color: white; }
+    @media (hover: none) { .card-del { opacity: 0.45; } }
     .card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(120,90,50,0.12); }
     @keyframes cardIn { from { opacity: 0; transform: translateY(14px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
     @media (prefers-reduced-motion: reduce) { .card { animation: none; } }
@@ -686,6 +690,10 @@
           <span class="settings-item-value">↑</span>
           <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)">
         </div>
+        <div class="settings-item" style="cursor:pointer" onclick="cleanupDuplicateCards()">
+          <span class="settings-item-label">清理重复卡片</span>
+          <span class="settings-item-value">🧹</span>
+        </div>
         <div class="settings-item" style="cursor:pointer" onclick="exportAnki()">
           <span class="settings-item-label">导出到 Anki</span>
           <span class="settings-item-value">↓</span>
@@ -1022,10 +1030,29 @@ async function loadData() {
   console.log('Data loaded: cards='+cards.length+', etymWords='+etymologyWords.length+', reviews='+Object.keys(reviewRecords).length);
 }
 
+function normContent(s) { return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
+
+// Choke point for all save paths (manual add / plugin inject / URL import / 词库 upsert).
+// If a NEW card duplicates an existing one's content, merge into the existing card instead.
 async function saveCardToDB(card) {
+  const isUpdate = cards.some(c => c.id === card.id);
+  if (!isUpdate) {
+    const dup = cards.find(c => normContent(c.content) === normContent(card.content));
+    if (dup) {
+      // Fill gaps in the existing card with incoming info; keep id/date/review state
+      if (!dup.translation && card.translation) dup.translation = card.translation;
+      if ((!dup.keywords || !dup.keywords.length) && card.keywords?.length) dup.keywords = card.keywords;
+      if (!dup.source && card.source) dup.source = card.source;
+      await dbPut('cards', dup);
+      const i = cards.findIndex(c => c.id === dup.id);
+      if (i >= 0) cards[i] = dup;
+      return { merged: true, id: dup.id };
+    }
+  }
   await dbPut('cards', card);
   const idx = cards.findIndex(c => c.id === card.id);
   if (idx >= 0) cards[idx] = card; else cards.unshift(card);
+  return { merged: false, id: card.id };
 }
 async function deleteCardFromDB(cardId) {
   await dbDelete('cards', cardId);
@@ -1489,6 +1516,7 @@ function renderCardHTML(card, index) {
   const delay = Math.min(index, 16) * 0.035;
   const tint = cardTint(card);
   const meta = `<div class="card-meta"><span class="card-date">${rel}</span>${libBadge}</div>`;
+  const delBtn = `<button class="card-del" title="删除" onclick="quickDeleteCard(event,'${card.id}')">✕</button>`;
   
   if (card.type === 'word') {
     // Dictionary-entry card
@@ -1496,6 +1524,7 @@ function renderCardHTML(card, index) {
     const cn = card.translation || kw.meaning || '';
     const roots = (kw.roots && kw.roots !== '-') ? kw.roots : '';
     return `<div class="card card-type-word ${tint}" style="animation-delay:${delay}s" onclick="openDetailModal('${card.id}')">
+      ${delBtn}
       <div class="cw-word">${esc(card.content)}</div>
       ${kw.phonetic ? `<div class="cw-phonetic">${esc(kw.phonetic)}</div>` : ''}
       ${cn ? `<div class="cw-meaning">${esc(cn)}</div>` : ''}
@@ -1509,6 +1538,7 @@ function renderCardHTML(card, index) {
     const contentLc = (card.content||'').trim().toLowerCase();
     const tags = (card.keywords||[]).filter(k => (k.word||'').trim().toLowerCase() !== contentLc);
     return `<div class="card card-type-quote ${tint}" style="animation-delay:${delay}s" onclick="openDetailModal('${card.id}')">
+      ${delBtn}
       <span class="cq-mark">“</span>
       <div class="cq-text">${esc(card.content)}</div>
       ${card.translation ? `<div class="cq-trans">${esc(card.translation)}</div>` : ''}
@@ -1519,6 +1549,7 @@ function renderCardHTML(card, index) {
   
   // Paragraph / default card
   return `<div class="card ${tint}" style="animation-delay:${delay}s" onclick="openDetailModal('${card.id}')">
+    ${delBtn}
     <div class="card-content">${esc(card.content)}</div>
     ${renderCardExtras(card)}
     ${meta}
@@ -1584,9 +1615,10 @@ function renderCards() {
       const libBadge = card.source==='词库' ? `<span style="font-size:9px;color:var(--accent);background:rgba(232,97,44,0.09);padding:2px 7px;border-radius:8px;white-space:nowrap">🧬 词库</span>` : '';
       return header + `
         <div class="card ${cardTint(card)}" onclick="openDetailModal('${card.id}')" style="margin-bottom:10px;animation-delay:${Math.min(i,16)*0.03}s">
+          <button class="card-del" title="删除" onclick="quickDeleteCard(event,'${card.id}')">✕</button>
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
             <div class="card-content" style="-webkit-line-clamp:3;flex:1">${esc(card.content)}</div>
-            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;padding-right:24px">
               <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;padding-top:2px">${rel}</span>
               ${libBadge}
             </div>
@@ -1714,9 +1746,10 @@ async function saveCard() {
     const wc = content.split(/\s+/).length;
     const type = wc<=3?'word':content.split(/[.!?]/).filter(s=>s.trim()).length<=1?'sentence':'paragraph';
     const card = { id:'card_'+Date.now(), content, type, translation:analysis.translation, keywords:analysis.keywords, createdAt:new Date().toISOString() };
-    await saveCardToDB(card);
+    const res = await saveCardToDB(card);
     if (!settings.firstUseDate) { settings.firstUseDate = new Date().toISOString(); await saveSettingsToDB(); }
-    renderCards(); updateStats(); closeAddModal(); showToast('保存成功！','success');
+    renderCards(); updateStats(); closeAddModal();
+    showToast(res.merged ? '已收藏过，内容已合并' : '保存成功！','success');
     if (settings.autoSync && accessToken) syncToCloud();
   } catch(e) { showToast('保存失败: '+e.message,'error'); }
   finally { btn.disabled=false; document.getElementById('saveBtnText').textContent='保存'; }
@@ -1725,6 +1758,76 @@ async function saveCard() {
 async function deleteCard(cardId) {
   if (!confirm('确定删除？')) return;
   await deleteCardFromDB(cardId); renderCards(); updateStats(); closeDetailModal(); showToast('已删除','success');
+  if (settings.autoSync && accessToken) syncToCloud();
+}
+
+// --- Quick delete from card grid (no confirm, with undo) ---
+let undoCardData = null, undoTimer = null;
+
+async function quickDeleteCard(ev, cardId) {
+  ev.stopPropagation();
+  const card = cards.find(c => c.id === cardId);
+  if (!card) return;
+  await deleteCardFromDB(cardId);
+  renderCards(); updateStats();
+  undoCardData = card;
+  showUndoToast(`已删除「${String(card.content||'').slice(0,16)}${String(card.content||'').length>16?'…':''}」`);
+  if (settings.autoSync && accessToken) syncToCloud();
+}
+
+function showUndoToast(msg) {
+  clearTimeout(undoTimer);
+  document.getElementById('undoToast')?.remove();
+  const t = document.createElement('div');
+  t.id = 'undoToast';
+  t.style.cssText = 'position:fixed;bottom:88px;left:50%;transform:translateX(-50%);background:#2D2A26;color:white;padding:12px 18px;border-radius:12px;font-size:13px;display:flex;gap:16px;align-items:center;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,0.25);max-width:90vw;animation:fadeInUp 0.2s ease';
+  t.innerHTML = `<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(msg)}</span><button onclick="undoDelete()" style="background:none;border:none;color:#FFB38A;font-size:13px;font-weight:600;cursor:pointer;padding:0;white-space:nowrap">撤销</button>`;
+  document.body.appendChild(t);
+  undoTimer = setTimeout(() => { t.remove(); undoCardData = null; }, 4000);
+}
+
+async function undoDelete() {
+  clearTimeout(undoTimer);
+  document.getElementById('undoToast')?.remove();
+  if (!undoCardData) return;
+  // Restore directly (bypass dedup merge — it's the same card coming back)
+  await dbPut('cards', undoCardData);
+  cards.unshift(undoCardData);
+  undoCardData = null;
+  renderCards(); updateStats(); showToast('已恢复','success');
+  if (settings.autoSync && accessToken) syncToCloud();
+}
+
+// Scan all cards, merge duplicates by content (keep the richest / oldest)
+async function cleanupDuplicateCards() {
+  const groups = {};
+  cards.forEach(c => {
+    const key = normContent(c.content);
+    (groups[key] = groups[key] || []).push(c);
+  });
+  const dupGroups = Object.values(groups).filter(g => g.length > 1);
+  if (!dupGroups.length) { showToast('没有发现重复卡片 ✨','success'); return; }
+  const total = dupGroups.reduce((n,g)=>n+g.length-1, 0);
+  if (!confirm(`发现 ${dupGroups.length} 组重复（共可清理 ${total} 张），保留信息最全的一张，确定清理？`)) return;
+  
+  const infoScore = c => (c.translation?2:0) + (c.keywords?.length?2:0) + (c.keywords?.[0]?.roots && c.keywords[0].roots!=='-'?1:0) + (c.source==='词库'?1:0);
+  let removed = 0;
+  for (const g of dupGroups) {
+    // Keep: highest info score; tie → earliest createdAt
+    g.sort((a,b) => (infoScore(b)-infoScore(a)) || (new Date(a.createdAt)-new Date(b.createdAt)));
+    const keep = g[0];
+    for (const c of g.slice(1)) {
+      // Backfill anything the keeper lacks
+      if (!keep.translation && c.translation) keep.translation = c.translation;
+      if ((!keep.keywords || !keep.keywords.length) && c.keywords?.length) keep.keywords = c.keywords;
+      if (!keep.source && c.source) keep.source = c.source;
+      await deleteCardFromDB(c.id);
+      removed++;
+    }
+    await dbPut('cards', keep);
+  }
+  renderCards(); updateStats();
+  showToast(`已清理 ${removed} 张重复卡片`,'success');
   if (settings.autoSync && accessToken) syncToCloud();
 }
 
@@ -2264,6 +2367,8 @@ function renderQuizInto(el) {
         `).join('')}
       </div>
     </div>`;
+  // Auto-play the word (question shows it, so no answer leak)
+  setTimeout(() => speakWord(q.word), 300);
 }
 
 function answerCourseQuiz(optIdx) {
@@ -2457,20 +2562,22 @@ function buildReviewQuestions(allWords) {
   reviewState.questions = reviewState.words.map(w => {
     // Pick a mode this word supports
     const modes = ['w2m'];
-    if (w.meaning) modes.push('m2w', 'listen');
+    if (w.meaning) modes.push('m2w', 'listen', 'spell');
     const mode = modes[Math.floor(Math.random() * modes.length)];
 
-    let correct, opts;
+    let correct, opts = [];
     if (mode === 'w2m') {
       correct = w.meaning || w.word;
       opts = meanings.filter(m => m !== correct).sort(() => Math.random()-0.5).slice(0,3);
       let fi = 0; while (opts.length < 3) { const f = FALLBACK_M[fi++]; if (f !== correct && !opts.includes(f)) opts.push(f); }
+    } else if (mode === 'spell') {
+      correct = w.word;   // typed answer, no options needed
     } else { // m2w and listen both answer with the word
       correct = w.word;
       opts = wordNames.filter(n => n.toLowerCase() !== correct.toLowerCase()).sort(() => Math.random()-0.5).slice(0,3);
       let fi = 0; while (opts.length < 3) { const f = FALLBACK_W[fi++]; if (f !== correct && !opts.includes(f)) opts.push(f); }
     }
-    const options = [correct, ...opts].sort(() => Math.random()-0.5);
+    const options = mode === 'spell' ? [] : [correct, ...opts].sort(() => Math.random()-0.5);
     return { ...w, qMode: mode, correct, options };
   });
 }
@@ -2497,6 +2604,13 @@ function renderReviewQuestion() {
       <div style="text-align:center;margin-bottom:24px">
         <span style="font-size:20px;font-weight:600;color:var(--text-primary)">${esc(q.meaning)}</span>
       </div>`;
+  } else if (q.qMode === 'spell') {
+    stem = `
+      <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:8px">✍️ 听发音看释义，拼出这个单词</p>
+      <div style="text-align:center;margin-bottom:20px">
+        <span style="font-size:19px;font-weight:600;color:var(--text-primary)">${esc(q.meaning)}</span>
+        <div style="margin-top:8px"><button class="speak-btn" onclick="speakWord('${esc(q.word)}')">🔊</button></div>
+      </div>`;
   } else { // listen
     stem = `
       <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:8px">听发音，选出正确的单词</p>
@@ -2506,17 +2620,50 @@ function renderReviewQuestion() {
       </div>`;
   }
   
+  const answerArea = q.qMode === 'spell'
+    ? `<div style="max-width:420px;margin:0 auto" id="rqOptions">
+        <input type="text" id="rqSpellInput" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="输入单词拼写…"
+          style="width:100%;padding:15px 18px;font-size:17px;letter-spacing:0.05em;border:1.5px solid rgba(0,0,0,0.12);border-radius:12px;background:white;color:var(--text-primary);text-align:center"
+          onkeydown="if(event.key==='Enter')submitSpellAnswer()">
+        <button onclick="submitSpellAnswer()" id="rqSpellBtn" style="width:100%;margin-top:10px;padding:14px;background:var(--accent);color:white;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer">提交</button>
+      </div>`
+    : `<div style="display:flex;flex-direction:column;gap:10px;max-width:420px;margin:0 auto" id="rqOptions">
+        ${q.options.map((opt,i)=>`<button class="rq-option" onclick="answerReviewQuestion(${i})"><span style="color:var(--text-muted);margin-right:8px">${['A','B','C','D'][i]}</span>${esc(opt)}</button>`).join('')}
+      </div>`;
+  
   document.getElementById('reviewQuizArea').innerHTML = `
     <div style="background:var(--accent-light);border-radius:8px;height:6px;margin-bottom:20px;overflow:hidden">
       <div style="background:var(--accent);height:100%;width:${(reviewState.currentIndex/reviewState.words.length)*100}%;border-radius:8px;transition:width 0.3s"></div>
     </div>
     ${stem}
-    <div style="display:flex;flex-direction:column;gap:10px;max-width:420px;margin:0 auto" id="rqOptions">
-      ${q.options.map((opt,i)=>`<button class="rq-option" onclick="answerReviewQuestion(${i})"><span style="color:var(--text-muted);margin-right:8px">${['A','B','C','D'][i]}</span>${esc(opt)}</button>`).join('')}
-    </div>`;
+    ${answerArea}`;
   
-  // Auto-play audio for listening questions
-  if (q.qMode === 'listen') setTimeout(() => speakWord(q.word), 300);
+  // Auto-play pronunciation on question entry (skip m2w — audio would reveal the answer)
+  if (q.qMode !== 'm2w') setTimeout(() => speakWord(q.word), 300);
+  if (q.qMode === 'spell') setTimeout(() => document.getElementById('rqSpellInput')?.focus(), 350);
+}
+
+function submitSpellAnswer() {
+  const q = reviewState.questions[reviewState.currentIndex];
+  if (!q || q.answered) return;
+  const input = document.getElementById('rqSpellInput');
+  const val = (input?.value || '').trim();
+  if (!val) { showToast('先输入拼写','error'); return; }
+  q.answered = true;
+  const isCorrect = val.toLowerCase().replace(/\s+/g,' ') === q.word.trim().toLowerCase().replace(/\s+/g,' ');
+  q.userSpelling = val;
+  
+  input.disabled = true;
+  document.getElementById('rqSpellBtn').disabled = true;
+  input.style.borderColor = isCorrect ? 'var(--success)' : 'var(--error)';
+  input.style.color = isCorrect ? 'var(--success)' : 'var(--error)';
+  if (!isCorrect) input.style.textDecoration = 'line-through';
+  if (isCorrect) playSound();
+  
+  updateReviewRecord(q, isCorrect).then(() => {
+    reviewState.results.push({ word:q.word, known:isCorrect, newLevel:reviewRecords[q.wordKey].level });
+    renderAnswerExplanation(q, isCorrect);
+  });
 }
 
 async function answerReviewQuestion(optIdx) {
@@ -2560,6 +2707,7 @@ function renderAnswerExplanation(q, isCorrect) {
   panel.style.cssText = `max-width:420px;margin:14px auto 0;border:1.5px solid ${color};background:${bg};border-radius:14px;padding:16px;animation:fadeInUp 0.25s ease`;
   panel.innerHTML = `
     <div style="font-size:11px;font-weight:600;color:${color};margin-bottom:10px">${label}</div>
+    ${(!isCorrect && q.userSpelling) ? `<div style="font-size:12px;color:var(--error);margin-bottom:8px">你的拼写：<s>${esc(q.userSpelling)}</s></div>` : ''}
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
       <span class="font-serif" style="font-size:22px;color:var(--text-primary)">${esc(q.word)}</span>
       ${q.phonetic?`<span style="font-size:13px;color:var(--text-muted)">${esc(q.phonetic)}</span>`:''}
@@ -3180,10 +3328,10 @@ async function checkUrlImport() {
   if (importData) {
     try {
       const card = JSON.parse(decodeURIComponent(atob(importData)));
-      await saveCardToDB(card);
+      const res = await saveCardToDB(card);
       if (!settings.firstUseDate) { settings.firstUseDate=new Date().toISOString(); await saveSettingsToDB(); }
       window.history.replaceState({}, '', location.pathname);
-      renderCards(); updateStats(); showToast('已导入！','success');
+      renderCards(); updateStats(); showToast(res.merged ? '已收藏过，内容已合并' : '已导入！','success');
       if (settings.autoSync && accessToken) syncToCloud();
     } catch(e) { console.error('Import error:', e); }
   }
