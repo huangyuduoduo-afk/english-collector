@@ -568,6 +568,7 @@
         <p class="review-progress" id="reviewProgress" style="margin:0">1 / 20</p>
         <div class="review-mode-toggle">
           <button class="review-mode-btn" id="modeQuizBtn" onclick="setReviewMode('quiz')">测验</button>
+          <button class="review-mode-btn" id="modeSpellBtn" onclick="setReviewMode('spell')">拼写</button>
           <button class="review-mode-btn" id="modeFlashBtn" onclick="setReviewMode('flashcard')">翻卡</button>
         </div>
       </div>
@@ -2531,12 +2532,13 @@ function beginReviewSession(sessionWords, allWords) {
   
   const mode = settings.reviewMode || 'quiz';
   document.getElementById('modeQuizBtn').classList.toggle('active', mode==='quiz');
+  document.getElementById('modeSpellBtn').classList.toggle('active', mode==='spell');
   document.getElementById('modeFlashBtn').classList.toggle('active', mode==='flashcard');
   
-  if (mode === 'quiz') {
+  if (mode === 'quiz' || mode === 'spell') {
     document.getElementById('reviewFlashArea').classList.add('hide');
     document.getElementById('reviewQuizArea').classList.remove('hide');
-    buildReviewQuestions(allWords);
+    buildReviewQuestions(allWords, mode === 'spell' ? 'spell' : null);
     renderReviewQuestion();
   } else {
     document.getElementById('reviewQuizArea').classList.add('hide');
@@ -2552,7 +2554,7 @@ function setReviewMode(mode) {
 }
 
 // --- Quiz mode: mixed question types ---
-function buildReviewQuestions(allWords) {
+function buildReviewQuestions(allWords, forceMode) {
   const pool = allWords.filter(w => w.meaning);
   const meanings = [...new Set(pool.map(w => w.meaning))];
   const wordNames = [...new Set(pool.map(w => w.word))];
@@ -2560,18 +2562,23 @@ function buildReviewQuestions(allWords) {
   const FALLBACK_W = ['memory','concept','pattern','system','process','element'];
 
   reviewState.questions = reviewState.words.map(w => {
-    // Pick a mode this word supports
-    const modes = ['w2m'];
-    if (w.meaning) modes.push('m2w', 'listen', 'spell');
-    const mode = modes[Math.floor(Math.random() * modes.length)];
+    let mode;
+    if (forceMode) {
+      mode = forceMode;   // 独立拼写模式：全部拼写题
+    } else {
+      // 测验模式：三种选择题随机（不含拼写）
+      const modes = ['w2m'];
+      if (w.meaning) modes.push('m2w', 'listen');
+      mode = modes[Math.floor(Math.random() * modes.length)];
+    }
 
     let correct, opts = [];
-    if (mode === 'w2m') {
+    if (mode === 'spell') {
+      correct = w.word;   // typed answer, no options needed
+    } else if (mode === 'w2m') {
       correct = w.meaning || w.word;
       opts = meanings.filter(m => m !== correct).sort(() => Math.random()-0.5).slice(0,3);
       let fi = 0; while (opts.length < 3) { const f = FALLBACK_M[fi++]; if (f !== correct && !opts.includes(f)) opts.push(f); }
-    } else if (mode === 'spell') {
-      correct = w.word;   // typed answer, no options needed
     } else { // m2w and listen both answer with the word
       correct = w.word;
       opts = wordNames.filter(n => n.toLowerCase() !== correct.toLowerCase()).sort(() => Math.random()-0.5).slice(0,3);
@@ -2606,10 +2613,12 @@ function renderReviewQuestion() {
       </div>`;
   } else if (q.qMode === 'spell') {
     stem = `
-      <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:8px">✍️ 听发音看释义，拼出这个单词</p>
+      <p style="font-size:12px;color:var(--text-muted);text-align:center;margin-bottom:8px">✍️ ${q.meaning ? '听发音看释义，拼出这个单词' : '听发音，拼出这个单词'}</p>
       <div style="text-align:center;margin-bottom:20px">
-        <span style="font-size:19px;font-weight:600;color:var(--text-primary)">${esc(q.meaning)}</span>
-        <div style="margin-top:8px"><button class="speak-btn" onclick="speakWord('${esc(q.word)}')">🔊</button></div>
+        ${q.meaning ? `<span style="font-size:19px;font-weight:600;color:var(--text-primary)">${esc(q.meaning)}</span>
+        <div style="margin-top:8px"><button class="speak-btn" onclick="speakWord('${esc(q.word)}')">🔊</button></div>`
+        : `<button class="speak-btn" style="width:64px;height:64px;font-size:26px" onclick="speakWord('${esc(q.word)}')">🔊</button>
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px">点击重听</div>`}
       </div>`;
   } else { // listen
     stem = `
