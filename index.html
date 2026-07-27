@@ -90,6 +90,11 @@
     .filter-chip { padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid rgba(160,120,60,0.15); background: white; color: var(--text-secondary); transition: all 0.15s; white-space: nowrap; }
     .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
     .filter-chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .domain-chips { display: flex; gap: 6px; flex-wrap: wrap; margin: -8px 0 16px; }
+    .domain-chips:empty { display: none; margin: 0; }
+    .filter-chip.domain { font-size: 12px; padding: 4px 11px; background: rgba(255,255,255,0.7); }
+    .filter-chip.domain.active { background: #5A7FB8; border-color: #5A7FB8; color: white; }
+    .card-domain-badge { font-size: 9px; padding: 2px 7px; border-radius: 8px; background: rgba(90,127,184,0.10); color: #5A7FB8; white-space: nowrap; }
     .sort-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid rgba(160,120,60,0.15); background: white; color: var(--text-secondary); transition: all 0.15s; white-space: nowrap; }
     .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
     #sortArrow { font-size: 14px; font-weight: 700; }
@@ -522,6 +527,7 @@
         <span id="sortArrow">↓</span>
       </button>
     </div>
+    <div class="domain-chips" id="domainChips"></div>
     <div class="masonry" id="cardGrid"></div>
     <div class="empty-state hide" id="emptyState">
       <div class="empty-state-icon">📝</div>
@@ -695,6 +701,10 @@
           <span class="settings-item-label">清理重复卡片</span>
           <span class="settings-item-value">🧹</span>
         </div>
+        <div class="settings-item" style="cursor:pointer" onclick="backfillDomains()">
+          <span class="settings-item-label">AI 补全学科标签</span>
+          <span class="settings-item-value" id="backfillDomainsVal">🏷️</span>
+        </div>
         <div class="settings-item" style="cursor:pointer" onclick="exportAnki()">
           <span class="settings-item-label">导出到 Anki</span>
           <span class="settings-item-value">↓</span>
@@ -751,9 +761,17 @@
         </div>
         <div class="add-modal-actions">
           <button class="btn btn-secondary" onclick="closeAddModal()">取消</button>
+          <button class="btn btn-secondary" id="batchBtn" onclick="batchExtract()" style="white-space:nowrap"><span id="batchBtnText">📄 论文提取</span></button>
           <button class="btn btn-primary" id="saveBtn" onclick="saveCard()"><span id="saveBtnText">保存</span></button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ==================== Batch Extract Modal (论文批量提取) ==================== -->
+  <div class="modal-overlay" id="batchModal" onclick="closeBatchModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div class="modal-body" id="batchBody"></div>
     </div>
   </div>
 
@@ -1044,6 +1062,7 @@ async function saveCardToDB(card) {
       if (!dup.translation && card.translation) dup.translation = card.translation;
       if ((!dup.keywords || !dup.keywords.length) && card.keywords?.length) dup.keywords = card.keywords;
       if (!dup.source && card.source) dup.source = card.source;
+      if (!dup.domain && card.domain) dup.domain = card.domain;
       await dbPut('cards', dup);
       const i = cards.findIndex(c => c.id === dup.id);
       if (i >= 0) cards[i] = dup;
@@ -1103,6 +1122,7 @@ function etyWordToCard(w) {
       meaning: w.meaning || ''
     }],
     source: '词库',
+    domain: normDomain(w.domain) || '',
     createdAt: w.savedAt ? new Date(w.savedAt).toISOString() : new Date().toISOString(),
     reviewCount: 0,
     lastReviewed: null,
@@ -1120,6 +1140,7 @@ async function upsertEtyCard(wordData) {
     card.reviewCount = existing.reviewCount || 0;
     card.lastReviewed = existing.lastReviewed || null;
     card.known = existing.known || false;
+    if (!card.domain && existing.domain) card.domain = existing.domain;
     await saveCardToDB(card);
     return;
   }
@@ -1462,6 +1483,20 @@ let timelineView = false;
 let sortDir = 'desc'; // 'desc' = newest first, 'asc' = oldest first
 let typeFilter = 'all'; // 'all' | 'word' | 'sentence' | 'paragraph' | 'lib'
 
+// --- 学科标签（受控词表，AI 输出统一归一到这 12 类）---
+const DOMAINS = ['医学','生物','统计','计算机','化学','物理','心理','经济','法律','工程','人文','日常'];
+let domainFilter = 'all';
+function normDomain(d) {
+  if (!d) return '';
+  d = String(d).trim();
+  if (DOMAINS.includes(d)) return d;
+  const map = { '数学':'统计','数据':'统计','数据科学':'统计','药学':'医学','医疗':'医学','护理':'医学','神经':'医学','流行病':'医学','营养':'医学','解剖':'医学','生物学':'生物','生命科学':'生物','遗传':'生物','IT':'计算机','软件':'计算机','编程':'计算机','科技':'计算机','技术':'工程','金融':'经济','商业':'经济','管理':'经济','历史':'人文','文学':'人文','哲学':'人文','艺术':'人文','语言':'人文','社会':'人文','教育':'人文','心理学':'心理','通用':'日常','日常用语':'日常','生活':'日常','general':'日常' };
+  if (map[d]) return map[d];
+  const hit = DOMAINS.find(x => d.includes(x));
+  return hit || '日常';
+}
+function setDomainFilter(d) { domainFilter = d; renderCards(); }
+
 function toggleTimelineView() {
   timelineView = !timelineView;
   renderCards();
@@ -1486,6 +1521,7 @@ function renderFilterChips() {
     { id:'sentence', label:'句子' },
     { id:'paragraph', label:'段落' },
     { id:'lib', label:'🧬 词库' },
+    { id:'paper', label:'📄 论文' },
   ];
   const counts = {
     all: cards.length,
@@ -1493,6 +1529,7 @@ function renderFilterChips() {
     sentence: cards.filter(c=>c.type==='sentence').length,
     paragraph: cards.filter(c=>c.type==='paragraph').length,
     lib: cards.filter(c=>c.source==='词库').length,
+    paper: cards.filter(c=>c.source==='论文提取').length,
   };
   const el = document.getElementById('filterChips');
   if (!el) return;
@@ -1500,6 +1537,19 @@ function renderFilterChips() {
     .filter(c => c.id==='all' || counts[c.id] > 0)
     .map(c => `<button class="filter-chip ${typeFilter===c.id?'active':''}" onclick="setTypeFilter('${c.id}')">${c.label} ${counts[c.id]}</button>`)
     .join('');
+
+  // 学科筛选行 — 只显示实际存在的学科
+  const dEl = document.getElementById('domainChips');
+  if (dEl) {
+    const dCounts = {};
+    cards.forEach(c => { const d = normDomain(c.domain); if (d) dCounts[d] = (dCounts[d]||0)+1; });
+    const ds = DOMAINS.filter(d => dCounts[d]);
+    if (domainFilter !== 'all' && !dCounts[domainFilter]) domainFilter = 'all';
+    dEl.innerHTML = !ds.length ? '' :
+      [`<button class="filter-chip domain ${domainFilter==='all'?'active':''}" onclick="setDomainFilter('all')">全部学科</button>`]
+        .concat(ds.map(d => `<button class="filter-chip domain ${domainFilter===d?'active':''}" onclick="setDomainFilter('${d}')">${d} ${dCounts[d]}</button>`))
+        .join('');
+  }
 }
 
 // --- mymind-style card rendering ---
@@ -1514,9 +1564,10 @@ function cardTint(card) {
 function renderCardHTML(card, index) {
   const rel = getRelativeDate(card.createdAt);
   const libBadge = card.source==='词库' ? `<span style="font-size:9px;color:var(--accent);background:rgba(232,97,44,0.09);padding:2px 7px;border-radius:8px">🧬 词库</span>` : '';
+  const domBadge = card.domain ? `<span class="card-domain-badge">${esc(normDomain(card.domain))}</span>` : '';
   const delay = Math.min(index, 16) * 0.035;
   const tint = cardTint(card);
-  const meta = `<div class="card-meta"><span class="card-date">${rel}</span>${libBadge}</div>`;
+  const meta = `<div class="card-meta"><span class="card-date">${rel}</span>${domBadge}${libBadge}</div>`;
   const delBtn = `<button class="card-del" title="删除" onclick="quickDeleteCard(event,'${card.id}')">✕</button>`;
   
   if (card.type === 'word') {
@@ -1586,7 +1637,10 @@ function renderCards() {
   );
   // Type / library filter
   if (typeFilter === 'lib') filtered = filtered.filter(c => c.source === '词库');
+  else if (typeFilter === 'paper') filtered = filtered.filter(c => c.source === '论文提取');
   else if (typeFilter !== 'all') filtered = filtered.filter(c => c.type === typeFilter);
+  // Domain filter
+  if (domainFilter !== 'all') filtered = filtered.filter(c => normDomain(c.domain) === domainFilter);
 
   // Sort by collection time
   filtered = filtered.slice().sort((a,b) => {
@@ -1614,6 +1668,7 @@ function renderCards() {
         header = `<div class="date-group-header"><div class="date-group-dot"></div><span class="date-group-label">${group}</span><span class="date-group-count">${count}条</span></div>`;
       }
       const libBadge = card.source==='词库' ? `<span style="font-size:9px;color:var(--accent);background:rgba(232,97,44,0.09);padding:2px 7px;border-radius:8px;white-space:nowrap">🧬 词库</span>` : '';
+      const domBadge = card.domain ? `<span class="card-domain-badge">${esc(normDomain(card.domain))}</span>` : '';
       return header + `
         <div class="card ${cardTint(card)}" onclick="openDetailModal('${card.id}')" style="margin-bottom:10px;animation-delay:${Math.min(i,16)*0.03}s">
           <button class="card-del" title="删除" onclick="quickDeleteCard(event,'${card.id}')">✕</button>
@@ -1621,6 +1676,7 @@ function renderCards() {
             <div class="card-content" style="-webkit-line-clamp:3;flex:1">${esc(card.content)}</div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;padding-right:24px">
               <span style="font-size:10px;color:var(--text-muted);white-space:nowrap;padding-top:2px">${rel}</span>
+              ${domBadge}
               ${libBadge}
             </div>
           </div>
@@ -1649,7 +1705,7 @@ function openDetailModal(cardId) {
       <div class="etymology-box" id="etymologyBox">${renderKwEtymology(card.keywords[0], cardId, 0)}</div>`;
   }
   document.getElementById('detailBody').innerHTML = `
-    <div class="detail-header"><div class="detail-meta"><span class="type-dot ${tc}"></span><span class="detail-date">${tl} · ${date}</span></div>
+    <div class="detail-header"><div class="detail-meta"><span class="type-dot ${tc}"></span><span class="detail-date">${tl} · ${date}${card.domain ? ' · ' + esc(normDomain(card.domain)) : ''}</span></div>
       <button class="modal-close" onclick="closeDetailModal()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
     <p class="detail-content">${esc(card.content)}</p>
     <p class="detail-translation">${esc(card.translation||'')}</p>
@@ -1746,7 +1802,7 @@ async function saveCard() {
     const analysis = await callAI(buildCollectionPrompt(content));
     const wc = content.split(/\s+/).length;
     const type = wc<=3?'word':content.split(/[.!?]/).filter(s=>s.trim()).length<=1?'sentence':'paragraph';
-    const card = { id:'card_'+Date.now(), content, type, translation:analysis.translation, keywords:analysis.keywords, createdAt:new Date().toISOString() };
+    const card = { id:'card_'+Date.now(), content, type, translation:analysis.translation, domain:normDomain(analysis.domain), keywords:analysis.keywords, createdAt:new Date().toISOString() };
     const res = await saveCardToDB(card);
     if (!settings.firstUseDate) { settings.firstUseDate = new Date().toISOString(); await saveSettingsToDB(); }
     renderCards(); updateStats(); closeAddModal();
@@ -1754,6 +1810,123 @@ async function saveCard() {
     if (settings.autoSync && accessToken) syncToCloud();
   } catch(e) { showToast('保存失败: '+e.message,'error'); }
   finally { btn.disabled=false; document.getElementById('saveBtnText').textContent='保存'; }
+}
+
+// ======================================================================
+// 论文批量提取（粘贴摘要 → AI 一次提取全部术语 → 勾选批量建卡）
+// ======================================================================
+function buildBatchExtractPrompt(text) {
+  return `你是学术英语术语提取助手。从以下论文文本（摘要/段落）中提取专业术语和值得学习的高级词汇，返回JSON格式（不要markdown代码块）：
+
+文本："${text}"
+
+要求：
+1. domain: 整段文本的学科分类，只能从 医学/生物/统计/计算机/化学/物理/心理/经济/法律/工程/人文/日常 中选一个最贴切的
+2. translation: 全文的中文翻译
+3. terms: 数组，提取8-20个术语，按重要性排序，专业术语和学术高频词优先，跳过 the/is/study 等简单常用词。每个包含：
+   - word: 单词或术语（用原形，词组保留原样）
+   - phonetic: 音标
+   - roots: 词根构成
+   - origin: 词源
+   - meaning: 中文释义（体现该学科语境下的含义）
+
+返回格式：{"domain":"...","translation":"...","terms":[{"word":"...","phonetic":"...","roots":"...","origin":"...","meaning":"..."}]}`;
+}
+
+let batchResult = null; // { domain, translation, terms, sourceText }
+
+async function batchExtract() {
+  const content = document.getElementById('addInput').value.trim();
+  if (!content) { showToast('先粘贴论文摘要或段落','error'); return; }
+  if (content.split(/\s+/).length < 10) { showToast('文本较短，直接点「保存」分析即可','error'); return; }
+  if (!settings.apiKey) { showToast('请先在设置中填写 API Key','error'); return; }
+  const btn = document.getElementById('batchBtn');
+  btn.disabled = true;
+  document.getElementById('batchBtnText').innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle"></div>';
+  try {
+    const r = await callAI(buildBatchExtractPrompt(content));
+    if (!Array.isArray(r.terms) || !r.terms.length) throw new Error('未提取到术语');
+    batchResult = { ...r, domain: normDomain(r.domain), sourceText: content };
+    closeAddModal();
+    renderBatchModal();
+    document.getElementById('batchModal').classList.add('active');
+  } catch(e) { showToast('提取失败: ' + e.message,'error'); }
+  finally { btn.disabled = false; document.getElementById('batchBtnText').textContent = '📄 论文提取'; }
+}
+
+function renderBatchModal() {
+  const r = batchResult;
+  document.getElementById('batchBody').innerHTML = `
+    <h2 class="add-modal-title">提取到 ${r.terms.length} 个术语</h2>
+    <div style="font-size:12px;color:var(--text-muted);margin-bottom:12px;display:flex;align-items:center;gap:8px">
+      <span>学科</span><span class="card-domain-badge" style="font-size:11px">${esc(r.domain||'日常')}</span>
+      <span style="margin-left:auto;cursor:pointer;color:var(--accent)" onclick="toggleAllBatchTerms()">全选/全不选</span>
+    </div>
+    <div id="batchTermList" style="max-height:45vh;overflow-y:auto;display:flex;flex-direction:column;gap:6px;margin-bottom:14px">
+      ${r.terms.map((t,i)=>`
+        <label style="display:flex;align-items:flex-start;gap:10px;padding:9px 12px;background:rgba(255,255,255,0.7);border:1px solid rgba(160,120,60,0.12);border-radius:10px;cursor:pointer">
+          <input type="checkbox" checked data-i="${i}" onchange="updateBatchCount()" style="margin-top:3px;accent-color:var(--accent)">
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:14px">${esc(t.word)} <span style="font-weight:400;font-size:11px;color:var(--text-muted)">${esc(t.phonetic||'')}</span></div>
+            <div style="font-size:12px;color:var(--text-secondary)">${esc(t.meaning||'')}</div>
+          </div>
+        </label>`).join('')}
+    </div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text-secondary);margin-bottom:14px;cursor:pointer">
+      <input type="checkbox" id="batchSavePara" style="accent-color:var(--accent)"> 同时把原文收藏为段落卡（含译文）
+    </label>
+    <div class="add-modal-actions">
+      <button class="btn btn-secondary" onclick="closeBatchModal()">取消</button>
+      <button class="btn btn-primary" id="batchSaveBtn" onclick="saveBatchCards()"><span id="batchSaveText">批量建卡 (${r.terms.length})</span></button>
+    </div>`;
+}
+
+function toggleAllBatchTerms() {
+  const boxes = [...document.querySelectorAll('#batchTermList input[type=checkbox]')];
+  const allOn = boxes.every(b => b.checked);
+  boxes.forEach(b => b.checked = !allOn);
+  updateBatchCount();
+}
+function updateBatchCount() {
+  const n = document.querySelectorAll('#batchTermList input:checked').length;
+  const el = document.getElementById('batchSaveText');
+  if (el) el.textContent = `批量建卡 (${n})`;
+}
+function closeBatchModal() { document.getElementById('batchModal').classList.remove('active'); batchResult = null; }
+
+async function saveBatchCards() {
+  if (!batchResult) return;
+  const checked = [...document.querySelectorAll('#batchTermList input:checked')].map(cb => batchResult.terms[+cb.dataset.i]);
+  const savePara = document.getElementById('batchSavePara').checked;
+  if (!checked.length && !savePara) { showToast('至少勾选一项','error'); return; }
+  const btn = document.getElementById('batchSaveBtn');
+  btn.disabled = true;
+  let created = 0, merged = 0;
+  const now = Date.now();
+  for (let j = 0; j < checked.length; j++) {
+    const t = checked[j];
+    const res = await saveCardToDB({
+      id: 'card_' + (now + j), content: t.word, type: 'word',
+      translation: t.meaning || '', domain: batchResult.domain,
+      keywords: [{ word: t.word, phonetic: t.phonetic || '', roots: t.roots || '', origin: t.origin || '', meaning: t.meaning || '' }],
+      source: '论文提取', createdAt: new Date().toISOString(), reviewCount: 0, lastReviewed: null, known: false
+    });
+    res.merged ? merged++ : created++;
+  }
+  if (savePara) {
+    const res = await saveCardToDB({
+      id: 'card_' + (now + checked.length), content: batchResult.sourceText, type: 'paragraph',
+      translation: batchResult.translation || '', domain: batchResult.domain,
+      keywords: checked.slice(0, 5).map(t => ({ word: t.word, phonetic: t.phonetic || '', roots: t.roots || '', origin: t.origin || '', meaning: t.meaning || '' })),
+      source: '论文提取', createdAt: new Date().toISOString(), reviewCount: 0, lastReviewed: null, known: false
+    });
+    res.merged ? merged++ : created++;
+  }
+  if (!settings.firstUseDate) { settings.firstUseDate = new Date().toISOString(); await saveSettingsToDB(); }
+  closeBatchModal();
+  renderCards(); updateStats();
+  showToast(`已建 ${created} 张新卡${merged ? `，${merged} 张已存在自动合并` : ''}`, 'success');
+  if (settings.autoSync && accessToken) syncToCloud();
 }
 
 async function deleteCard(cardId) {
@@ -1829,6 +2002,43 @@ async function cleanupDuplicateCards() {
   }
   renderCards(); updateStats();
   showToast(`已清理 ${removed} 张重复卡片`,'success');
+  if (settings.autoSync && accessToken) syncToCloud();
+}
+
+// --- 批量补全存量卡片的学科标签（30 条/次批量调用，省 API）---
+async function backfillDomains() {
+  if (!settings.apiKey) { showToast('请先在设置中填写 API Key','error'); return; }
+  const todo = cards.filter(c => !c.domain);
+  if (!todo.length) { showToast('所有卡片都已有学科标签','success'); return; }
+  const batches = Math.ceil(todo.length / 30);
+  if (!confirm(`将为 ${todo.length} 张卡片补全学科标签（约 ${batches} 次 AI 调用），继续？`)) return;
+  const el = document.getElementById('backfillDomainsVal');
+  let done = 0;
+  for (let i = 0; i < todo.length; i += 30) {
+    const batch = todo.slice(i, i + 30);
+    if (el) el.textContent = `${i}/${todo.length}…`;
+    const items = batch.map((c, j) => `${j}. ${(c.content||'').replace(/\s+/g,' ').slice(0, 80)}`).join('\n');
+    const prompt = `为以下每条英文内容标注一个学科分类。只能从这些学科中选择：${DOMAINS.join('/')}。\n\n${items}\n\n返回JSON格式（不要markdown代码块），键为条目编号，值为学科，例如：{"0":"医学","1":"日常"}`;
+    try {
+      const map = await callAI(prompt);
+      for (let j = 0; j < batch.length; j++) {
+        const d = normDomain(map[String(j)] ?? map[j]);
+        if (!d) continue;
+        batch[j].domain = d;
+        await dbPut('cards', batch[j]);
+        // 单词卡同步写入词源缓存
+        const ew = etymologyWords.find(w => w.word.toLowerCase() === (batch[j].content||'').trim().toLowerCase());
+        if (ew && !ew.domain) { ew.domain = d; await dbPut('etymologyWords', ew); }
+        done++;
+      }
+    } catch(e) {
+      showToast(`第 ${Math.floor(i/30)+1}/${batches} 批失败: ${e.message}，已保存前面的进度`,'error');
+      break;
+    }
+  }
+  if (el) el.textContent = '🏷️';
+  renderCards(); updateStats();
+  showToast(`已为 ${done} 张卡片补全学科标签`,'success');
   if (settings.autoSync && accessToken) syncToCloud();
 }
 
@@ -3243,14 +3453,15 @@ function buildCollectionPrompt(content) {
 
 要求：
 1. translation: 中文翻译
-2. keywords: 数组，最多5个重点词汇（不要选 the, is, a 等简单词），每个包含：
+2. domain: 学科分类，只能从以下选项中选一个最贴切的：医学/生物/统计/计算机/化学/物理/心理/经济/法律/工程/人文/日常
+3. keywords: 数组，最多5个重点词汇（不要选 the, is, a 等简单词），每个包含：
    - word: 单词
    - phonetic: 音标
    - roots: 词根构成
    - origin: 词源
    - meaning: 中文释义
 
-返回格式：{"translation":"...","keywords":[{"word":"...","phonetic":"...","roots":"...","origin":"...","meaning":"..."}]}`;
+返回格式：{"translation":"...","domain":"...","keywords":[{"word":"...","phonetic":"...","roots":"...","origin":"...","meaning":"..."}]}`;
 }
 
 function buildEtymologyPrompt(word) {
@@ -3259,6 +3470,7 @@ function buildEtymologyPrompt(word) {
   "word": "单词",
   "phonetic": "音标",
   "meaning": "核心含义（简洁中文）",
+  "domain": "学科分类，只能从 医学/生物/统计/计算机/化学/物理/心理/经济/法律/工程/人文/日常 中选一个最贴切的",
   "roots": [
     { "part": "词根/词缀部分", "origin": "来源语言", "originalWord": "原始词", "meaning": "该部分含义" }
   ],
