@@ -96,6 +96,26 @@
     .filter-chip.domain.active { background: #5A7FB8; border-color: #5A7FB8; color: white; }
     .card-domain-badge { font-size: 9px; padding: 2px 7px; border-radius: 8px; background: rgba(90,127,184,0.10); color: #5A7FB8; white-space: nowrap; }
     .sort-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 16px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid rgba(160,120,60,0.15); background: white; color: var(--text-secondary); transition: all 0.15s; white-space: nowrap; }
+    .sort-btn.active { background: var(--accent); color: white; border-color: var(--accent); }
+    .family-section { background: white; border: 1px solid var(--border); border-radius: 16px; padding: 16px 18px; margin-bottom: 14px; }
+    .family-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    .family-root { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 600; color: var(--accent); }
+    .family-meaning { font-size: 13px; color: var(--text-secondary); }
+    .family-origin { font-size: 11px; color: var(--text-muted); }
+    .family-count { margin-left: auto; font-size: 11px; color: var(--text-muted); white-space: nowrap; }
+    .family-members { display: flex; flex-wrap: wrap; gap: 8px; }
+    .family-word { padding: 7px 12px; background: var(--cream); border: 1px solid rgba(160,120,60,0.15); border-radius: 10px; cursor: pointer; transition: all 0.15s; }
+    .family-word:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .family-word b { font-size: 13px; font-weight: 600; display: block; color: var(--text-primary); }
+    .family-word b mark { background: none; color: var(--accent); }
+    .family-word span { font-size: 11px; color: var(--text-muted); }
+    .src-head-link { font-size: 11px; color: var(--text-muted); text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; display: block; }
+    .src-head-link:hover { color: var(--accent); text-decoration: underline; }
+    .src-row { display: flex; align-items: baseline; gap: 10px; padding: 9px 12px; background: var(--cream); border: 1px solid rgba(160,120,60,0.12); border-radius: 10px; cursor: pointer; transition: all 0.15s; margin-bottom: 6px; }
+    .src-row:hover { border-color: var(--accent); }
+    .src-row-content { flex: 1; min-width: 0; font-size: 13px; font-weight: 500; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .src-row-trans { flex-shrink: 1; min-width: 0; font-size: 11px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 40%; }
+    .src-row-date { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
     .sort-btn:hover { border-color: var(--accent); color: var(--accent); }
     #sortArrow { font-size: 14px; font-weight: 700; }
     .card { background: var(--card-yellow); border-radius: 16px; transition: transform 0.25s ease, box-shadow 0.25s ease; box-shadow: 0 1px 4px rgba(180,140,80,0.05); border: 1px solid rgba(0,0,0,0.04); cursor: pointer; padding: 22px; break-inside: avoid; margin-bottom: 12px; animation: cardIn 0.45s cubic-bezier(0.21,0.9,0.35,1) backwards; position: relative; }
@@ -526,6 +546,8 @@
         <span id="sortLabel">最新在前</span>
         <span id="sortArrow">↓</span>
       </button>
+      <button class="sort-btn" id="familyBtn" onclick="toggleFamilyView()" title="按词根家族聚合">🧬 词族</button>
+      <button class="sort-btn" id="sourceBtn" onclick="toggleSourceView()" title="按收藏来源分组">📚 来源</button>
     </div>
     <div class="domain-chips" id="domainChips"></div>
     <div class="masonry" id="cardGrid"></div>
@@ -649,6 +671,10 @@
         <div class="settings-item">
           <span class="settings-item-label">模型</span>
           <select class="settings-select" id="apiModel" onchange="saveSettings()"></select>
+        </div>
+        <div class="settings-item">
+          <span class="settings-item-label">深度分析模型</span>
+          <select class="settings-select" id="deepModel" onchange="saveSettings()"></select>
         </div>
         <div class="settings-item">
           <span class="settings-item-label">API Key</span>
@@ -907,7 +933,7 @@ const DAILY_ARTICLES = [
 // ======================================================================
 let cards = [];
 let etymologyWords = []; // saved from etymology analysis
-let settings = { apiProvider:'gemini', apiModel:'gemini-2.5-flash', apiKey:'', firstUseDate:null, autoSync:false, voiceURI:'', reviewMode:'quiz', sessionSize:20, reviewStreak:{ count:0, lastDate:'', history:{} } };
+let settings = { apiProvider:'gemini', apiModel:'gemini-2.5-flash', deepModel:'', apiKey:'', firstUseDate:null, autoSync:false, voiceURI:'', reviewMode:'quiz', sessionSize:20, reviewStreak:{ count:0, lastDate:'', history:{} } };
 let reviewState = { words:[], currentIndex:0, results:[], questions:[] };
 let reviewRecords = {}; // wordKey -> { wordKey, word, level, nextReview, reviewCount, correctCount, wrongCount, lastReview }
 const REVIEW_INTERVALS = [0, 1, 3, 7, 15, 30]; // days per level (0=new, 1-5=spaced)
@@ -1499,7 +1525,198 @@ function setDomainFilter(d) { domainFilter = d; renderCards(); }
 
 function toggleTimelineView() {
   timelineView = !timelineView;
+  if (timelineView) { familyView = false; sourceView = false; syncViewBtns(); }
   renderCards();
+}
+
+// 视图按钮激活态统一刷新
+function syncViewBtns() {
+  document.getElementById('familyBtn')?.classList.toggle('active', familyView);
+  document.getElementById('sourceBtn')?.classList.toggle('active', sourceView);
+}
+
+// ======================================================================
+// 词根家族聚类（词族视图）
+// ======================================================================
+let familyView = false;
+
+// 语法后缀 + 过于泛化的前缀 → 不成家族
+const ROOT_BLACKLIST = new Set(['ing','ed','es','er','est','ly','ion','tion','sion','ation','ment','ness','able','ible','ous','ious','ive','ative','ful','less','ize','ise','ity','ety','ate','ance','ence','ancy','ency','ant','ent','al','ial','ic','ical','ary','ory','ish','ism','ist','age','dom','hood','ship','ward','wise','ure','ide','ine','ify','fy','the','and','for','un','in','im','il','ir','re','de','ex','en','em','non','pre','pro','con','com','col','cor','dis','sub','sup','sur','per','ad','ab','ob','of','up','out']);
+
+// 归一化词根 key：小写、只留字母
+function normRootKey(s) {
+  const k = (s || '').toLowerCase().replace(/[^a-z]/g, '');
+  if (k.length < 3 || ROOT_BLACKLIST.has(k)) return '';
+  return k;
+}
+
+// 从词根字符串解析各部分："glyc(糖)+emic(血的)" / "glyc- 糖 + -emic 血"
+function parseRootsString(str) {
+  if (!str || str === '-') return [];
+  return String(str).split(/[+＋,，、;；]/).map(seg => {
+    const m = seg.match(/[a-zA-Z]{2,}/);
+    if (!m) return null;
+    const paren = seg.match(/[（(]([^)）]+)[)）]/);
+    return { part: m[0], meaning: paren ? paren[1] : '' };
+  }).filter(Boolean);
+}
+
+// 收集一张单词卡的全部词根 {part, meaning, origin}[]
+function cardRootParts(card) {
+  const word = (card.content || '').trim().toLowerCase();
+  // 优先：深度词源缓存的结构化 roots
+  const ew = etymologyWords.find(w => w.word.toLowerCase() === word);
+  if (ew && Array.isArray(ew.roots) && ew.roots.length) {
+    return ew.roots.map(r => (typeof r === 'object' && r) ? { part: r.part || '', meaning: r.meaning || '', origin: r.origin || '' } : { part: String(r), meaning: '', origin: '' });
+  }
+  if (ew && typeof ew.roots === 'string') return parseRootsString(ew.roots);
+  // 回退：卡片 keywords 里的词根字符串
+  const kw = (card.keywords || []).find(k => (k.word || '').trim().toLowerCase() === word) || card.keywords?.[0];
+  return kw ? parseRootsString(kw.roots).map(p => ({ ...p, origin: kw.origin || '' })) : [];
+}
+
+// 聚类：返回按家族大小降序的数组
+function buildRootFamilies(wordCards) {
+  const fams = {}; // key → { key, display, members:Map(cardId→card), meanings:{}, origins:{} }
+  for (const card of wordCards) {
+    for (const p of cardRootParts(card)) {
+      const key = normRootKey(p.part);
+      if (!key) continue;
+      if (!fams[key]) fams[key] = { key, display: p.part.replace(/[^a-zA-Z-]/g,''), members: new Map(), meanings: {}, origins: {} };
+      const f = fams[key];
+      f.members.set(card.id, card);
+      if (p.meaning) f.meanings[p.meaning] = (f.meanings[p.meaning] || 0) + 1;
+      if (p.origin) f.origins[p.origin] = (f.origins[p.origin] || 0) + 1;
+    }
+  }
+  // 合并连接元音变体：glyco → glyc、hydro → hydr（仅当两者都存在）
+  for (const k of Object.keys(fams)) {
+    const base = /[oe]$/.test(k) ? k.slice(0, -1) : '';
+    if (base && base.length >= 3 && fams[base]) {
+      const src = fams[k], dst = fams[base];
+      src.members.forEach((c, id) => dst.members.set(id, c));
+      for (const [m, n] of Object.entries(src.meanings)) dst.meanings[m] = (dst.meanings[m] || 0) + n;
+      for (const [o, n] of Object.entries(src.origins)) dst.origins[o] = (dst.origins[o] || 0) + n;
+      delete fams[k];
+    }
+  }
+  const top = obj => Object.entries(obj).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+  return Object.values(fams)
+    .filter(f => f.members.size >= 2)
+    .map(f => ({ key: f.key, display: f.display, meaning: top(f.meanings), origin: top(f.origins), members: [...f.members.values()].sort((a, b) => a.content.localeCompare(b.content)) }))
+    .sort((a, b) => b.members.length - a.members.length || a.key.localeCompare(b.key));
+}
+
+// 成员词内高亮词根部分
+function hlRoot(word, key) {
+  const lc = word.toLowerCase();
+  let i = lc.indexOf(key), len = key.length;
+  if (i < 0 && key.length > 3) { i = lc.indexOf(key.slice(0, -1)); len = key.length - 1; }
+  if (i < 0) return esc(word);
+  return esc(word.slice(0, i)) + '<mark>' + esc(word.slice(i, i + len)) + '</mark>' + esc(word.slice(i + len));
+}
+
+function toggleFamilyView() {
+  familyView = !familyView;
+  if (familyView) { timelineView = false; sourceView = false; }
+  syncViewBtns();
+  renderCards();
+}
+
+// ======================================================================
+// 按来源分组视图（插件 URL / 论文提取 / 词库 / 手动添加）
+// ======================================================================
+let sourceView = false;
+
+function toggleSourceView() {
+  sourceView = !sourceView;
+  if (sourceView) { timelineView = false; familyView = false; }
+  syncViewBtns();
+  renderCards();
+}
+
+function buildSourceGroups(list) {
+  const groups = new Map(); // key → { label, url, cards[] }
+  for (const c of list) {
+    const s = c.source || '';
+    let key, label, url = '';
+    if (!s) { key = '__manual'; label = '✍️ 手动添加'; }
+    else if (s === '词库') { key = '__lib'; label = '🧬 词库'; }
+    else if (s === '论文提取') { key = '__paper'; label = '📄 论文提取'; }
+    else if (/^https?:\/\//.test(s)) {
+      key = s; url = s;
+      try { label = '🌐 ' + new URL(s).hostname.replace(/^www\./, ''); } catch(e) { label = '🌐 网页'; }
+    } else { key = s; label = '📌 ' + s; }
+    if (!groups.has(key)) groups.set(key, { label, url, cards: [] });
+    groups.get(key).cards.push(c);
+  }
+  return [...groups.values()]
+    .map(g => ({ ...g, latest: Math.max(...g.cards.map(c => new Date(c.createdAt).getTime() || 0)),
+      cards: g.cards.slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)) }))
+    .sort((a, b) => b.latest - a.latest);
+}
+
+function renderSourceView(grid, empty, list) {
+  grid.classList.remove('grid-mode');
+  grid.style.columnCount = '1';
+  grid.style.maxWidth = '680px';
+  if (!list.length) { grid.innerHTML = ''; empty.classList.remove('hide'); return; }
+  empty.classList.add('hide');
+  const groups = buildSourceGroups(list);
+  grid.innerHTML = `<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">${groups.length} 个来源 · 共 ${list.length} 条收藏</div>` +
+    groups.map(g => `
+      <div class="family-section">
+        <div class="family-head" style="margin-bottom:${g.url ? '4px' : '12px'}">
+          <span style="font-size:15px;font-weight:600;color:var(--text-primary)">${esc(g.label)}</span>
+          <span class="family-count">${g.cards.length} 条</span>
+        </div>
+        ${g.url ? `<a class="src-head-link" href="${esc(g.url)}" target="_blank" rel="noopener" style="margin-bottom:10px">${esc(g.url)}</a>` : ''}
+        ${g.cards.map(c => {
+          const cn = c.translation || c.keywords?.[0]?.meaning || '';
+          return `<div class="src-row" onclick="openDetailModal('${c.id}')">
+            <span class="src-row-content">${esc(c.content)}</span>
+            ${cn ? `<span class="src-row-trans">${esc(cn)}</span>` : ''}
+            <span class="src-row-date">${getRelativeDate(c.createdAt)}</span>
+          </div>`;
+        }).join('')}
+      </div>`).join('');
+}
+
+function renderFamilyView(grid, empty, wordCards) {
+  const families = buildRootFamilies(wordCards);
+  grid.classList.remove('grid-mode');
+  grid.style.columnCount = '1';
+  grid.style.maxWidth = '680px';
+  if (!families.length) {
+    grid.innerHTML = `<div style="text-align:center;padding:48px 20px;color:var(--text-muted);font-size:14px;line-height:2">
+      还没有形成词根家族（需要 ≥2 个词共享同一词根）<br>
+      <span style="font-size:12px">提示：在卡片详情里做「🧬 深入分析词根词源」能获得更准确的结构化词根，家族会更快长出来</span></div>`;
+    empty.classList.add('hide');
+    return;
+  }
+  const covered = new Set();
+  families.forEach(f => f.members.forEach(c => covered.add(c.id)));
+  grid.innerHTML = `<div style="font-size:12px;color:var(--text-muted);margin-bottom:14px">${families.length} 个词根家族 · 覆盖 ${covered.size}/${wordCards.length} 个单词</div>` +
+    families.map(f => `
+      <div class="family-section">
+        <div class="family-head">
+          <span class="family-root">${esc(f.display || f.key)}</span>
+          ${f.meaning ? `<span class="family-meaning">${esc(f.meaning)}</span>` : ''}
+          ${f.origin ? `<span class="family-origin">${esc(f.origin)}</span>` : ''}
+          <span class="family-count">${f.members.length} 词</span>
+        </div>
+        <div class="family-members">
+          ${f.members.map(c => {
+            const kw = c.keywords?.[0] || {};
+            const cn = c.translation || kw.meaning || '';
+            return `<div class="family-word" onclick="openDetailModal('${c.id}')">
+              <b>${hlRoot(c.content, f.key)}</b>
+              ${cn ? `<span>${esc(cn.length > 14 ? cn.slice(0, 14) + '…' : cn)}</span>` : ''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>`).join('');
+  empty.classList.add('hide');
 }
 
 function toggleSortDir() {
@@ -1632,9 +1849,29 @@ function renderCards() {
   const query = document.getElementById('searchInput').value.toLowerCase();
   renderFilterChips();
 
+  // 聚合视图（词族/来源）下类型筛选/排序无意义，隐藏；保留搜索与学科筛选
+  const chipsEl = document.getElementById('filterChips');
+  const sortEl = document.getElementById('sortBtn');
+  const aggView = familyView || sourceView;
+  if (chipsEl) chipsEl.style.display = aggView ? 'none' : '';
+  if (sortEl) sortEl.style.display = aggView ? 'none' : '';
+
   let filtered = cards.filter(c =>
     c.content.toLowerCase().includes(query) || c.translation?.toLowerCase().includes(query) || c.keywords?.some(k=>k.word.toLowerCase().includes(query))
   );
+
+  if (familyView) {
+    let wordCards = filtered.filter(c => c.type === 'word');
+    if (domainFilter !== 'all') wordCards = wordCards.filter(c => normDomain(c.domain) === domainFilter);
+    renderFamilyView(grid, empty, wordCards);
+    return;
+  }
+  if (sourceView) {
+    let list = filtered;
+    if (domainFilter !== 'all') list = list.filter(c => normDomain(c.domain) === domainFilter);
+    renderSourceView(grid, empty, list);
+    return;
+  }
   // Type / library filter
   if (typeFilter === 'lib') filtered = filtered.filter(c => c.source === '词库');
   else if (typeFilter === 'paper') filtered = filtered.filter(c => c.source === '论文提取');
@@ -1758,7 +1995,7 @@ async function deepAnalyzeInModal(cardId, idx) {
   const btn = document.getElementById('deepBtn-' + idx);
   if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner" style="width:14px;height:14px;border-width:2px;display:inline-block;vertical-align:middle;margin-right:6px"></div>分析中...'; }
   try {
-    const result = await callAI(buildEtymologyPrompt(word));
+    const result = await callAI(buildEtymologyPrompt(word), 'deep');
     // Save to cache (also upserts a 词库 card via saveEtyWord)
     await saveEtyWord({ ...result, savedAt: Date.now() });
     // Re-render the etymology box with the retained deep detail
@@ -2221,7 +2458,7 @@ async function etySearchWord(word) {
   const btn = document.getElementById('etySearchBtn');
   btn.disabled = true;
   try {
-    const result = await callAI(buildEtymologyPrompt(word));
+    const result = await callAI(buildEtymologyPrompt(word), 'deep');
     etyAnalysis = result;
     // 3. Auto-save to cache
     await saveEtyWord({ ...result, savedAt: Date.now() });
@@ -2389,7 +2626,7 @@ async function toggleWordDetail(word, itemId) {
   if (arrowEl) arrowEl.style.transform = 'rotate(180deg)';
 
   try {
-    const analysis = await callAI(buildEtymologyPrompt(word));
+    const analysis = await callAI(buildEtymologyPrompt(word), 'deep');
     if (analysis) {
       // Save to cache
       await saveEtyWord({ ...analysis, savedAt: Date.now() });
@@ -3311,6 +3548,7 @@ function onProviderChange() {
 function saveSettings() {
   settings.apiProvider = document.getElementById('apiProvider').value;
   settings.apiModel = document.getElementById('apiModel').value;
+  settings.deepModel = document.getElementById('deepModel').value;
   settings.apiKey = document.getElementById('apiKey').value;
   saveSettingsToDB();
 }
@@ -3321,12 +3559,26 @@ function updateModelOptions() {
     openrouter: [{ v:'anthropic/claude-sonnet-4', l:'Claude Sonnet 4' }, { v:'anthropic/claude-haiku-4.5', l:'Claude Haiku 4.5（便宜）' }],
     deepseek: [{ v:'deepseek-chat', l:'DeepSeek Chat' }]
   };
+  // 深度分析可选更强的模型（词源深挖用 pro，快速建卡仍走上面的主模型）
+  const deepModels = {
+    gemini: [{ v:'gemini-2.5-pro', l:'Gemini 2.5 Pro（更准）' }, { v:'gemini-2.5-flash', l:'Gemini 2.5 Flash' }],
+    openrouter: [{ v:'anthropic/claude-sonnet-4', l:'Claude Sonnet 4' }, { v:'anthropic/claude-haiku-4.5', l:'Claude Haiku 4.5' }],
+    deepseek: [{ v:'deepseek-reasoner', l:'DeepSeek Reasoner（更准）' }, { v:'deepseek-chat', l:'DeepSeek Chat' }]
+  };
   const sel = document.getElementById('apiModel');
   const opts = models[settings.apiProvider]||[];
   sel.innerHTML = opts.map(m=>`<option value="${m.v}">${m.l}</option>`).join('');
   // Try to restore saved model
   if (opts.some(m=>m.v===settings.apiModel)) sel.value = settings.apiModel;
   else if (opts.length) { settings.apiModel = opts[0].v; sel.value = settings.apiModel; }
+  // 深度模型下拉：首项「跟随主模型」
+  const dSel = document.getElementById('deepModel');
+  if (dSel) {
+    const dOpts = deepModels[settings.apiProvider]||[];
+    dSel.innerHTML = `<option value="">跟随主模型</option>` + dOpts.map(m=>`<option value="${m.v}">${m.l}</option>`).join('');
+    dSel.value = (settings.deepModel && dOpts.some(m=>m.v===settings.deepModel)) ? settings.deepModel : '';
+    if (dSel.value !== (settings.deepModel||'')) settings.deepModel = dSel.value;
+  }
 }
 
 function updateStats() {
@@ -3484,10 +3736,11 @@ function buildEtymologyPrompt(word) {
 }`;
 }
 
-async function callAI(prompt) {
+async function callAI(prompt, tier) {
+  const model = (tier === 'deep' && settings.deepModel) ? settings.deepModel : settings.apiModel;
   const res = await fetch('/api/analyze', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ provider:settings.apiProvider, model:settings.apiModel, apiKey:settings.apiKey, prompt })
+    body: JSON.stringify({ provider:settings.apiProvider, model, apiKey:settings.apiKey, prompt })
   });
   if (!res.ok) { const e = await res.json(); throw new Error(e.message || 'API failed'); }
   return await res.json();
