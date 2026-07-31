@@ -151,6 +151,13 @@
     .card-roots { font-size: 11px; line-height: 1.5; color: var(--accent); margin-top: 6px; opacity: 0.85; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .card-keywords { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,0.05); }
     .keyword-tag { font-size: 11px; padding: 3px 8px; background: rgba(232,97,44,0.05); color: #c0724a; border-radius: 4px; }
+    /* Paragraph cards stay compact in the grid; the detail modal still shows full text. */
+    .card.card-type-paragraph { height: 260px; display: flex; flex-direction: column; overflow: hidden; }
+    .card.card-type-paragraph .card-content { -webkit-line-clamp: 4; }
+    .card.card-type-paragraph .card-translation { -webkit-line-clamp: 2; }
+    .card.card-type-paragraph .card-keywords { flex-wrap: nowrap; overflow: hidden; min-height: 28px; }
+    .card.card-type-paragraph .keyword-tag { flex: 0 0 auto; }
+    .card.card-type-paragraph .card-meta { margin-top: auto; }
 
     /* ==================== Quick Input ==================== */
     .quick-input-wrapper { position: fixed; bottom: 68px; left: 50%; transform: translateX(-50%); width: calc(100% - 32px); max-width: 500px; z-index: 30; padding-bottom: env(safe-area-inset-bottom); }
@@ -1817,7 +1824,7 @@ function renderCardHTML(card, index) {
   }
   
   // Paragraph / default card
-  return `<div class="card ${tint}" style="animation-delay:${delay}s" onclick="openDetailModal('${card.id}')">
+  return `<div class="card card-type-paragraph ${tint}" style="animation-delay:${delay}s" onclick="openDetailModal('${card.id}')">
     ${delBtn}
     <div class="card-content">${esc(card.content)}</div>
     ${renderCardExtras(card)}
@@ -1839,7 +1846,8 @@ function renderCardExtras(card) {
   // Keyword tags, minus any identical to the card content (removes redundancy)
   const contentLc = (card.content||'').trim().toLowerCase();
   const tags = (card.keywords||[]).filter(k => (k.word||'').trim().toLowerCase() !== contentLc);
-  const tagsHtml = tags.length ? `<div class="card-keywords">${tags.slice(0,4).map(k=>`<span class="keyword-tag">${esc(k.word)}</span>`).join('')}</div>` : '';
+  const maxTags = card.type === 'paragraph' ? 3 : 4;
+  const tagsHtml = tags.length ? `<div class="card-keywords">${tags.slice(0,maxTags).map(k=>`<span class="keyword-tag">${esc(k.word)}</span>`).join('')}</div>` : '';
   return trans + rootsLine + tagsHtml;
 }
 
