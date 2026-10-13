@@ -3956,6 +3956,8 @@ function removeUrlImport(from, encoded) {
 }
 
 let urlImportRunning = false;
+let urlImportReady = false;
+window.addEventListener('hashchange', () => { if (urlImportReady) checkUrlImport(); });
 async function checkUrlImport() {
   if (urlImportRunning) return;
   const payload = readUrlImport();
@@ -3987,6 +3989,8 @@ async function checkUrlImport() {
   } finally {
     urlImportRunning = false;
     retryBtn.disabled = false;
+    const next = readUrlImport();
+    if (next && (next.from !== payload.from || next.encoded !== payload.encoded)) queueMicrotask(() => checkUrlImport());
   }
 }
 
@@ -4042,6 +4046,7 @@ async function init() {
         }, 1500);
       }
     }
+    urlImportReady = true;
     await checkUrlImport();
     renderCards(); updateStats();
     if (settings.autoSync && accessToken && cards.length > 0) setTimeout(()=>syncToCloud(), 2000);
