@@ -3923,13 +3923,26 @@ function validateImportedCard(value) {
   return card;
 }
 
-function decodeImportedCard(encoded) {
+function decodeImportedPayload(encoded) {
   if (typeof encoded !== 'string' || !encoded || encoded.length > 150000) throw new Error('导入内容为空或过大，请缩短选中文字');
   // Both clients use base64(encodeURIComponent(JSON)); URLSearchParams has
   // already removed the outer percent encoding, leaving this inner encoding.
   const json = decodeURIComponent(atob(encoded));
   if (json.length > 100000 || new TextEncoder().encode(json).length > 100000) throw new Error('导入内容过大，请缩短选中文字');
-  return validateImportedCard(JSON.parse(json));
+  return JSON.parse(json);
+}
+
+function decodeImportedCard(encoded) {
+  return validateImportedCard(decodeImportedPayload(encoded));
+}
+
+function decodeImportedCards(encoded) {
+  const payload = decodeImportedPayload(encoded);
+  if (payload && payload.kind === 'pdf-batch') {
+    if (!Array.isArray(payload.cards) || !payload.cards.length || payload.cards.length > 40) throw new Error('批量收藏内容不正确');
+    return payload.cards.map(validateImportedCard);
+  }
+  return [validateImportedCard(payload)];
 }
 
 function readUrlImport() {
@@ -3967,10 +3980,18 @@ async function checkUrlImport() {
   const retryBtn = document.getElementById('urlImportRetryBtn');
   retryBtn.disabled = true;
   try {
-    const card = decodeImportedCard(payload.encoded);
-    const collision = cards.find(c => c.id === card.id && normContent(c.content) !== normContent(card.content));
-    if (collision) throw new Error('收藏编号与已有内容冲突，请重新收藏');
-    const res = await saveCardToDB(card, { mergeExisting: true });
+    const imported = decodeImportedCards(payload.encoded);
+    // Validate the complete batch before committing any card. If a later
+    // transaction fails, keep the URL; retries safely merge earlier commits.
+    const seenIds = new Map();
+    for (const card of imported) {
+      const content = normContent(card.content);
+      const collision = cards.find(c => c.id === card.id && normContent(c.content) !== content);
+      if (collision || (seenIds.has(card.id) && seenIds.get(card.id) !== content)) throw new Error('收藏编号与已有内容冲突，请重新收藏');
+      seenIds.set(card.id, content);
+    }
+    const results = [];
+    for (const card of imported) results.push(await saveCardToDB(card, { mergeExisting: true }));
     // Clear the payload only after IndexedDB reports transaction completion.
     removeUrlImport(payload.from, payload.encoded);
     retry.hidden = true;
@@ -3978,7 +3999,8 @@ async function checkUrlImport() {
       settings.firstUseDate = new Date().toISOString();
       try { await saveSettingsToDB(); } catch (e) { console.warn('Import settings could not be saved:', e); }
     }
-    renderCards(); updateStats(); showToast(res.merged ? (card.sourceRefs?.length ? '已收藏过，内容和 PDF 来源已合并' : '已收藏过，内容已合并') : '已导入收藏！', 'success');
+    const card = imported[0], res = results[0];
+    renderCards(); updateStats(); showToast(imported.length > 1 ? `已同步 ${imported.length} 条收藏` : (res.merged ? (card.sourceRefs?.length ? '已收藏过，内容和 PDF 来源已合并' : '已收藏过，内容已合并') : '已导入收藏！'), 'success');
     if (settings.autoSync && accessToken) syncToCloud();
   } catch (e) {
     const message = '导入失败：' + (e.message || '请重试');
