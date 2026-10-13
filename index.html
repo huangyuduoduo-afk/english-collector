@@ -242,6 +242,10 @@
     .detail-date { font-size: 12px; color: var(--text-muted); }
     .detail-content { font-size: 18px; line-height: 1.6; color: var(--text-primary); font-weight: 300; margin-bottom: 8px; }
     .detail-translation { font-size: 14px; line-height: 1.6; color: var(--text-secondary); padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .detail-sources { margin-bottom: 20px; padding: 12px 14px; background: var(--warm-gray); border-radius: 10px; font-size: 12px; line-height: 1.7; color: var(--text-secondary); overflow-wrap: anywhere; }
+    .detail-sources-title { color: var(--text-muted); margin-bottom: 4px; }
+    .import-retry { margin: 12px auto; max-width: 680px; padding: 12px 16px; border: 1px solid var(--border); border-radius: 10px; color: var(--error); background: var(--warm-gray); font-size: 13px; line-height: 1.6; }
+    .import-retry button { margin-left: 12px; padding: 6px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--cream); color: var(--text-primary); cursor: pointer; }
     .keywords-section { margin-bottom: 20px; }
     .keywords-title { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
     .keywords-title-bar { width: 3px; height: 14px; background: var(--accent); border-radius: 2px; }
@@ -479,6 +483,7 @@
   <div class="ambient-glow"></div>
   <div class="ambient-glow-2"></div>
   <div id="toast" class="toast"></div>
+  <div id="urlImportRetry" class="import-retry" hidden><span id="urlImportError"></span><button id="urlImportRetryBtn" onclick="checkUrlImport()">重试导入</button></div>
 
   <!-- Welcome Animation -->
   <div class="welcome-overlay" id="welcomeOverlay">
@@ -1041,7 +1046,15 @@ async function dbGet(store, key) {
 }
 async function dbPut(store, data) {
   ensureDB();
-  return new Promise((r, e) => { const q = db.transaction([store],'readwrite').objectStore(store).put(data); q.onsuccess = () => r(); q.onerror = () => e(q.error); });
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction([store], 'readwrite');
+    const q = tx.objectStore(store).put(data);
+    // A successful request can still be rolled back; only confirm after commit.
+    tx.oncomplete = () => resolve();
+    tx.onabort = () => reject(tx.error || q.error || new Error('收藏未能写入，请重试'));
+    tx.onerror = () => reject(tx.error || q.error || new Error('数据库写入失败，请重试'));
+    q.onerror = () => reject(q.error || new Error('数据库写入失败，请重试'));
+  });
 }
 async function dbDelete(store, key) {
   ensureDB();
@@ -1084,18 +1097,53 @@ async function loadData() {
 
 function normContent(s) { return String(s||'').trim().toLowerCase().replace(/\s+/g,' '); }
 
+// Keep every PDF location when the same phrase appears in multiple documents.
+function getPDFSourceRefs(card) {
+  const refs = [];
+  const seen = new Set();
+  const append = ref => {
+    if (!ref || ref.kind !== 'pdf' || typeof ref.name !== 'string' || !ref.name.trim() ||
+        ref.name.length > 512 || !Number.isInteger(ref.page) || ref.page < 1 || ref.page > 1000000 ||
+        typeof ref.fingerprint !== 'string' || !/^[A-Za-z0-9_:.\-]{1,128}$/.test(ref.fingerprint)) return;
+    const key = ref.fingerprint + ':' + ref.page;
+    if (!seen.has(key) && refs.length < 100) {
+      seen.add(key);
+      refs.push({ kind: 'pdf', name: ref.name.trim(), page: ref.page, fingerprint: ref.fingerprint });
+    }
+  };
+  if (Array.isArray(card.sourceRefs)) card.sourceRefs.forEach(append);
+  append({ kind: 'pdf', name: card.sourceDocument, page: card.sourcePage, fingerprint: card.sourceFingerprint });
+  return refs;
+}
+
+function mergePDFSourceRefs(existing, incoming) {
+  return getPDFSourceRefs({ sourceRefs: [...getPDFSourceRefs(existing), ...getPDFSourceRefs(incoming)] });
+}
+
 // Choke point for all save paths (manual add / plugin inject / URL import / 词库 upsert).
 // If a NEW card duplicates an existing one's content, merge into the existing card instead.
-async function saveCardToDB(card) {
-  const isUpdate = cards.some(c => c.id === card.id);
-  if (!isUpdate) {
-    const dup = cards.find(c => normContent(c.content) === normContent(card.content));
-    if (dup) {
+async function saveCardToDB(card, { mergeExisting = false } = {}) {
+  const existing = cards.find(c => c.id === card.id);
+  const refs = mergePDFSourceRefs(existing || {}, card);
+  card = { ...card, ...(refs.length ? { sourceRefs: refs } : {}) };
+  if (!existing || mergeExisting) {
+    const found = cards.find(c => normContent(c.content) === normContent(card.content));
+    if (found) {
       // Fill gaps in the existing card with incoming info; keep id/date/review state
+      // Work on a copy so an aborted write cannot appear saved in memory.
+      const dup = { ...found };
       if (!dup.translation && card.translation) dup.translation = card.translation;
       if ((!dup.keywords || !dup.keywords.length) && card.keywords?.length) dup.keywords = card.keywords;
       if (!dup.source && card.source) dup.source = card.source;
       if (!dup.domain && card.domain) dup.domain = card.domain;
+      const mergedRefs = mergePDFSourceRefs(dup, card);
+      if (mergedRefs.length) dup.sourceRefs = mergedRefs;
+      if (!dup.sourceDocument && card.sourceDocument) {
+        dup.sourceDocument = card.sourceDocument;
+        dup.sourcePage = card.sourcePage;
+        dup.sourceFingerprint = card.sourceFingerprint;
+        dup.sourceApp = card.sourceApp;
+      }
       await dbPut('cards', dup);
       const i = cards.findIndex(c => c.id === dup.id);
       if (i >= 0) cards[i] = dup;
@@ -1644,8 +1692,17 @@ function toggleSourceView() {
 
 function buildSourceGroups(list) {
   const groups = new Map(); // key → { label, url, cards[] }
+  const add = (key, label, url, card) => {
+    if (!groups.has(key)) groups.set(key, { label, url, cards: [] });
+    const group = groups.get(key);
+    if (!group.cards.some(c => c.id === card.id)) group.cards.push(card);
+  };
   for (const c of list) {
     const s = c.source || '';
+    const refs = getPDFSourceRefs(c);
+    refs.forEach(ref => add('__pdf:' + ref.fingerprint, '📄 ' + ref.name, '', c));
+    // PDF page numbers belong to the detail, not to separate source groups.
+    if (refs.length && (!s || refs.some(ref => ref.name === s))) continue;
     let key, label, url = '';
     if (!s) { key = '__manual'; label = '✍️ 手动添加'; }
     else if (s === '词库') { key = '__lib'; label = '🧬 词库'; }
@@ -1654,8 +1711,7 @@ function buildSourceGroups(list) {
       key = s; url = s;
       try { label = '🌐 ' + new URL(s).hostname.replace(/^www\./, ''); } catch(e) { label = '🌐 网页'; }
     } else { key = s; label = '📌 ' + s; }
-    if (!groups.has(key)) groups.set(key, { label, url, cards: [] });
-    groups.get(key).cards.push(c);
+    add(key, label, url, c);
   }
   return [...groups.values()]
     .map(g => ({ ...g, latest: Math.max(...g.cards.map(c => new Date(c.createdAt).getTime() || 0)),
@@ -1954,6 +2010,7 @@ function openDetailModal(cardId) {
       <button class="modal-close" onclick="closeDetailModal()"><svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
     <p class="detail-content">${esc(card.content)}</p>
     <p class="detail-translation">${esc(card.translation||'')}</p>
+    ${renderPDFSources(card)}
     ${kwHtml}
     <div class="add-modal-actions">
       <button class="btn btn-secondary" onclick="deleteCard('${cardId}')">删除</button>
@@ -1962,12 +2019,18 @@ function openDetailModal(cardId) {
   document.getElementById('detailModal').classList.add('active');
 }
 
+function renderPDFSources(card) {
+  const refs = getPDFSourceRefs(card);
+  if (!refs.length) return '';
+  return `<div class="detail-sources"><div class="detail-sources-title">📄 PDF 来源</div>${refs.map(ref => `<div>${esc(ref.name)} · 第 ${ref.page} 页</div>`).join('')}</div>`;
+}
+
 function renderKwEtymology(kw, cardId, idx) {
   if (!kw) return '';
   // Check for a cached deep analysis of this word
   const deep = etymologyWords.find(w => w.word.toLowerCase() === kw.word.toLowerCase());
   const basic = `<div class="etymology-header"><div class="etymology-word">${esc(kw.word)}</div>
-    <button class="speak-btn" onclick="speakWord('${esc(kw.word)}')">🔊</button></div>
+    <button class="speak-btn" onclick="speakWord(this.closest('.etymology-header').querySelector('.etymology-word').textContent)">🔊</button></div>
     ${kw.phonetic?`<div class="etymology-phonetic">${esc(kw.phonetic)}</div>`:''}
     <div class="etymology-item"><span class="etymology-label">构词 · </span><span class="etymology-value">${esc(kw.roots||'-')}</span></div>
     <div class="etymology-item"><span class="etymology-label">来源 · </span><span class="etymology-value">${esc(kw.origin||'-')}</span></div>
@@ -2240,6 +2303,8 @@ async function cleanupDuplicateCards() {
       if (!keep.translation && c.translation) keep.translation = c.translation;
       if ((!keep.keywords || !keep.keywords.length) && c.keywords?.length) keep.keywords = c.keywords;
       if (!keep.source && c.source) keep.source = c.source;
+      const refs = mergePDFSourceRefs(keep, c);
+      if (refs.length) keep.sourceRefs = refs;
       await deleteCardFromDB(c.id);
       removed++;
     }
@@ -3802,20 +3867,126 @@ function exportSingleAnki(cardId) {
 }
 
 // ======================================================================
-// URL IMPORT (from Chrome extension)
+// URL IMPORT (Chrome extension query / local PDF reader hash)
 // ======================================================================
+function validateImportedCard(value) {
+  const isObject = item => item !== null && typeof item === 'object' && !Array.isArray(item);
+  const text = (item, label, max, fallback = '') => {
+    if (item === undefined) return fallback;
+    if (typeof item !== 'string' || item.length > max) throw new Error(label + '格式不正确或过长');
+    return item;
+  };
+  if (!isObject(value)) throw new Error('导入内容必须是一张收藏卡片');
+  if (typeof value.id !== 'string' || !/^[A-Za-z0-9_-]{1,160}$/.test(value.id)) throw new Error('收藏编号不正确');
+  const content = text(value.content, '英文内容', 5000).trim();
+  if (!content) throw new Error('没有可收藏的英文内容');
+  if (!['word', 'sentence', 'paragraph'].includes(value.type)) throw new Error('收藏类型不正确');
+  if (value.keywords !== undefined && (!Array.isArray(value.keywords) || value.keywords.length > 20)) throw new Error('重点词汇格式不正确');
+  const keywords = (value.keywords || []).map(item => {
+    if (!isObject(item)) throw new Error('重点词汇格式不正确');
+    const word = text(item.word, '重点词汇', 200).trim();
+    if (!word) throw new Error('重点词汇不能为空');
+    return { word, phonetic: text(item.phonetic, '音标', 500), roots: text(item.roots, '构词', 2000),
+      origin: text(item.origin, '词源', 3000), meaning: text(item.meaning, '释义', 2000) };
+  });
+  const createdAt = text(value.createdAt, '收藏时间', 64, new Date().toISOString());
+  if (!Number.isFinite(new Date(createdAt).getTime())) throw new Error('收藏时间不正确');
+  if (value.reviewCount !== undefined && (!Number.isInteger(value.reviewCount) || value.reviewCount < 0)) throw new Error('复习次数不正确');
+  if (value.known !== undefined && typeof value.known !== 'boolean') throw new Error('复习状态不正确');
+  const lastReviewed = value.lastReviewed === undefined || value.lastReviewed === null ? null : text(value.lastReviewed, '复习时间', 64);
+  if (lastReviewed !== null && !Number.isFinite(new Date(lastReviewed).getTime())) throw new Error('复习时间不正确');
+  let source = text(value.source, '来源', 2048);
+  if (/^https?:\/\//.test(source)) {
+    try { source = new URL(source).href; } catch (_) { throw new Error('来源网址不正确'); }
+  }
+  const card = { id: value.id, content, type: value.type, translation: text(value.translation, '翻译', 10000),
+    domain: normDomain(text(value.domain, '学科', 80)), keywords, source, createdAt,
+    reviewCount: value.reviewCount || 0, lastReviewed, known: value.known || false };
+  if (value.sourceApp !== undefined) card.sourceApp = text(value.sourceApp, '来源应用', 128);
+  const hasPDFMetadata = value.sourceDocument !== undefined || value.sourcePage !== undefined || value.sourceFingerprint !== undefined;
+  if (hasPDFMetadata) {
+    card.sourceDocument = text(value.sourceDocument, 'PDF 文件名', 512).trim();
+    card.sourcePage = value.sourcePage;
+    card.sourceFingerprint = text(value.sourceFingerprint, 'PDF 编号', 128);
+    if (getPDFSourceRefs(card).length !== 1) throw new Error('PDF 文件名、页码或编号不正确');
+    if (card.sourceApp === 'quick-reader' || !card.source) card.source = card.sourceDocument;
+  } else if (card.sourceApp === 'quick-reader') throw new Error('缺少 PDF 来源信息');
+  if (value.sourceRefs !== undefined) {
+    if (!Array.isArray(value.sourceRefs) || value.sourceRefs.length > 100) throw new Error('PDF 来源列表不正确');
+    for (const ref of value.sourceRefs) {
+      if (!isObject(ref) || getPDFSourceRefs({ sourceRefs: [ref] }).length !== 1) throw new Error('PDF 来源列表不正确');
+    }
+    card.sourceRefs = value.sourceRefs;
+  }
+  const refs = getPDFSourceRefs(card);
+  if (refs.length) card.sourceRefs = refs;
+  return card;
+}
+
+function decodeImportedCard(encoded) {
+  if (typeof encoded !== 'string' || !encoded || encoded.length > 150000) throw new Error('导入内容为空或过大，请缩短选中文字');
+  // Both clients use base64(encodeURIComponent(JSON)); URLSearchParams has
+  // already removed the outer percent encoding, leaving this inner encoding.
+  const json = decodeURIComponent(atob(encoded));
+  if (json.length > 100000 || new TextEncoder().encode(json).length > 100000) throw new Error('导入内容过大，请缩短选中文字');
+  return validateImportedCard(JSON.parse(json));
+}
+
+function readUrlImport() {
+  const url = new URL(window.location.href);
+  const hashParams = new URLSearchParams(url.hash.slice(1));
+  if (hashParams.has('import')) return { from: 'hash', encoded: hashParams.get('import') };
+  if (url.searchParams.has('import')) return { from: 'query', encoded: url.searchParams.get('import') };
+  return null;
+}
+
+function removeUrlImport(from, encoded) {
+  const url = new URL(window.location.href);
+  const current = new URLSearchParams(from === 'hash' ? url.hash.slice(1) : url.search.slice(1));
+  // A new handoff could arrive while the transaction was committing.
+  if (encoded !== undefined && current.get('import') !== encoded) return;
+  // Preserve other parameters, hash state, and their original encoding.
+  const strip = value => value.split('&').filter(part => {
+    try { return decodeURIComponent(part.split('=')[0].replace(/\+/g, ' ')) !== 'import'; }
+    catch (_) { return true; }
+  }).join('&');
+  const query = from === 'query' ? strip(url.search.slice(1)) : url.search.slice(1);
+  const hash = from === 'hash' ? strip(url.hash.slice(1)) : url.hash.slice(1);
+  window.history.replaceState(window.history.state, '', url.pathname + (query ? '?' + query : '') + (hash ? '#' + hash : ''));
+}
+
+let urlImportRunning = false;
 async function checkUrlImport() {
-  const params = new URLSearchParams(window.location.search);
-  const importData = params.get('import');
-  if (importData) {
-    try {
-      const card = JSON.parse(decodeURIComponent(atob(importData)));
-      const res = await saveCardToDB(card);
-      if (!settings.firstUseDate) { settings.firstUseDate=new Date().toISOString(); await saveSettingsToDB(); }
-      window.history.replaceState({}, '', location.pathname);
-      renderCards(); updateStats(); showToast(res.merged ? '已收藏过，内容已合并' : '已导入！','success');
-      if (settings.autoSync && accessToken) syncToCloud();
-    } catch(e) { console.error('Import error:', e); }
+  if (urlImportRunning) return;
+  const payload = readUrlImport();
+  if (!payload) return;
+  urlImportRunning = true;
+  const retry = document.getElementById('urlImportRetry');
+  const retryBtn = document.getElementById('urlImportRetryBtn');
+  retryBtn.disabled = true;
+  try {
+    const card = decodeImportedCard(payload.encoded);
+    const collision = cards.find(c => c.id === card.id && normContent(c.content) !== normContent(card.content));
+    if (collision) throw new Error('收藏编号与已有内容冲突，请重新收藏');
+    const res = await saveCardToDB(card, { mergeExisting: true });
+    // Clear the payload only after IndexedDB reports transaction completion.
+    removeUrlImport(payload.from, payload.encoded);
+    retry.hidden = true;
+    if (!settings.firstUseDate) {
+      settings.firstUseDate = new Date().toISOString();
+      try { await saveSettingsToDB(); } catch (e) { console.warn('Import settings could not be saved:', e); }
+    }
+    renderCards(); updateStats(); showToast(res.merged ? (card.sourceRefs?.length ? '已收藏过，内容和 PDF 来源已合并' : '已收藏过，内容已合并') : '已导入收藏！', 'success');
+    if (settings.autoSync && accessToken) syncToCloud();
+  } catch (e) {
+    const message = '导入失败：' + (e.message || '请重试');
+    document.getElementById('urlImportError').textContent = message + '；导入内容仍保留，可以重试或刷新页面。';
+    retry.hidden = false;
+    showToast(message, 'error');
+    console.error('Import error:', e);
+  } finally {
+    urlImportRunning = false;
+    retryBtn.disabled = false;
   }
 }
 
